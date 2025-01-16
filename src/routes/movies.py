@@ -17,8 +17,10 @@ router = APIRouter()
 def add_film(film: movies.MovieCreate, db: Session = Depends(get_db)):
     existing_movie = db.query(MovieModel).filter(MovieModel.name == film.name, MovieModel.date == film.date).first()
     if existing_movie:
-        raise HTTPException(status_code=409,
-                            detail=f"A movie with the name '{film.name}' and release date '{film.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{film.name}' "
+                   f"and release date '{film.date}' already exists.")
 
     country = db.query(CountryModel).filter(CountryModel.code == "US").first()
     if not country:
