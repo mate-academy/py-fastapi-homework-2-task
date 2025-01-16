@@ -2,9 +2,9 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from database import models # noqa: F401
-from database.models import Base
-from database.session_postgresql import postgresql_engine
+from src.database import models # noqa: F401
+from src.database.models import Base
+from src.database.session_postgresql import postgresql_engine
 
 
 # this is the Alembic Config object, which provides

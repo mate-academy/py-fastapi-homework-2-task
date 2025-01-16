@@ -2,8 +2,8 @@ import random
 
 import pytest
 
-from database import MovieModel
-from database.models import GenreModel, ActorModel, LanguageModel, CountryModel
+from src.database.models import MovieModel
+from src.database.models import GenreModel, ActorModel, LanguageModel, CountryModel
 
 
 def test_get_movies_empty_database(client):
@@ -330,7 +330,8 @@ def test_create_movie_and_related_models(client, db_session):
     }
 
     response = client.post("/api/v1/theater/movies/", json=movie_data)
-
+    print(response.status_code)
+    print(response.json())
     assert response.status_code == 201, f"Expected status code 201, but got {response.status_code}"
 
     response_data = response.json()
