@@ -74,7 +74,7 @@ def create_movie(movie: MovieCreateResponseSchema, db: Session = Depends(get_db)
             detail="Invalid input data."
         )
 
-    if movie.date > datetime.datetime.now(datetime.UTC).date() + datetime.timedelta(days=365):
+    if movie.date > datetime.datetime.now().date() + datetime.timedelta(days=365):
         raise HTTPException(
             status_code=400,
             detail="Invalid input data."
@@ -180,7 +180,7 @@ def edit_movie(movie_id: int, movie: MovieUpdateResponseSchema, db: Session = De
         db_movie.name = movie.name
 
     if movie.date:
-        if movie.date > datetime.datetime.now(datetime.UTC).date() + datetime.timedelta(days=365):
+        if movie.date > datetime.datetime.now().date() + datetime.timedelta(days=365):
             raise HTTPException(
                 status_code=400,
                 detail="Invalid input data."
