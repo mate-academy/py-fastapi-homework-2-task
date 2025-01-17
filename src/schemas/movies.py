@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+import datetime
+from datetime import timedelta
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,7 +48,7 @@ class MovieListReadResponseSchema(BaseModel):
 
     id: int
     name: str
-    date: date
+    date: datetime.date
     score: float
     overview: str
 
@@ -70,13 +71,13 @@ class MovieCreateRequestSchema(BaseModel):
     """Schema for movie creation request."""
 
     name: str = Field(max_length=255)
-    date: date = Field(le=date.today() + timedelta(days=365))
+    date: datetime.date = Field(le=datetime.date.today() + timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatusEnum
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country: str = Field(pattern="^[A-Z]{3}$", description="ISO 3166-1 alpha-3 code")
+    country: str = Field(max_length=3, description="ISO 3166-1 alpha-3 code")
     genres: list[str]
     actors: list[str]
     languages: list[str]
@@ -87,7 +88,7 @@ class MovieCreateResponseSchema(BaseModel):
 
     id: int
     name: str
-    date: date
+    date: datetime.date
     score: float
     overview: str
     status: MovieStatusEnum
@@ -106,7 +107,7 @@ class MovieDetailResponseSchema(BaseModel):
 
     id: int
     name: str
-    date: date
+    date: datetime.date
     score: float
     overview: str
     status: MovieStatusEnum
@@ -123,10 +124,10 @@ class MovieDetailResponseSchema(BaseModel):
 class MovieUpdateRequestSchema(BaseModel):
     """Schema for movie update request."""
 
-    name: str | None = Field(max_length=255)
-    date: date | None = Field(le=date.today() + timedelta(days=365))
-    score: float | None = Field(ge=0, le=100)
-    overview: str | None
-    status: MovieStatusEnum | None
-    budget: float | None = Field(ge=0)
-    revenue: float | None = Field(ge=0)
+    name: str | None = Field(None, max_length=255)
+    date: datetime.date | None = Field(None, le=datetime.date.today() + timedelta(days=365))
+    score: float | None = Field(None, ge=0, le=100)
+    overview: str | None = None
+    status: MovieStatusEnum | None = None
+    budget: float | None = Field(None, ge=0)
+    revenue: float | None = Field(None, ge=0)
