@@ -84,11 +84,11 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
 
     try:
         with db.begin():
-            exciting_movie = db.query(MovieModel).filter(
+            existing_movie = db.query(MovieModel).filter(
                 MovieModel.name == movie.name,
                 MovieModel.date == movie.date
             ).first()
-            if exciting_movie:
+            if existing_movie:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"A movie with the name '{movie.name}' and "

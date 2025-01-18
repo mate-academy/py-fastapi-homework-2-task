@@ -52,13 +52,15 @@ class MovieCreateSchema(BaseModel):
     languages: list[str]
 
     @field_validator("date")
-    @classmethod
-    def check_date_on_the_future(cls, date: date):
-        if date > date.today() + timedelta(days=365):
-            raise ValidationError(
-                "The date must not be more than one year in the future."
-            )
-        return date
+    def parse_and_validate_date(cls, movie_date: str | date):
+        if isinstance(movie_date, str):
+            try:
+                movie_date = date.fromisoformat(movie_date)
+            except ValueError:
+                raise ValueError(f"Invalid date format: {movie_date}")
+        if movie_date > date.today() + timedelta(days=365):
+            raise ValueError("The date must not be more than one year in the future.")
+        return movie_date
 
 
 class MovieDetailSchema(BaseModel):
