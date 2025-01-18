@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from enum import Enum
+from typing import Optional
 
 from pydantic import (
     BaseModel,
@@ -7,7 +8,28 @@ from pydantic import (
     field_validator,
     ValidationError
 )
-from pydantic_extra_types.country import CountryAlpha3
+from pydantic_extra_types.country import CountryAlpha3, CountryAlpha2
+
+
+class CountrySchema(BaseModel):
+    id: int
+    code: CountryAlpha3 | CountryAlpha2
+    name: str | None
+
+
+class GenreSchema(BaseModel):
+    id: int
+    name: str
+
+
+class ActorSchema(BaseModel):
+    id: int
+    name: str
+
+
+class LanguageSchema(BaseModel):
+    id: int
+    name: str
 
 
 class StatusEnum(str, Enum):
@@ -24,7 +46,7 @@ class MovieCreateSchema(BaseModel):
     status: StatusEnum
     budget: float = Field(gt=0)
     revenue: float = Field(gt=0)
-    country: CountryAlpha3
+    country: CountryAlpha3 | CountryAlpha2
     genres: list[str]
     actors: list[str]
     languages: list[str]
@@ -39,8 +61,32 @@ class MovieCreateSchema(BaseModel):
         return date
 
 
+class MovieDetailSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float = Field(ge=0, le=100)
+    overview: str
+    status: StatusEnum
+    budget: float = Field(gt=0)
+    revenue: float = Field(gt=0)
+    country: CountrySchema
+    genres: list[GenreSchema]
+    actors: list[ActorSchema]
+    languages: list[LanguageSchema]
+
+    class Config:
+        from_attributes = True
+
+
 class MovieUpdateSchema(BaseModel):
-    pass
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = Field(None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[StatusEnum] = None
+    budget: Optional[float] = Field(None, gt=0)
+    revenue: Optional[float] = Field(None, gt=0)
 
 
 class MovieListSchema(BaseModel):
