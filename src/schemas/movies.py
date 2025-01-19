@@ -19,15 +19,18 @@ class Movie(BaseModel):
     budget: float
     revenue: float
 
+
 class Genre(BaseModel):
     name: str
     movies: list[Movie]
 
     model_config = {"from_attributes": True}
 
+
 class GenreDetail(BaseModel):
     id: int
     name: str
+
 
 class Actor(BaseModel):
     name: str
@@ -35,9 +38,11 @@ class Actor(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class ActorDetail(BaseModel):
     id: int
     name: str
+
 
 class Language(BaseModel):
     name: str
@@ -45,9 +50,11 @@ class Language(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class LanguageDetail(BaseModel):
     id: int
     name: str
+
 
 class Country(BaseModel):
     code: str
@@ -56,17 +63,18 @@ class Country(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class CountryDetail(BaseModel):
     id: int
     code: str
     name: Optional[str]
 
 
-
-
 class MovieCreate(BaseModel):
     name: str = Field(max_length=255)
-    date: datetime.date #= Field(lt=datetime.date.today() + datetime.timedelta(days=365))
+    date: (
+        datetime.date
+    )  # = Field(lt=datetime.date.today() + datetime.timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatus
@@ -79,12 +87,14 @@ class MovieCreate(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class MovieDetail(Movie):
     id: int
     country: Optional[CountryDetail] = None
     genres: Optional[list[GenreDetail]] = None
     actors: Optional[list[ActorDetail]] = None
     languages: Optional[list[LanguageDetail]] = None
+
 
 class MovieList(BaseModel):
     id: int
@@ -93,6 +103,7 @@ class MovieList(BaseModel):
     score: float
     overview: str
 
+
 class MovieListResponse(BaseModel):
     movies: list[MovieList]
     prev_page: str | None
@@ -100,12 +111,14 @@ class MovieListResponse(BaseModel):
     total_pages: int
     total_items: int
 
+
 class MovieUpdate(Movie):
     name: Optional[str] = Field(max_length=255, default=None)
-    date: Optional[datetime.date] = Field(lt=datetime.date.today() + datetime.timedelta(days=365), default=None)
+    date: Optional[datetime.date] = Field(
+        lt=datetime.date.today() + datetime.timedelta(days=365), default=None
+    )
     overview: Optional[str] = None
     status: Optional[MovieStatus] = None
     score: Optional[float] = Field(ge=0, le=100, default=None)
     budget: Optional[float] = Field(gt=0, default=None)
     revenue: Optional[float] = Field(gt=0, default=None)
-

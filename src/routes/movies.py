@@ -3,7 +3,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 import datetime
 from database import get_db
-from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
+from database.models import (
+    MovieModel,
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel,
+)
 
 from schemas.movies import MovieListResponse, MovieDetail, MovieCreate, MovieUpdate
 
@@ -14,19 +20,25 @@ router = APIRouter()
 
 @router.get("/movies/", response_model=MovieListResponse)
 def get_movies(
-        db: Session = Depends(get_db),
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1, le=20)
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
 ):
 
-    movies = db.query(MovieModel).order_by(MovieModel.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    movies = (
+        db.query(MovieModel)
+        .order_by(MovieModel.id.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
     print(f"print get_movies: {movies}")
 
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
 
     prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}"
-    next_page =f"/theater/movies/?page={page + 1}&per_page={per_page}"
+    next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}"
     total_items = db.query(MovieModel).count()
     total_pages = (total_items // per_page) + (1 if total_items % per_page > 0 else 0)
 
@@ -43,20 +55,18 @@ def get_movies(
 
 
 @router.post("/movies/", response_model=MovieDetail, status_code=201)
-def create_movie(
-        movie: MovieCreate,
-        db: Session = Depends(get_db)
-):
-    db_movie = db.query(MovieModel).filter(
-        MovieModel.name == movie.name
-    ).filter(
-        MovieModel.date == movie.date
-    ).first()
+def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
+    db_movie = (
+        db.query(MovieModel)
+        .filter(MovieModel.name == movie.name)
+        .filter(MovieModel.date == movie.date)
+        .first()
+    )
 
     if db_movie:
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{db_movie.name}' and release date '{db_movie.date}' already exists."
+            detail=f"A movie with the name '{db_movie.name}' and release date '{db_movie.date}' already exists.",
         )
 
     if movie.date > datetime.datetime.now().date() + datetime.timedelta(days=365):
@@ -73,7 +83,11 @@ def create_movie(
     if movie.languages:
         # languages.extend(check_or_create_many_instances_by_name(movie.languages, LanguageModel, db))
         for language_name in movie.languages:
-            language = db.query(LanguageModel).filter(LanguageModel.name == language_name).first()
+            language = (
+                db.query(LanguageModel)
+                .filter(LanguageModel.name == language_name)
+                .first()
+            )
             if not language:
                 language = LanguageModel(name=language_name)
                 db.add(language)
@@ -135,35 +149,36 @@ def create_movie(
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetail)
-def get_movie(
-        movie_id: int,
-        db: Session = Depends(get_db)
-):
+def get_movie(movie_id: int, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print get_movie: {movie}")
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
     return movie
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
-def delete_movie(
-        movie_id: int,
-        db: Session = Depends(get_db)
-):
+def delete_movie(movie_id: int, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print delete_movie: {movie}")
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
     db.delete(movie)
     db.commit()
+
 
 @router.patch("/movies/{movie_id}/", status_code=200)
 def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print edit_movie: {movie} and {movie_id}")
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
 
     try:
         movie_date = movie_data.model_dump(exclude_unset=True)
