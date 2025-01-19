@@ -23,7 +23,7 @@ def get_movies(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
-):
+) -> MovieListResponse:
 
     movies = (
         db.query(MovieModel)
@@ -55,7 +55,7 @@ def get_movies(
 
 
 @router.post("/movies/", response_model=MovieDetail, status_code=201)
-def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
+def create_movie(movie: MovieCreate, db: Session = Depends(get_db)) -> MovieDetail:
     db_movie = (
         db.query(MovieModel)
         .filter(MovieModel.name == movie.name)
@@ -142,14 +142,14 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_movie)
         return new_movie
-    except:
+    except IntegrityError:
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     # raise HTTPException(status_code=201, detail="Movie created successfully.")
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetail)
-def get_movie(movie_id: int, db: Session = Depends(get_db)):
+def get_movie(movie_id: int, db: Session = Depends(get_db)) -> MovieDetail:
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print get_movie: {movie}")
     if not movie:
@@ -160,7 +160,7 @@ def get_movie(movie_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
-def delete_movie(movie_id: int, db: Session = Depends(get_db)):
+def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> None:
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print delete_movie: {movie}")
     if not movie:
@@ -172,7 +172,7 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/movies/{movie_id}/", status_code=200)
-def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)):
+def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)) -> dict[str, str]:
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print edit_movie: {movie} and {movie_id}")
     if not movie:
@@ -187,7 +187,7 @@ def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get
                 setattr(movie, key, value)
         db.commit()
         db.refresh(movie)
-    except:
+    except IntegrityError:
         raise HTTPException(status_code=400, detail="Invalid input data.")
     # raise HTTPException(status_code=200, detail="Movie updated successfully.")
     return {"detail": "Movie updated successfully."}
