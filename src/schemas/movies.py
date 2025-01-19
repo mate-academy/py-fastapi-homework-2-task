@@ -66,7 +66,7 @@ class CountryDetail(BaseModel):
 
 class MovieCreate(BaseModel):
     name: str = Field(max_length=255)
-    date: datetime.date = Field(lt=datetime.date.today() + datetime.timedelta(days=365))
+    date: datetime.date #= Field(lt=datetime.date.today() + datetime.timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatus
@@ -101,11 +101,11 @@ class MovieListResponse(BaseModel):
     total_items: int
 
 class MovieUpdate(Movie):
-    name: Optional[str] = Field(max_length=255)
-    date: Optional[datetime.date] = Field(lt=datetime.date.today() + datetime.timedelta(days=365))
-    overview: Optional[str]
-    status: Optional[MovieStatus]
-    score: Optional[float] = Field(ge=0, le=100)
-    budget: Optional[float] = Field(gt=0)
-    revenue: Optional[float] = Field(gt=0)
+    name: Optional[str] = Field(max_length=255, default=None)
+    date: Optional[datetime.date] = Field(lt=datetime.date.today() + datetime.timedelta(days=365), default=None)
+    overview: Optional[str] = None
+    status: Optional[MovieStatus] = None
+    score: Optional[float] = Field(ge=0, le=100, default=None)
+    budget: Optional[float] = Field(gt=0, default=None)
+    revenue: Optional[float] = Field(gt=0, default=None)
 
