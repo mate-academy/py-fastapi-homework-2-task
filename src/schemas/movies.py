@@ -101,7 +101,11 @@ class MovieListResponse(BaseModel):
     total_items: int
 
 class MovieUpdate(Movie):
-    score: float = Field(ge=0, le=100)
-    budget: float = Field(gt=0)
-    revenue: float = Field(gt=0)
+    name: Optional[str] = Field(max_length=255)
+    date: Optional[datetime.date] = Field(lt=datetime.date.today() + datetime.timedelta(days=365))
+    overview: Optional[str]
+    status: Optional[MovieStatus]
+    score: Optional[float] = Field(ge=0, le=100)
+    budget: Optional[float] = Field(gt=0)
+    revenue: Optional[float] = Field(gt=0)
 

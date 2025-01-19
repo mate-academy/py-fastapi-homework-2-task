@@ -150,7 +150,7 @@ def delete_movie(
     db.delete(movie)
     db.commit()
 
-@router.patch("/movies/{movie_id}", response_model=MovieDetail, status_code=200)
+@router.patch("/movies/{movie_id}", status_code=200)
 def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     print(f"print edit_movie: {movie} and {movie_id}")
@@ -158,9 +158,12 @@ def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     try:
-        movie_date = dict(movie_data)
+        movie_date = movie_data.dict(exclude_unset=True)
         for key, value in movie_date.items():
             setattr(movie, key, value)
+        db.commit()
+        db.refresh(movie)
     except:
         raise HTTPException(status_code=400, detail="Invalid input data.")
-    raise HTTPException(status_code=200, detail="Movie updated successfully.")
+    # raise HTTPException(status_code=200, detail="Movie updated successfully.")
+    return {"detail": "Movie updated successfully."}
