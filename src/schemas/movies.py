@@ -1,7 +1,12 @@
 import datetime
 from datetime import timedelta
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer
+)
 
 from database.models import MovieStatusEnum
 
@@ -59,7 +64,7 @@ class MovieListSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieCreateRequestSchema(BaseModel):
+class MovieCreateBaseSchema(BaseModel):
     name: str = Field(max_length=255)
     date: datetime.date = Field(le=datetime.date.today() + timedelta(days=365))
     score: float = Field(ge=0, le=100)
@@ -90,7 +95,7 @@ class MovieCreateResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieDetailResponseSchema(BaseModel):
+class MovieDetailSchema(BaseModel):
     id: int
     name: str
     date: datetime.date
@@ -107,7 +112,7 @@ class MovieDetailResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieUpdateRequestSchema(BaseModel):
+class MovieUpdateSchema(BaseModel):
     name: str | None = Field(None, max_length=255)
     date: datetime.date | None = Field(None, le=datetime.date.today() + timedelta(days=365))
     score: float | None = Field(None, ge=0, le=100)

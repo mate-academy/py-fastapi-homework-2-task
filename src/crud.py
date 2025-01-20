@@ -1,15 +1,20 @@
-import datetime
 from datetime import date
-from typing import Type
 
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import MovieModel
-from database.models import ActorModel, CountryModel, GenreModel, LanguageModel, Base
-from schemas.movies import MovieCreateRequestSchema, MovieUpdateRequestSchema, MovieListSchema, \
-    MovieCreateResponseSchema
+from database.models import (
+    ActorModel,
+    CountryModel,
+    GenreModel,
+    LanguageModel
+)
+from schemas.movies import (
+    MovieCreateBaseSchema,
+    MovieUpdateSchema,
+    MovieListSchema
+)
 
 
 def get_all_movies(db: Session, page: int, per_page: int) -> MovieListSchema:
@@ -40,32 +45,8 @@ def get_all_movies(db: Session, page: int, per_page: int) -> MovieListSchema:
         total_items=total_items,
     )
 
-# ---------------------------------------------------------------------------------
 
-# def check_data(
-#         db: Session,
-#         input_data: list[str],
-#         model: Type[Base]
-# ) -> list[Type[Base]]:
-#     results = []
-#
-#     for data in input_data:
-#         item = db.query(model).filter(model.name == data).first()
-#
-#         if not item:
-#             item = model(name=data)
-#             db.add(item)
-#             db.commit()
-#             db.refresh(item)
-#
-#         results.append(item)
-#
-#     return results
-
-
-
-def create_movie(movie_data: MovieCreateRequestSchema, db: Session) -> MovieModel:
-    """Creates new movie record with all related entities."""
+def create_movie(movie_data: MovieCreateBaseSchema, db: Session) -> MovieModel:
     country = db.query(CountryModel).filter(CountryModel.code == movie_data.country).first()
 
     if not country:
@@ -109,10 +90,7 @@ def get_movie_by_name_and_date(name: str, date: date, db: Session) -> MovieModel
     return db.query(MovieModel).filter(MovieModel.name == name, MovieModel.date == date).first()
 
 
-
-
-# ---------------------------------------------------------------------------------
-def update_movie(movie: MovieModel, movie_data: MovieUpdateRequestSchema, db: Session) -> MovieModel:
+def update_movie(movie: MovieModel, movie_data: MovieUpdateSchema, db: Session) -> MovieModel:
     update_data = movie_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(movie, field, value)
@@ -122,8 +100,7 @@ def update_movie(movie: MovieModel, movie_data: MovieUpdateRequestSchema, db: Se
 
     return movie
 
+
 def delete_movie(movie: MovieModel, db: Session) -> None:
     db.delete(movie)
     db.commit()
-
-
