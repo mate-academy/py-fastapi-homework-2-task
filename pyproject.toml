@@ -18,6 +18,9 @@ pytest-env = "^1.1.5"
 flake8 = "^7.1.1"
 psycopg2-binary = "^2.9.10"
 alembic = "^1.14.0"
+pydantic-extra-types = "^2.10.2"
+pycountry = "^24.6.1"
+ruff = "^0.9.2"
 
 
 [build-system]
