@@ -166,53 +166,6 @@ def edit_movie(movie: MovieUpdate, movie_id: int, db: Session = Depends(get_db))
     if not existing_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    # if movie.name:
-    #     if len(movie.name) > 255:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     existing_movie.name = movie.name
-    #
-    # if movie.date:
-    #     if movie.date > datetime.datetime.now().date() + datetime.timedelta(days=365):
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     existing_movie.date = movie.date
-    #
-    # if movie.score:
-    #     if not (0 <= movie.score <= 100):
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     existing_movie.score = movie.score
-    #
-    # if movie.overview:
-    #     existing_movie.overview = movie.overview
-    # if movie.status:
-    #     existing_movie.status = movie.status
-    #
-    # if movie.budget:
-    #     if movie.budget < 0:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     existing_movie.budget = movie.budget
-    #
-    # if movie.revenue:
-    #     if movie.revenue < 0:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     existing_movie.revenue = movie.revenue
-
-
-
     if movie.name:
         existing_movie.name = movie.name
 
@@ -233,15 +186,6 @@ def edit_movie(movie: MovieUpdate, movie_id: int, db: Session = Depends(get_db))
 
     if movie.revenue:
         existing_movie.revenue = movie.revenue
-
-
-    # existing_movie.name = movie.name
-    # existing_movie.date = movie.date
-    # existing_movie.score = movie.score
-    # existing_movie.overview = movie.overview
-    # existing_movie.status = movie.status
-    # existing_movie.budget = movie.budget
-    # existing_movie.revenue = movie.revenue
 
     db.commit()
     db.refresh(existing_movie)
