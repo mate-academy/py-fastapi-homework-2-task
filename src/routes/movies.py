@@ -79,7 +79,11 @@ def create_movie(
         .first()
     )
     if find_movie:
-        raise HTTPException(409, f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.")
+        raise HTTPException(
+            409,
+            f"A movie with the name '{movie.name}' "
+            f"and release date '{movie.date}' already exists."
+        )
     movie_genres = []
     for genre in movie.genres:
         movie_genre = (
@@ -217,6 +221,7 @@ def create_movie(
         revenue=new_movie.revenue,
     )
 
+
 @router.get("/movies/{movie_id}/")
 def read_movie(
         movie_id: int,
@@ -276,10 +281,11 @@ def delete_movie(
         "msg": "Movie has been deleted."
     }
 
+
 @router.patch(
     "/movies/{movie_id}/",
 )
-def update_movie(
+def update_movie( # noqa
         movie_id: int,
         movie: MovieUpdateSchema,
         db: Session = Depends(get_db)
