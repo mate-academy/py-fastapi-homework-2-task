@@ -90,7 +90,11 @@ def get_movie_by_name_and_date(name: str, date: date, db: Session) -> MovieModel
     return db.query(MovieModel).filter(MovieModel.name == name, MovieModel.date == date).first()
 
 
-def update_movie(movie: MovieModel, movie_data: MovieUpdateSchema, db: Session) -> MovieModel:
+def update_movie(
+        movie: MovieModel,
+        movie_data: MovieUpdateSchema,
+        db: Session
+) -> MovieModel:
     update_data = movie_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(movie, field, value)
