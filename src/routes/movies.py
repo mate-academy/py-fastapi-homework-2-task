@@ -158,7 +158,7 @@ def create_movie(
     )
     if not movie_country:
         db.add(
-            CountryModel(name=movie.country)
+            CountryModel(code=movie.country)
         )
         db.commit()
         movie_country = (
