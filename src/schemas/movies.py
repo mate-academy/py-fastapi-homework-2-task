@@ -87,12 +87,10 @@ class MovieDetailResponseSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = None
-    date: datetime.date | None = None
-    score: float | None = None
+    name: str | None = Field(None, max_length=255)
+    date: datetime.date | None = Field(None, le=datetime.date.today() + timedelta(days=365))
+    score: float | None = Field(None, ge=0, le=100)
     overview: str | None = None
     status: MovieStatusEnum | None = None
-    budget: float | None = None
-    revenue: float | None = None
-
-    model_config = {"from_attributes": True}
+    budget: float | None = Field(None, ge=0)
+    revenue: float | None = Field(None, ge=0)

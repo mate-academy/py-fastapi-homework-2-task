@@ -94,14 +94,22 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> None:
 
     delete_movie_from_db(movie, db)
 
+
 @router.patch("/movies/{movie_id}")
 def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: Session = Depends(get_db)) -> dict[str, str]:
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    movie = db.query(MovieModel).filter_by(id=movie_id).first()
 
     if not movie:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found."
+        )
 
     try:
         update_movie_in_db(movie, movie_data, db)
+        return {"detail": "Movie updated successfully."}
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input data.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
+        )
