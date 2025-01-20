@@ -15,29 +15,34 @@ def add_film(film: MovieCreateSchema, db: Session = Depends(get_db)):
 
 
 @router.get("/movies/", response_model=list[MovieReadSchema])
-def list_films(db: Session = Depends(get_db)):
-    return get_movies(db)
+def list_movies(db: Session = Depends(get_db)):
+    db_movie = get_movies(db)
+    if not db_movie:
+        raise HTTPException(status_code=404, detail="No movies found for the specified page.")
+    if db_movie:
+        raise HTTPException(status_code=200)
+    return db_movie
 
 
-@router.get("/movies/{film_id}", response_model=MovieReadSchema)
-def read_film(film_id: int, db: Session = Depends(get_db)):
-    db_film = get_movie(db, film_id)
-    if not db_film:
-        raise HTTPException(status_code=404, detail="Film not found")
-    return db_film
+@router.get("/movies/{movie_id}", response_model=MovieReadSchema)
+def read_movie(movie_id: int, db: Session = Depends(get_db)):
+    db_movie = get_movie(db, movie_id)
+    if not db_movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return db_movie
 
 
-@router.put("/movies/{film_id}", response_model=MovieReadSchema)
+@router.put("/movies/{movie_id}", response_model=MovieReadSchema)
 def edit_film(film_id: int, film: MovieUpdateSchema, db: Session = Depends(get_db)):
-    db_film = update_movie(db, film_id, film)
-    if not db_film:
-        raise HTTPException(status_code=404, detail="Film not found")
-    return db_film
+    db_movie = update_movie(db, film_id, film)
+    if not db_movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return db_movie
 
 
-@router.delete("/movies/{film_id}", response_model=MovieReadSchema)
-def remove_film(film_id: int, db: Session = Depends(get_db)):
-    db_film = delete_movie(db, film_id)
-    if not db_film:
+@router.delete("/movies/{movie_id}", response_model=MovieReadSchema)
+def remove_film(movie_id: int, db: Session = Depends(get_db)):
+    db_movie = delete_movie(db, movie_id)
+    if not db_movie:
         raise HTTPException(status_code=404, detail="Film not found")
-    return db_film
+    return db_movie
