@@ -69,6 +69,7 @@ class MovieResponseSchema(MovieCreateSchema):
     actors: list[ActorReadSchema]
     languages: list[LanguageReadSchema]
 
+
 class MovieDetailResponseSchema(BaseModel):
     id: int
     name: str

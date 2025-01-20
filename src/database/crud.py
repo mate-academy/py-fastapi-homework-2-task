@@ -20,6 +20,7 @@ def get_or_create(db, model, name_value):
         db.refresh(obj)
     return obj
 
+
 def create_new_movie(db: Session, movie: MovieCreateSchema):
     existing_movie = (
         db.query(MovieModel)
@@ -68,9 +69,11 @@ def create_new_movie(db: Session, movie: MovieCreateSchema):
 
     return new_movie
 
+
 def delete_movie_from_db(movie: MovieModel, db: Session) -> None:
     db.delete(movie)
     db.commit()
+
 
 def update_movie_in_db(movie: MovieModel, movie_data: MovieUpdateSchema, db: Session) -> MovieModel:
     update_data = movie_data.model_dump(exclude_unset=True)
