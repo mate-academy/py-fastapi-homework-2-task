@@ -13,7 +13,16 @@ from database.models import (
 
 from schemas.movies import MovieListResponse, MovieDetail, MovieCreate, MovieUpdate
 
-# from src.crud import create_country_by_code, create_instance_by_name, check_or_create_many_instances_by_name
+from crud import (
+    create_country_by_code,
+    create_instance_by_name,
+    check_or_create_many_instances_by_name,
+    get_movies_on_page,
+    get_movie_by_name_and_date,
+    get_movie_by_id,
+)
+
+from src.crud import create_new_movie
 
 router = APIRouter()
 
@@ -25,14 +34,7 @@ def get_movies(
     per_page: int = Query(10, ge=1, le=20),
 ) -> MovieListResponse:
 
-    movies = (
-        db.query(MovieModel)
-        .order_by(MovieModel.id.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-        .all()
-    )
-    print(f"print get_movies: {movies}")
+    movies = get_movies_on_page(page, per_page, MovieModel, db)
 
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
@@ -56,11 +58,8 @@ def get_movies(
 
 @router.post("/movies/", response_model=MovieDetail, status_code=201)
 def create_movie(movie: MovieCreate, db: Session = Depends(get_db)) -> MovieDetail:
-    db_movie = (
-        db.query(MovieModel)
-        .filter(MovieModel.name == movie.name)
-        .filter(MovieModel.date == movie.date)
-        .first()
+    db_movie = get_movie_by_name_and_date(
+        name=movie.name, date=movie.date, model=MovieModel, db=db
     )
 
     if db_movie:
@@ -81,55 +80,23 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)) -> MovieDeta
     languages = []
 
     if movie.languages:
-        # languages.extend(check_or_create_many_instances_by_name(movie.languages, LanguageModel, db))
-        for language_name in movie.languages:
-            language = (
-                db.query(LanguageModel)
-                .filter(LanguageModel.name == language_name)
-                .first()
-            )
-            if not language:
-                language = LanguageModel(name=language_name)
-                db.add(language)
-                db.commit()
-                db.refresh(language)
-            languages.append(language)
+        languages.extend(
+            check_or_create_many_instances_by_name(movie.languages, LanguageModel, db)
+        )
 
     if movie.actors:
-        # actors.extend(check_or_create_many_instances_by_name(movie.actors, ActorModel, db))
-        for actor_name in movie.actors:
-            actor = db.query(ActorModel).filter(ActorModel.name == actor_name).first()
-            if not actor:
-                # create_instance_by_name(name=actor_name, model=ActorModel)
-                actor = ActorModel(name=actor_name)
-                db.add(actor)
-                db.commit()
-                db.refresh(actor)
-            actors.append(actor)
+        actors.extend(
+            check_or_create_many_instances_by_name(movie.actors, ActorModel, db)
+        )
 
     if movie.genres:
-        # genres.extend(check_or_create_many_instances_by_name(movie.genres, GenreModel, db))
-        for genre_name in movie.genres:
-            genre = db.query(GenreModel).filter(GenreModel.name == genre_name).first()
-            if not genre:
-                genre = GenreModel(name=genre_name)
-                db.add(genre)
-                db.commit()
-                db.refresh(genre)
-            genres.append(genre)
+        genres.extend(
+            check_or_create_many_instances_by_name(movie.genres, GenreModel, db)
+        )
 
     if not country:
-        # country = create_country_by_code(code=movie.country, db=db)
-        country = CountryModel(code=movie.country)
-        db.add(country)
-        db.commit()
-        db.refresh(country)
+        country = create_country_by_code(code=movie.country, model=CountryModel, db=db)
 
-    print(f"Genres: {genres}")
-    print(f"Actors: {actors}")
-    print(f"Languages: {languages}")
-    print(f"Country: {country}")
-    print(f"Movie: {movie.model_dump()}")
     try:
         new_movie = MovieModel(
             **movie.model_dump(exclude={"country", "genres", "actors", "languages"}),
@@ -138,20 +105,16 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)) -> MovieDeta
             actors=actors,
             languages=languages,
         )
-        db.add(new_movie)
-        db.commit()
-        db.refresh(new_movie)
-        return new_movie
+        return create_new_movie(movie=new_movie, db=db)
+
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Invalid input data.")
-
-    # raise HTTPException(status_code=201, detail="Movie created successfully.")
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetail)
 def get_movie(movie_id: int, db: Session = Depends(get_db)) -> MovieDetail:
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
-    print(f"print get_movie: {movie}")
+    movie = get_movie_by_id(movie_id, MovieModel, db)
+
     if not movie:
         raise HTTPException(
             status_code=404, detail="Movie with the given ID was not found."
@@ -161,8 +124,8 @@ def get_movie(movie_id: int, db: Session = Depends(get_db)) -> MovieDetail:
 
 @router.delete("/movies/{movie_id}/", status_code=204)
 def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> None:
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
-    print(f"print delete_movie: {movie}")
+    movie = get_movie_by_id(movie_id, MovieModel, db)
+
     if not movie:
         raise HTTPException(
             status_code=404, detail="Movie with the given ID was not found."
@@ -172,9 +135,11 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> None:
 
 
 @router.patch("/movies/{movie_id}/", status_code=200)
-def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)) -> dict[str, str]:
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
-    print(f"print edit_movie: {movie} and {movie_id}")
+def edit_movie(
+    movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)
+) -> dict[str, str]:
+    movie = get_movie_by_id(movie_id, MovieModel, db)
+
     if not movie:
         raise HTTPException(
             status_code=404, detail="Movie with the given ID was not found."
@@ -189,58 +154,5 @@ def edit_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get
         db.refresh(movie)
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Invalid input data.")
-    # raise HTTPException(status_code=200, detail="Movie updated successfully.")
-    return {"detail": "Movie updated successfully."}
 
-    # db_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
-    # if not db_movie:
-    #     raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    #
-    # if movie.name:
-    #     if len(movie.name) > 255:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     db_movie.name = movie.name
-    #
-    # if movie.date:
-    #     if movie.date > datetime.datetime.now().date() + datetime.timedelta(days=365):
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     db_movie.date = movie.date
-    #
-    # if movie.score:
-    #     if not (0 <= movie.score <= 100):
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     db_movie.score = movie.score
-    #
-    # if movie.overview:
-    #     db_movie.overview = movie.overview
-    # if movie.status:
-    #     db_movie.status = movie.status
-    #
-    # if movie.budget:
-    #     if movie.budget < 0:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     db_movie.budget = movie.budget
-    #
-    # if movie.revenue:
-    #     if movie.revenue < 0:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Invalid input data."
-    #         )
-    #     db_movie.revenue = movie.revenue
-    #
-    # db.commit()
-    # db.refresh(db_movie)
-    # return {"detail": "Movie updated successfully.", "movie": db_movie}
+    return {"detail": "Movie updated successfully."}
