@@ -4,10 +4,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from tqdm import tqdm
 
-from config import get_settings
-from database import MovieModel, get_db_contextmanager
-from database.models import CountryModel, GenreModel, ActorModel, MoviesGenresModel, ActorsMoviesModel, LanguageModel, \
-    MoviesLanguagesModel
+from src.config import get_settings
+from src.database import MovieModel, get_db_contextmanager
+from src.database.models import (
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    MoviesGenresModel,
+    ActorsMoviesModel,
+    LanguageModel,
+    MoviesLanguagesModel,
+)
 
 
 class CSVDatabaseSeeder:
@@ -138,6 +145,7 @@ class CSVDatabaseSeeder:
         except Exception as e:
             print(f"Unexpected error: {e}")
             raise
+
 
 def main():
     settings = get_settings()
