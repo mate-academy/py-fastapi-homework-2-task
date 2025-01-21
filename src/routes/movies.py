@@ -1,15 +1,28 @@
-import datetime
 import math
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from database import get_db
-from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
-from schemas.movies import MoviesSchema, MovieSchema, MovieDetailSchema, GenreSchema, ActorSchema, LanguageSchema, \
-    CountrySchema, MovieCreateSchema, MovieUpdateSchema
+from database.models import (
+    MovieModel,
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel
+)
+from schemas.movies import (
+    MoviesSchema,
+    MovieSchema,
+    MovieDetailSchema,
+    GenreSchema,
+    ActorSchema,
+    LanguageSchema,
+    CountrySchema,
+    MovieCreateSchema,
+    MovieUpdateSchema
+)
 
 router = APIRouter()
 
