@@ -240,7 +240,7 @@ def read_movie(
         movie_id: int,
         db: Session = Depends(get_db)
 ) -> MovieDetailSchema:
-    movie = db.query(MovieModel).get(movie_id)
+    movie = db.get(MovieModel, movie_id)
     if not movie:
         raise HTTPException(404, "Movie with the given ID was not found.")
 
@@ -285,7 +285,7 @@ def delete_movie(
         movie_id: int,
         db: Session = Depends(get_db)
 ):
-    movie = db.query(MovieModel).get(movie_id)
+    movie = db.get(MovieModel, movie_id)
     if not movie:
         raise HTTPException(404, "Movie with the given ID was not found.")
     db.delete(movie)
@@ -303,7 +303,7 @@ def update_movie( # noqa
         movie: MovieUpdateSchema,
         db: Session = Depends(get_db)
 ):
-    need_movie = db.query(MovieModel).get(movie_id)
+    need_movie = db.get(MovieModel, movie_id)
     if not need_movie:
         raise HTTPException(404, "Movie with the given ID was not found.")
 
