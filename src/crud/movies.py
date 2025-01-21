@@ -10,7 +10,7 @@ from schemas.movies import MovieCreateRequestSchema, MovieUpdateRequestSchema
 def get_movies_with_pagination(offset: int, per_page: int, db: Session) -> tuple[list[MovieModel], int]:
     """Retrieves paginated movies from database by ID descending."""
     movies = db.query(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(per_page).all()
-    movies_count = db.query(MovieModel).count()
+    movies_count = db.query(MovieModel.id).count()
 
     return movies, movies_count
 
