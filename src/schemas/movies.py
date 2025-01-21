@@ -58,7 +58,6 @@ class LanguageSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-
 class MovieCreateSchema(BaseModel):
     name: str = Field(max_length=255)
     date: datetime.date = Field(le=datetime.date.today() + timedelta(days=365))
@@ -83,9 +82,8 @@ class MovieResponseSchema(MovieCreateSchema):
     languages: List[LanguageSchema]
 
 
-
 class MovieDetailSchema(MovieModelSchema):
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema

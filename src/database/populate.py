@@ -6,8 +6,15 @@ from tqdm import tqdm
 
 from config import get_settings
 from database import MovieModel, get_db_contextmanager
-from database.models import CountryModel, GenreModel, ActorModel, MoviesGenresModel, ActorsMoviesModel, LanguageModel, \
+from database.models import (
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    MoviesGenresModel,
+    ActorsMoviesModel,
+    LanguageModel,
     MoviesLanguagesModel
+)
 
 
 class CSVDatabaseSeeder:
@@ -132,12 +139,14 @@ class CSVDatabaseSeeder:
             self._db_session.execute(insert(MoviesLanguagesModel).values(movie_languages_data))
             self._db_session.commit()
 
+
         except SQLAlchemyError as e:
             print(f"An error occurred: {e}")
             raise
         except Exception as e:
             print(f"Unexpected error: {e}")
             raise
+
 
 def main():
     settings = get_settings()

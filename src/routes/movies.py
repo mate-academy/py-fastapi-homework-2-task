@@ -4,7 +4,13 @@ from starlette import status
 
 from database import get_db
 from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieListSchema, MovieCreateSchema, MovieDetailSchema, MovieUpdateSchema, MovieResponseSchema
+from schemas.movies import (
+    MovieListSchema,
+    MovieCreateSchema,
+    MovieDetailSchema,
+    MovieUpdateSchema,
+    MovieResponseSchema
+)
 
 router = APIRouter()
 
@@ -37,6 +43,7 @@ def get_list_movies(page: int = Query(default=1, ge=1),
         total_items=total_items,
     )
 
+
 @router.post("/movies/", response_model=MovieResponseSchema, status_code=status.HTTP_201_CREATED)
 def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> MovieResponseSchema:
     movie_check = db.query(MovieModel).filter(
@@ -61,7 +68,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
         for name in movie.genres
     ]
     for genre in genres:
-        db.add(genre)
+        if not db.query(GenreModel).filter(GenreModel.name == genre.name).first():
+            db.add(genre)
     db.commit()
 
     actors = [
@@ -69,7 +77,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
         for name in movie.actors
     ]
     for actor in actors:
-        db.add(actor)
+        if not db.query(ActorModel).filter(ActorModel.name == actor.name).first():
+            db.add(actor)
     db.commit()
 
     languages = [
@@ -77,7 +86,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
         for name in movie.languages
     ]
     for language in languages:
-        db.add(language)
+        if not db.query(LanguageModel).filter(LanguageModel.name == language.name).first():
+            db.add(language)
     db.commit()
 
     new_movie = MovieModel(
@@ -103,7 +113,7 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 def get_movie_by_id(movie_id: int, db: Session = Depends(get_db)) -> MovieDetailSchema:
-    movie = db.query(MovieModel).filter(MovieModel.id==movie_id).first()
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
@@ -113,7 +123,7 @@ def get_movie_by_id(movie_id: int, db: Session = Depends(get_db)) -> MovieDetail
 
 @router.delete("/movies/{movie_id}/", response_model=None)
 def delete_movie(movie_id: int, db: Session = Depends(get_db)):
-    movie = db.query(MovieModel).filter(MovieModel.id==movie_id).first()
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
