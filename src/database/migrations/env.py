@@ -2,7 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from database import models # noqa: F401
+from database import models  # noqa: F401
 from database.models import Base
 from database.session_postgresql import postgresql_engine
 
