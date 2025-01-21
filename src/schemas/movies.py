@@ -1,12 +1,11 @@
 import datetime
 from datetime import timedelta
-from typing import Annotated, Optional, List, Any
+from typing import Optional, List
 
-from fastapi import HTTPException
 
-from pydantic import BaseModel, model_validator, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from database.models import ActorModel, GenreModel, LanguageModel, MovieStatusEnum
+from database.models import MovieStatusEnum
 
 
 class MovieModelSchema(BaseModel):

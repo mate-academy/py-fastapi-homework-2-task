@@ -3,23 +3,37 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from database import get_db
-from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
+from database.models import (
+    MovieModel,
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel,
+)
 from schemas.movies import (
     MovieListSchema,
     MovieCreateSchema,
     MovieDetailSchema,
     MovieUpdateSchema,
-    MovieResponseSchema
+    MovieResponseSchema,
 )
 
 router = APIRouter()
 
 
 @router.get("/movies/", response_model=MovieListSchema)
-def get_list_movies(page: int = Query(default=1, ge=1),
-                    per_page: int = Query(default=10, ge=1, le=20),
-                    db: Session = Depends(get_db)) -> list[MovieListSchema]:
-    movies = (db.query(MovieModel).order_by(MovieModel.id.desc()).offset((page - 1) * per_page).limit(per_page).all())
+def get_list_movies(
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=10, ge=1, le=20),
+    db: Session = Depends(get_db),
+) -> list[MovieListSchema]:
+    movies = (
+        db.query(MovieModel)
+        .order_by(MovieModel.id.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
 
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
@@ -44,16 +58,21 @@ def get_list_movies(page: int = Query(default=1, ge=1),
     )
 
 
-@router.post("/movies/", response_model=MovieResponseSchema, status_code=status.HTTP_201_CREATED)
-def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> MovieResponseSchema:
-    movie_check = db.query(MovieModel).filter(
-        MovieModel.name == movie.name,
-        MovieModel.date == movie.date
-    ).count()
+@router.post(
+    "/movies/", response_model=MovieResponseSchema, status_code=status.HTTP_201_CREATED
+)
+def create_movie(
+    movie: MovieCreateSchema, db: Session = Depends(get_db)
+) -> MovieResponseSchema:
+    movie_check = (
+        db.query(MovieModel)
+        .filter(MovieModel.name == movie.name, MovieModel.date == movie.date)
+        .count()
+    )
     if movie_check > 0:
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
         )
 
     country = db.query(CountryModel).filter_by(code=movie.country).first()
@@ -64,7 +83,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
         db.refresh(country)
 
     genres = [
-        db.query(GenreModel).filter(GenreModel.name == name).first() or GenreModel(name=name)
+        db.query(GenreModel).filter(GenreModel.name == name).first()
+        or GenreModel(name=name)
         for name in movie.genres
     ]
     for genre in genres:
@@ -73,7 +93,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
     db.commit()
 
     actors = [
-        db.query(ActorModel).filter(ActorModel.name == name).first() or ActorModel(name=name)
+        db.query(ActorModel).filter(ActorModel.name == name).first()
+        or ActorModel(name=name)
         for name in movie.actors
     ]
     for actor in actors:
@@ -82,11 +103,16 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
     db.commit()
 
     languages = [
-        db.query(LanguageModel).filter(LanguageModel.name == name).first() or LanguageModel(name=name)
+        db.query(LanguageModel).filter(LanguageModel.name == name).first()
+        or LanguageModel(name=name)
         for name in movie.languages
     ]
     for language in languages:
-        if not db.query(LanguageModel).filter(LanguageModel.name == language.name).first():
+        if (
+            not db.query(LanguageModel)
+            .filter(LanguageModel.name == language.name)
+            .first()
+        ):
             db.add(language)
     db.commit()
 
@@ -116,7 +142,9 @@ def get_movie_by_id(movie_id: int, db: Session = Depends(get_db)) -> MovieDetail
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
 
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
 
     return MovieDetailSchema.model_validate(movie)
 
@@ -126,7 +154,9 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
 
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
 
     db.delete(movie)
     db.commit()
@@ -135,11 +165,15 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/movies/{movie_id}/")
-def update_movie(movie_id: int, new_movie: MovieUpdateSchema, db: Session = Depends(get_db)):
+def update_movie(
+    movie_id: int, new_movie: MovieUpdateSchema, db: Session = Depends(get_db)
+):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
 
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
 
     if new_movie.score is not None and (new_movie.score < 0 or new_movie.score > 100):
         raise HTTPException(status_code=400, detail="Score must be between 0 and 100.")
