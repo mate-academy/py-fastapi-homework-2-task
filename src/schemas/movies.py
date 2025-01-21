@@ -2,26 +2,31 @@ import datetime
 from pydantic import BaseModel
 from database.models import MovieStatusEnum
 
+
 class CountryResponseSchema(BaseModel):
     id: int
     code: str
     name: str | None
     model_config = {"from_attributes": True}
 
+
 class GenreResponseSchema(BaseModel):
     id: int
     name: str
     model_config = {"from_attributes": True}
+
 
 class ActorResponseSchema(BaseModel):
     id: int
     name: str
     model_config = {"from_attributes": True}
 
+
 class LanguageResponseSchema(BaseModel):
     id: int
     name: str
     model_config = {"from_attributes": True}
+
 
 class MovieListReadResponseSchema(BaseModel):
     id: int
@@ -31,12 +36,14 @@ class MovieListReadResponseSchema(BaseModel):
     overview: str
     model_config = {"from_attributes": True}
 
+
 class MovieListResponseSchema(BaseModel):
     movies: list[MovieListReadResponseSchema]
     prev_page: str | None
     next_page: str | None
     total_pages: int
     total_items: int
+
 
 class MovieDetailResponseSchema(BaseModel):
     id: int
@@ -53,6 +60,7 @@ class MovieDetailResponseSchema(BaseModel):
     languages: list[LanguageResponseSchema]
     model_config = {"from_attributes": True}
 
+
 class MovieCreateResponseSchema(BaseModel):
     name: str
     date: datetime.date
@@ -66,6 +74,7 @@ class MovieCreateResponseSchema(BaseModel):
     actors: list[str]
     languages: list[str]
     model_config = {"from_attributes": True}
+
 
 class MovieUpdateResponseSchema(BaseModel):
     name: str | None = None

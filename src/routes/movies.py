@@ -21,6 +21,7 @@ from schemas.movies import (
 
 router = APIRouter()
 
+
 @router.get("/movies/", response_model=MovieListResponseSchema)
 def get_movies(
     page: Annotated[int, Query(ge=1, description="The page number to fetch.")] = 1,
@@ -50,12 +51,14 @@ def get_movies(
         total_items=total_items,
     )
 
+
 @router.get("/movies/{movie_id}", response_model=MovieDetailResponseSchema)
 def get_movie_by_id(movie_id: int, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return movie
+
 
 @router.post("/movies/", response_model=MovieDetailResponseSchema, status_code=status.HTTP_201_CREATED)
 def create_movie(movie: MovieCreateResponseSchema, db: Session = Depends(get_db)):
@@ -116,6 +119,7 @@ def create_movie(movie: MovieCreateResponseSchema, db: Session = Depends(get_db)
     db.refresh(db_movie)
     return db_movie
 
+
 @router.delete("/movies/{movie_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_movie(movie_id: int, db: Session = Depends(get_db)):
     db_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
@@ -123,6 +127,7 @@ def remove_movie(movie_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     db.delete(db_movie)
     db.commit()
+
 
 @router.patch("/movies/{movie_id}")
 def edit_movie(movie_id: int, movie: MovieUpdateResponseSchema, db: Session = Depends(get_db)):
