@@ -1,14 +1,20 @@
 import os
 from pathlib import Path
 from typing import Any
+from dotenv import load_dotenv
+
 
 from pydantic_settings import BaseSettings
+
+load_dotenv()
 
 
 class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
-    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+    PATH_TO_MOVIES_CSV: str = str(
+        BASE_DIR / "database" / "seed_data" / "imdb_movies.csv"
+    )
 
 
 class Settings(BaseAppSettings):
@@ -20,13 +26,12 @@ class Settings(BaseAppSettings):
 
 
 class TestingSettings(BaseAppSettings):
-
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
-        object.__setattr__(self, 'PATH_TO_DB', ":memory:")
+        object.__setattr__(self, "PATH_TO_DB", ":memory:")
         object.__setattr__(
             self,
-            'PATH_TO_MOVIES_CSV',
-            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv")
+            "PATH_TO_MOVIES_CSV",
+            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv"),
         )
 
 
