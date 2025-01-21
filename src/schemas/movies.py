@@ -1,7 +1,24 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Optional, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
+
+
+class CountrySchema(BaseModel):
+    name: str
+
+
+class GenreSchema(BaseModel):
+    name: str
+
+
+class ActorSchema(BaseModel):
+    name: str
+
+
+class LanguageSchema(BaseModel):
+    name: str
+
 
 
 class MovieBaseSchema(BaseModel):
@@ -21,7 +38,22 @@ class MovieBaseSchema(BaseModel):
 
 
 class MovieCreateSchema(MovieBaseSchema):
-    pass
+    title: str = Field(max_length=255, description="Название фильма (не более 255 символов)")
+    release_date: date = Field(description="Дата выхода фильма")
+    score: int = Field(ge=0, le=100, description="Оценка (0-100)")
+    budget: int = Field(ge=0, description="Бюджет (не может быть отрицательным)")
+    revenue: int = Field(ge=0, description="Доход (не может быть отрицательным)")
+    country: CountrySchema
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
+
+    @validator("release_date")
+    def validate_date(cls, value):
+        max_date = date.today() + timedelta(days=365)
+        if value > max_date:
+            raise ValueError("Дата выхода не может превышать текущую дату более чем на 1 год.")
+        return value
 
 
 class MovieUpdateSchema(MovieBaseSchema):
@@ -29,11 +61,18 @@ class MovieUpdateSchema(MovieBaseSchema):
 
 
 class MovieReadSchema(MovieBaseSchema):
-    id: int
+    id: int = Field(ge=0)
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
 
     class Config:
         from_attributes = True
 
+    @validator("id")
+    def validate_id(cls, value):
+        if movie_id := value:
+            return movie_id
 
 class MovieDetailResponseSchema(BaseModel):
     id: int
