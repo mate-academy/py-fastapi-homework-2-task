@@ -139,7 +139,6 @@ class CSVDatabaseSeeder:
             self._db_session.execute(insert(MoviesLanguagesModel).values(movie_languages_data))
             self._db_session.commit()
 
-
         except SQLAlchemyError as e:
             print(f"An error occurred: {e}")
             raise
