@@ -3,7 +3,7 @@ import random
 import pytest
 
 from database import MovieModel
-from database.models import GenreModel, ActorModel, LanguageModel, CountryModel
+from database.models import ActorModel, CountryModel, GenreModel, LanguageModel
 
 
 def test_get_movies_empty_database(client):
