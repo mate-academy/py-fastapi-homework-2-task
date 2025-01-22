@@ -17,28 +17,28 @@ class BaseSchema(BaseModel):
     name: str
 
 
-class Country(BaseModel):
-    id: int
+class CountryResponseSchema(BaseSchema):
     code: str
-    name: str | None
+    name: Optional[str]
 
 
-class Genre(BaseSchema):
+class GenreResponseSchema(BaseSchema):
     pass
 
 
-class Actor(BaseSchema):
+class ActorResponseSchema(BaseSchema):
     pass
 
 
-class Language(BaseSchema):
+class LanguageResponseSchema(BaseSchema):
     pass
 
 
 class MovieBase(BaseModel):
     name: str = Field(max_length=255)
     date: datetime.date = Field(
-        le=datetime.date.today() + datetime.timedelta(days=365)
+        le=datetime.date.today() + datetime.timedelta(days=365),
+        description="The date must not be more than one year in the future."
     )
     score: float = Field(ge=0, le=100, description="float (0-100)")
     overview: str
@@ -46,14 +46,20 @@ class MovieBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieRead(MovieBase):
+class MovieBaseExtra(MovieBase):
+    status: MovieStatusEnum = Field(
+        description="string (Released | Post Production | In Production)"
+    )
+    budget: float = Field(ge=0, description="float (>= 0)")
+    revenue: float = Field(ge=0, description="float (>= 0)")
+
+
+class MovieReadResponseSchema(MovieBase):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class MovieList(BaseModel):
-    movies: List[MovieRead]
+class MovieListResponseSchema(BaseModel):
+    movies: List[MovieReadResponseSchema]
     prev_page: Optional[str] = None
     next_page: Optional[str] = None
     total_pages: int
@@ -62,12 +68,7 @@ class MovieList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieCreate(MovieBase):
-    status: MovieStatusEnum = Field(
-        description="string (Released | Post Production | In Production)"
-    )
-    budget: float = Field(ge=0 ,description="float (>= 0)")
-    revenue: float = Field(ge=0, description="float (>= 0)")
+class MovieCreateSchema(MovieBaseExtra):
     country: CountryAlpha2 | CountryAlpha3 = Field(
         description="string (ISO 3166-1 alpha-2 code)"
     )
@@ -78,30 +79,23 @@ class MovieCreate(MovieBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieDetail(MovieBase):
+class MovieDetailResponseSchema(MovieBaseExtra):
     id: int
-    status: MovieStatusEnum = Field(
-        description="string (Released | Post Production | In Production)"
-    )
-    budget: float = Field(ge=0 ,description="float (>= 0)")
-    revenue: float = Field(ge=0, description="float (>= 0)")
-    country: Country
-    genres: List[Genre]
-    actors: List[Actor]
-    languages: List[Language]
+    country: CountryResponseSchema
+    genres: List[GenreResponseSchema]
+    actors: List[ActorResponseSchema]
+    languages: List[LanguageResponseSchema]
 
 
-class MovieUpdate(BaseModel):
+class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[datetime.date] = Field(
-        None,
-        le=datetime.date.today() + datetime.timedelta(days=365)
+        None, le=datetime.date.today() + datetime.timedelta(days=365)
     )
     score: Optional[float] = Field(None, ge=0, le=100, description="float (0-100)")
     overview: Optional[str] = None
     status: MovieStatusEnum = Field(
-        None,
-        description="string (Released | Post Production | In Production)"
+        None, description="string (Released | Post Production | In Production)"
     )
-    budget: Optional[float] = Field(None, ge=0 ,description="float (>= 0)")
+    budget: Optional[float] = Field(None, ge=0, description="float (>= 0)")
     revenue: Optional[float] = Field(None, ge=0, description="float (>= 0)")

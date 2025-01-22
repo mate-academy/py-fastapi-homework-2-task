@@ -7,12 +7,12 @@ from sqlalchemy import desc
 from database import get_db
 from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
 
-from schemas.movies import MovieList, MovieCreate, MovieDetail, MovieUpdate
+from schemas.movies import MovieListResponseSchema, MovieCreateSchema, MovieDetailResponseSchema, MovieUpdateSchema
 
 router = APIRouter()
 
 
-@router.get("/movies/", response_model=MovieList)
+@router.get("/movies/", response_model=MovieListResponseSchema)
 def get_movies_list(
         page: int = Query(1, ge=1, description="Page number, must be >= 1"),
         per_page: int = Query(
@@ -40,7 +40,7 @@ def get_movies_list(
     next_page = (f"/theater/movies/?page={page + 1}"
                  f"&per_page={per_page}") if page < total_pages else None
 
-    return MovieList(
+    return MovieListResponseSchema(
         movies=movies,
         prev_page=prev_page,
         next_page=next_page,
@@ -49,8 +49,8 @@ def get_movies_list(
     )
 
 
-@router.post("/movies/", response_model=MovieCreate, status_code=201)
-def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
+@router.post("/movies/", response_model=MovieCreateSchema, status_code=201)
+def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
     if len(movie.name) > 255:
         raise HTTPException(status_code=400, detail="Name must not exceed 255 characters.")
     if movie.date > (date.today() + timedelta(days=365)):
@@ -117,7 +117,7 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_movie)
 
-    return MovieCreate(
+    return MovieCreateSchema(
         name=new_movie.name,
         date=new_movie.date,
         score=new_movie.score,
@@ -132,7 +132,7 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/movies/{movie_id}/", response_model=MovieDetail)
+@router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
 def get_movie_details(movie_id: int, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     if not movie:
@@ -157,7 +157,7 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/movies/{movie_id}/", status_code=200)
-def update_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)):
+def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: Session = Depends(get_db)):
     movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     if not movie:
         raise HTTPException(
