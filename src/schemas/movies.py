@@ -20,7 +20,6 @@ class LanguageSchema(BaseModel):
     name: str
 
 
-
 class MovieBaseSchema(BaseModel):
     id: int
     name: str
@@ -57,7 +56,9 @@ class MovieCreateSchema(MovieBaseSchema):
 
 
 class MovieUpdateSchema(MovieBaseSchema):
-    pass
+    score: int = Field(ge=0, le=100, description="Оценка (0-100)")
+    budget: int = Field(ge=0, description="Бюджет (не может быть отрицательным)")
+    revenue: int = Field(ge=0, description="Доход (не может быть отрицательным)")
 
 
 class MovieReadSchema(MovieBaseSchema):
@@ -73,6 +74,7 @@ class MovieReadSchema(MovieBaseSchema):
     def validate_id(cls, value):
         if movie_id := value:
             return movie_id
+
 
 class MovieDetailResponseSchema(BaseModel):
     id: int
