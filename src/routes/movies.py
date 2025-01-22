@@ -26,13 +26,12 @@ def add_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400)
     return create_movie(db, movie)
 
-@router.get("/movies/", response_model=list[MovieReadSchema])
+
+@router.get("/movies/", response_model=list[MovieReadSchema], status_code=200)
 def list_movies(db: Session = Depends(get_db)):
     db_movie = get_movies(db)
     if not db_movie:
         raise HTTPException(status_code=404, detail="No movies found for the specified page.")
-    if db_movie:
-        raise HTTPException(status_code=200)
     return db_movie
 
 
@@ -44,17 +43,19 @@ def read_movie(movie_id: int, db: Session = Depends(get_db)):
     return db_movie
 
 
-@router.put("/movies/{movie_id}", response_model=MovieReadSchema)
+@router.put("/movies/{movie_id}", response_model=MovieReadSchema, status_code=200)
 def edit_movie(movie_id: int, movie: MovieUpdateSchema, db: Session = Depends(get_db)):
     db_movie = update_movie(db, movie_id, movie)
     if not db_movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    if db_movie is None:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     return db_movie
 
 
-@router.delete("/movies/{movie_id}", response_model=MovieReadSchema)
+@router.delete("/movies/{movie_id}", response_model=MovieReadSchema, status_code=204)
 def remove_movie(movie_id: int, db: Session = Depends(get_db)):
     db_movie = delete_movie(db, movie_id)
     if not db_movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return db_movie
