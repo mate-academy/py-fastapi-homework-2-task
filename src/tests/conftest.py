@@ -2,10 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from config import get_settings
-from database import (
-    reset_database,
-    get_db_contextmanager,
-)
+from database import get_db_contextmanager, reset_database
 from database.populate import CSVDatabaseSeeder
 from main import app
 
