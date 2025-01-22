@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 
 def create_movie(db: Session, movie: MovieCreateSchema):
-    db_movie = MovieModel(**movie.dict())
     db_movie = (
         db.query(MovieModel)
         .filter(MovieModel.name == movie.name, MovieModel.date == movie.date)
@@ -17,8 +16,6 @@ def create_movie(db: Session, movie: MovieCreateSchema):
             status_code=409,
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
-    if db_movie is None:
-        raise HTTPException(status_code=400)
     db.add(db_movie)
     db.commit()
     db.refresh(db_movie)
@@ -49,8 +46,8 @@ def get_movies(
         "movies": movies,
         "prev_page": prev_page,
         "next_page": next_page,
-        "total_pages": (total_items + per_page - 1) // per_page,
         "total_items": total_items,
+        "total_pages": total_items // per_page + (total_items % per_page > 0)
     }
 
 
@@ -71,7 +68,7 @@ def update_movie(db: Session, movie_id: int, movie: MovieUpdateSchema):
 def delete_movie(db: Session, movie_id: int):
     db_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     if not db_movie:
-        return None
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     db.delete(db_movie)
     db.commit()
     return db_movie

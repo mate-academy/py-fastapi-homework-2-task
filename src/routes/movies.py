@@ -33,9 +33,7 @@ def edit_movie(movie_id: int, movie: MovieUpdateSchema, db: Session = Depends(ge
     return db_movie
 
 
-@router.delete("/movies/{movie_id}", response_model=MovieReadSchema, status_code=204)
+@router.delete("/movies/{movie_id}", response_model=MovieReadSchema)
 def remove_movie(movie_id: int, db: Session = Depends(get_db)):
     db_movie = delete_movie(db, movie_id)
-    if not db_movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return db_movie

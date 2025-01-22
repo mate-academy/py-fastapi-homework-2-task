@@ -21,26 +21,21 @@ class LanguageSchema(BaseModel):
 
 
 class MovieBaseSchema(BaseModel):
-    name: str
+    name: str = Field(max_length=255, description="Название фильма (не более 255 символов)")
     date: datetime.date
-    score: Optional[float]
+    score: Optional[float] = Field(ge=0, le=100, description="Оценка (0-100)")
     genre: Optional[str]
     overview: Optional[str]
     crew: Optional[str]
     orig_title: Optional[str]
     status: Optional[str]
     orig_lang: Optional[str]
-    budget: Optional[int]
-    revenue: Optional[float]
+    budget: Optional[int] = Field(ge=0, description="Бюджет (не может быть отрицательным)")
+    revenue: Optional[float] = Field(ge=0, description="Доход (не может быть отрицательным)")
     country: Optional[str]
 
 
-class MovieCreateSchema(BaseModel):
-    title: str = Field(max_length=255, description="Название фильма (не более 255 символов)")
-    release_date: date = Field(description="Дата выхода фильма")
-    score: int = Field(ge=0, le=100, description="Оценка (0-100)")
-    budget: int = Field(ge=0, description="Бюджет (не может быть отрицательным)")
-    revenue: int = Field(ge=0, description="Доход (не может быть отрицательным)")
+class MovieCreateSchema(MovieBaseSchema):
     country: CountrySchema
     genres: List[GenreSchema]
     actors: List[ActorSchema]
@@ -54,10 +49,8 @@ class MovieCreateSchema(BaseModel):
         return value
 
 
-class MovieUpdateSchema(BaseModel):
-    score: int = Field(ge=0, le=100, description="Оценка (0-100)")
-    budget: int = Field(ge=0, description="Бюджет (не может быть отрицательным)")
-    revenue: int = Field(ge=0, description="Доход (не может быть отрицательным)")
+class MovieUpdateSchema(MovieBaseSchema):
+    pass
 
 
 class MovieReadSchema(MovieBaseSchema):
@@ -68,30 +61,3 @@ class MovieReadSchema(MovieBaseSchema):
 
     class Config:
         from_attributes = True
-
-
-class MovieDetailResponseSchema(BaseModel):
-    id: int
-    name: str
-    date: datetime.date
-    score: Optional[float]
-    genre: Optional[str]
-    overview: Optional[str]
-    crew: Optional[str]
-    orig_title: Optional[str]
-    status: Optional[str]
-    orig_lang: Optional[str]
-    budget: Optional[int]
-    revenue: Optional[float]
-    country: Optional[str]
-
-    class Config:
-        from_attributes: True
-
-
-class MovieListResponseSchema(BaseModel):
-    movies: List[MovieDetailResponseSchema]
-    prev_page: Optional[str]
-    next_page: Optional[str]
-    total_pages: int
-    total_items: int
