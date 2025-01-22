@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from database import get_db
 from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
 
-from schemas.movies import MovieList, MovieCreate, MovieDetail
+from schemas.movies import MovieList, MovieCreate, MovieDetail, MovieUpdate
 
 router = APIRouter()
 
@@ -154,3 +154,25 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)):
     db.delete(movie)
     db.commit()
     return None
+
+
+@router.patch("/movies/{movie_id}/", status_code=200)
+def update_movie(movie_id: int, movie_data: MovieUpdate, db: Session = Depends(get_db)):
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    movie.name = movie_data.name if movie_data.name else movie.name
+    movie.date = movie_data.date if movie_data.date else movie.date
+    movie.score = movie_data.score if movie_data.score else movie.score
+    movie.overview = movie_data.overview if movie_data.overview else movie.overview
+    movie.status = movie_data.status if movie_data.status else movie.status
+    movie.budget = movie_data.budget if movie_data.budget else movie.budget
+    movie.revenue = movie_data.revenue if movie_data.revenue else movie.revenue
+
+    db.commit()
+
+    return {"detail": "Movie updated successfully."}

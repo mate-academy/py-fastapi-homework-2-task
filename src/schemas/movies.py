@@ -89,3 +89,19 @@ class MovieDetail(MovieBase):
     genres: List[Genre]
     actors: List[Actor]
     languages: List[Language]
+
+
+class MovieUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=255)
+    date: Optional[datetime.date] = Field(
+        None,
+        le=datetime.date.today() + datetime.timedelta(days=365)
+    )
+    score: Optional[float] = Field(None, ge=0, le=100, description="float (0-100)")
+    overview: Optional[str] = None
+    status: MovieStatusEnum = Field(
+        None,
+        description="string (Released | Post Production | In Production)"
+    )
+    budget: Optional[float] = Field(None, ge=0 ,description="float (>= 0)")
+    revenue: Optional[float] = Field(None, ge=0, description="float (>= 0)")
