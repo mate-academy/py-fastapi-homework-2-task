@@ -4,9 +4,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MoviesBase, MovieBase, MovieDetailSchema, MovieCreateSchema, CountryBase, GenreBase, \
-    ActorBase, LanguageBase, MovieUpdateSchema
+from database.models import (MovieModel,
+                             CountryModel,
+                             GenreModel,
+                             ActorModel,
+                             LanguageModel)
+from schemas.movies import (MoviesBase,
+                            MovieBase,
+                            MovieDetailSchema,
+                            MovieCreateSchema,
+                            CountryBase,
+                            GenreBase,
+                            ActorBase,
+                            LanguageBase,
+                            MovieUpdateSchema)
 
 router = APIRouter()
 
@@ -196,7 +207,7 @@ def update_movie(movie_id: int, movie: MovieUpdateSchema, db: Session = Depends(
     if movie.country is not None:
         country = db.query(CountryModel).filter(CountryModel.name == movie.country).first()
         if not country:
-            country = CountryModel(name=movie.country, code="default_code")  # Set a default code or generate one
+            country = CountryModel(name=movie.country)
             db.add(country)
             db.commit()
             db.refresh(country)
@@ -254,7 +265,9 @@ def update_movie(movie_id: int, movie: MovieUpdateSchema, db: Session = Depends(
         status=existing_movie.status,
         budget=existing_movie.budget,
         revenue=existing_movie.revenue,
-        countries=[CountryBase(id=existing_movie.country.id, code=existing_movie.country.code, name=existing_movie.country.name)],
+        countries=[CountryBase(id=existing_movie.country.id,
+                               code=existing_movie.country.code,
+                               name=existing_movie.country.name)],
         genres=[GenreBase(id=genre.id, name=genre.name) for genre in existing_movie.genres],
         actors=[ActorBase(id=actor.id, name=actor.name) for actor in existing_movie.actors],
         languages=[LanguageBase(id=language.id, name=language.name) for language in existing_movie.languages],
