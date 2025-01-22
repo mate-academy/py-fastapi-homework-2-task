@@ -36,18 +36,18 @@ class LanguageBase(BaseModel):
 
 class CountryBase(BaseModel):
     id: int
-    name: str = Field(min_length=1, max_length=255)
-    code: str = Field(default=None, max_length=2)
+    name: str = Field(default=None, max_length=255)
+    code: str = Field(max_length=2)
 
 
-class MovieCreateSchema(MovieBase):
+class MovieCreateSchema(BaseModel):
     name: str
     date: datetime.date
-    score: float = Field(ge=0, le=100)
+    score: float
     overview: str
     status: str
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
+    budget: float
+    revenue: float
     country: str
     genres: list[str]
     actors: list[str]
@@ -55,8 +55,8 @@ class MovieCreateSchema(MovieBase):
 
     @field_validator("date")
     def validate(cls, value: str | datetime.date):
-        if value < datetime.date.today() + datetime.timedelta(days=365):
-            raise ValueError("Date must be at least one year in future")
+        if value > datetime.date.today() + datetime.timedelta(days=365):
+            raise ValueError("The date must not be more than one year in the future.")
         return value
 
 
@@ -71,14 +71,14 @@ class MovieDetailSchema(MovieBase):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str
-    date: datetime.date
-    score: float = Field(ge=0, le=100)
-    overview: str
-    status: str
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
-    countries: list[str]
-    genres: list[str]
-    actors: list[str]
-    languages: list[str]
+    name: str | None = Field(max_length=255)
+    date: datetime.date | None
+    score: float | None = Field(ge=0, le=100)
+    overview: str | None
+    status: str | None
+    budget: float | None = Field(ge=0)
+    revenue: float | None = Field(ge=0)
+    country: str | None
+    genres: list[str] | None
+    actors: list[str] | None
+    languages: list[str] | None
