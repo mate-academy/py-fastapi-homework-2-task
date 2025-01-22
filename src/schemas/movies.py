@@ -2,6 +2,8 @@ import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from database.models import MovieStatusEnum
+
 
 class MovieBase(BaseModel):
     id: int
@@ -36,7 +38,7 @@ class LanguageBase(BaseModel):
 
 class CountryBase(BaseModel):
     id: int
-    name: str = Field(default=None, max_length=255)
+    name: str | None = None
     code: str = Field(max_length=2)
 
 
@@ -64,21 +66,17 @@ class MovieDetailSchema(MovieBase):
     status: str
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    countries: list[CountryBase]
+    country: CountryBase
     genres: list[GenreBase]
     actors: list[ActorBase]
     languages: list[LanguageBase]
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = Field(max_length=255)
-    date: datetime.date | None
-    score: float | None = Field(ge=0, le=100)
-    overview: str | None
-    status: str | None
-    budget: float | None = Field(ge=0)
-    revenue: float | None = Field(ge=0)
-    country: str | None
-    genres: list[str] | None
-    actors: list[str] | None
-    languages: list[str] | None
+    name: str | None = Field(max_length=255, default=None)
+    date: datetime.date = None
+    score: float = Field(ge=0, le=100, default=None)
+    overview: str = None
+    status: MovieStatusEnum = None
+    budget: float = Field(ge=0, default=None)
+    revenue: float = Field(ge=0, default=None)
