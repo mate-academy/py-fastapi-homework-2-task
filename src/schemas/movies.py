@@ -94,7 +94,7 @@ class MovieUpdateSchema(BaseModel):
     )
     score: Optional[float] = Field(None, ge=0, le=100, description="float (0-100)")
     overview: Optional[str] = None
-    status: MovieStatusEnum = Field(
+    status: Optional[MovieStatusEnum] = Field(
         None, description="string (Released | Post Production | In Production)"
     )
     budget: Optional[float] = Field(None, ge=0, description="float (>= 0)")

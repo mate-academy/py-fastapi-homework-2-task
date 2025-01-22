@@ -118,6 +118,7 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
     db.refresh(new_movie)
 
     return MovieCreateSchema(
+        id=new_movie.id,
         name=new_movie.name,
         date=new_movie.date,
         score=new_movie.score,
