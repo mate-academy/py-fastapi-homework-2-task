@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from database import get_db
 from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel
 
-from schemas.movies import MovieList, MovieCreate
+from schemas.movies import MovieList, MovieCreate, MovieDetail
 
 router = APIRouter()
 
@@ -130,3 +130,14 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
         actors=[actor.name for actor in new_movie.actors],
         languages=[language.name for language in new_movie.languages],
     )
+
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetail)
+def get_movie_details(movie_id: int, db: Session = Depends(get_db)):
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+    return movie

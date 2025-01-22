@@ -12,10 +12,35 @@ class MovieStatusEnum(str, Enum):
     IN_PRODUCTION = "In Production"
 
 
-class MovieBase(BaseModel):
+class BaseSchema(BaseModel):
+    id: int
     name: str
-    date: datetime.date
-    score: float
+
+
+class Country(BaseModel):
+    id: int
+    code: str
+    name: str | None
+
+
+class Genre(BaseSchema):
+    pass
+
+
+class Actor(BaseSchema):
+    pass
+
+
+class Language(BaseSchema):
+    pass
+
+
+class MovieBase(BaseModel):
+    name: str = Field(max_length=255)
+    date: datetime.date = Field(
+        le=datetime.date.today() + datetime.timedelta(days=365)
+    )
+    score: float = Field(ge=0, le=100, description="float (0-100)")
     overview: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -37,13 +62,7 @@ class MovieList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieCreate(BaseModel):
-    name: str = Field(max_length=255)
-    date: datetime.date = Field(
-        le=datetime.date.today() + datetime.timedelta(days=365)
-    )
-    score: float = Field(ge=0, le=100, description="float (0-100)")
-    overview: str
+class MovieCreate(MovieBase):
     status: MovieStatusEnum = Field(
         description="string (Released | Post Production | In Production)"
     )
@@ -57,3 +76,16 @@ class MovieCreate(BaseModel):
     languages: List[str]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MovieDetail(MovieBase):
+    id: int
+    status: MovieStatusEnum = Field(
+        description="string (Released | Post Production | In Production)"
+    )
+    budget: float = Field(ge=0 ,description="float (>= 0)")
+    revenue: float = Field(ge=0, description="float (>= 0)")
+    country: Country
+    genres: List[Genre]
+    actors: List[Actor]
+    languages: List[Language]
