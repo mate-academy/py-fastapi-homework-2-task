@@ -21,7 +21,6 @@ class LanguageSchema(BaseModel):
 
 
 class MovieBaseSchema(BaseModel):
-    id: int
     name: str
     date: datetime.date
     score: Optional[float]
@@ -36,7 +35,7 @@ class MovieBaseSchema(BaseModel):
     country: Optional[str]
 
 
-class MovieCreateSchema(MovieBaseSchema):
+class MovieCreateSchema(BaseModel):
     title: str = Field(max_length=255, description="Название фильма (не более 255 символов)")
     release_date: date = Field(description="Дата выхода фильма")
     score: int = Field(ge=0, le=100, description="Оценка (0-100)")
@@ -55,7 +54,7 @@ class MovieCreateSchema(MovieBaseSchema):
         return value
 
 
-class MovieUpdateSchema(MovieBaseSchema):
+class MovieUpdateSchema(BaseModel):
     score: int = Field(ge=0, le=100, description="Оценка (0-100)")
     budget: int = Field(ge=0, description="Бюджет (не может быть отрицательным)")
     revenue: int = Field(ge=0, description="Доход (не может быть отрицательным)")
@@ -69,11 +68,6 @@ class MovieReadSchema(MovieBaseSchema):
 
     class Config:
         from_attributes = True
-
-    @validator("id")
-    def validate_id(cls, value):
-        if movie_id := value:
-            return movie_id
 
 
 class MovieDetailResponseSchema(BaseModel):
