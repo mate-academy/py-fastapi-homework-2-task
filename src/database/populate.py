@@ -6,8 +6,10 @@ from tqdm import tqdm
 
 from config import get_settings
 from database import MovieModel, get_db_contextmanager
-from database.models import CountryModel, GenreModel, ActorModel, MoviesGenresModel, ActorsMoviesModel, LanguageModel, \
-    MoviesLanguagesModel
+from database.models import (
+    CountryModel, GenreModel, ActorModel, MoviesGenresModel,
+    ActorsMoviesModel, LanguageModel, MoviesLanguagesModel
+)
 
 
 class CSVDatabaseSeeder:
@@ -138,6 +140,7 @@ class CSVDatabaseSeeder:
         except Exception as e:
             print(f"Unexpected error: {e}")
             raise
+
 
 def main():
     settings = get_settings()
