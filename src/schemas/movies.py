@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 from datetime import date
 
@@ -38,8 +40,8 @@ class Movie(BaseModel):
 
 class MoviesList(BaseModel):
     movies: list[Movie]
-    prev_page: str | None
-    next_page: str | None
+    prev_page: Optional[str] = None
+    next_page: Optional[str] = None
     total_pages: int
     total_items: int
 
@@ -74,10 +76,10 @@ class MovieCreate(BaseModel):
 
 
 class MovieUpdate(BaseModel):
-    name: str = None
-    date: date = None
-    score: float = None
-    overview: str = None
-    status: MovieStatusEnum = None
-    budget: float = None
-    revenue: float = None
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None

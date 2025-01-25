@@ -35,7 +35,14 @@ def get_movies(
     next_page = (f"/theater/movies/?page={min(total_pages, page + 1)}"
                  f"&per_page={per_page}") if page < total_pages else None
 
-    movies_list = [Movie.model_validate(movie) for movie in movies]
+    movies_list = []
+    for movie in movies:
+        try:
+            validated_movie = Movie.model_validate(movie)
+            movies_list.append(validated_movie)
+        except AttributeError as e:
+            raise HTTPException(status_code=500, detail=f"Error validating movie: {e}")
+
     result = MoviesList(
         movies=movies_list,
         prev_page=prev_page,
@@ -57,11 +64,13 @@ def get_movie_details(movie_id: int, db: Session = Depends(get_db)):
 
 @router.post("/movies/", response_model=MovieDetail, status_code=status.HTTP_201_CREATED)
 def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
-    if len(movie.name) > 255 or (
-            movie.date > date.today() + timedelta(days=365)
-    ) or (
-            not (0 <= movie.score <= 100)
-    ) or movie.budget < 0 or movie.revenue < 0:
+    if (
+            len(movie.name) > 255
+            or movie.date > date.today() + timedelta(days=365)
+            or not (0 <= movie.score <= 100)
+            or movie.budget < 0
+            or movie.revenue < 0
+    ):
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     existing_movie = db.query(MovieModel).filter(
@@ -110,7 +119,7 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
             db.refresh(language)
         languages.append(language)
 
-    new_movie_data = movie.model_dump(exclude={"country", "genres", "actors", "languages"})
+    new_movie_data = movie.dict(exclude={"country", "genres", "actors", "languages"})
     new_movie = MovieModel(country=country, **new_movie_data)
 
     db.add(new_movie)
@@ -130,26 +139,26 @@ def update_film(movie_id: int, movie: MovieUpdate, db: Session = Depends(get_db)
     db_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     if not db_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    if not (0 <= movie.score <= 100) or (
-            movie.budget is not None and movie.budget < 0
-    ) or (
-            movie.revenue is not None and movie.revenue < 0
+    if (
+            not (0 <= movie.score <= 100)
+            or (movie.budget is not None and movie.budget < 0)
+            or (movie.revenue is not None and movie.revenue < 0)
     ):
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
-    if movie.name:
+    if movie.name is not None:
         db_movie.name = movie.name
-    if movie.date:
+    if movie.date is not None:
         db_movie.date = movie.date
-    if movie.score:
+    if movie.score is not None:
         db_movie.score = movie.score
-    if movie.overview:
+    if movie.overview is not None:
         db_movie.overview = movie.overview
-    if movie.status:
+    if movie.status is not None:
         db_movie.status = movie.status
-    if movie.budget:
+    if movie.budget is not None:
         db_movie.budget = movie.budget
-    if movie.revenue:
+    if movie.revenue is not None:
         db_movie.revenue = movie.revenue
     db.commit()
     db.refresh(db_movie)
