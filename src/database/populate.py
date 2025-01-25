@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 from sqlalchemy import insert
 from sqlalchemy.orm import Session
@@ -6,8 +8,17 @@ from tqdm import tqdm
 
 from config import get_settings
 from database import MovieModel, get_db_contextmanager
-from database.models import CountryModel, GenreModel, ActorModel, MoviesGenresModel, ActorsMoviesModel, LanguageModel, \
-    MoviesLanguagesModel
+from database.models import (
+    CountryModel, GenreModel, ActorModel, MoviesGenresModel,
+    ActorsMoviesModel, LanguageModel, MoviesLanguagesModel
+)
+
+
+logging.basicConfig(
+    filename="app.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class CSVDatabaseSeeder:
@@ -133,11 +144,12 @@ class CSVDatabaseSeeder:
             self._db_session.commit()
 
         except SQLAlchemyError as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An SQLAlchemy error occurred: {e}")
             raise
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logging.error(f"Unexpected error: {e}")
             raise
+
 
 def main():
     settings = get_settings()
