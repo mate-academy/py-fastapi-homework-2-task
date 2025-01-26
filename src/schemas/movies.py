@@ -42,7 +42,7 @@ class MovieUpdate(BaseModel):
     date: Optional[datetime.date] = None
     score: Optional[float] = None
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = None
     revenue: Optional[float] = None
 
