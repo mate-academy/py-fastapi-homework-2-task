@@ -1,4 +1,5 @@
 from math import ceil
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -128,14 +129,13 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
         revenue=movie.revenue,
         country_id=country.id,
     )
-    db.add(db_movie)
-    db.commit()
-    db.refresh(db_movie)
 
     db_movie.genres = genres
     db_movie.actors = actors
     db_movie.languages = languages
+    db.add(db_movie)
     db.commit()
+    db.refresh(db_movie)
 
     return db_movie
 

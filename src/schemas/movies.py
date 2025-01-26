@@ -67,7 +67,7 @@ class MovieRead(BaseModel):
     date: datetime.date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountryRead
