@@ -8,7 +8,7 @@ from database.models import MovieStatusEnum
 
 class MovieBase(BaseModel):
     name: str
-    data: date
+    date: date
     score: float
     overview: str
     status: str
@@ -37,13 +37,13 @@ class MovieCreate(BaseModel):
 
 
 class MovieUpdate(BaseModel):
-    name: str = None
-    date: str = None
-    score: float = None
-    overview: str = None
-    status: str = None
-    budget: float = None
-    revenue: float = None
+    name: str
+    date: str
+    score: float
+    overview: str
+    status: str
+    budget: float
+    revenue: float
 
 
 class MovieListPaginated(MovieBase):

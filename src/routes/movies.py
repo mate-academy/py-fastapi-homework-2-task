@@ -135,7 +135,7 @@ def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
 @router.patch("movies/{movie_id}")
 def patch_movie(movie_id, movie: MovieUpdate, db: Session = Depends(get_db)):
     db_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
-    if not movie:
+    if not db_movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 
     if (
@@ -173,5 +173,6 @@ def delete_movie(movie_id, db: Session = Depends(get_db)):
 
     if not db_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+
     db.delete(db_movie)
     db.commit()
