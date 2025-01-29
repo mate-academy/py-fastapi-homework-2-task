@@ -67,38 +67,18 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
 
-    country = db.query(CountryModel).filter_by(code=movie.country).first()
-    if not country:
-        country = CountryModel(code=movie.country)
-        db.add(country)
-        db.flush()
-
-    genres = []
-    for genre_name in movie.genres:
-        genre = db.query(GenreModel).filter_by(name=genre_name).first()
-        if not genre:
-            genre = GenreModel(name=genre_name)
-            db.add(genre)
+    def get_or_create(model, db, **kwargs):
+        instance = db.query(model).filter_by(**kwargs).first()
+        if not instance:
+            instance = model(**kwargs)
+            db.add(instance)
             db.flush()
-        genres.append(genre)
+        return instance
 
-    actors = []
-    for actor_name in movie.actors:
-        actor = db.query(ActorModel).filter_by(name=actor_name).first()
-        if not actor:
-            actor = ActorModel(name=actor_name)
-            db.add(actor)
-            db.flush()
-        actors.append(actor)
-
-    languages = []
-    for language_name in movie.languages:
-        language = db.query(LanguageModel).filter_by(name=language_name).first()
-        if not language:
-            language = LanguageModel(name=language_name)
-            db.add(language)
-            db.flush()
-        languages.append(language)
+    country = get_or_create(CountryModel, db, code=movie.country)
+    genres = [get_or_create(GenreModel, db, name=genre_name) for genre_name in movie.genres]
+    actors = [get_or_create(ActorModel, db, name=actor_name) for actor_name in movie.actors]
+    languages = [get_or_create(LanguageModel, db, name=language_name) for language_name in movie.languages]
 
     new_movie = MovieModel(
         name=movie.name,
