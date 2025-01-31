@@ -47,7 +47,6 @@ class MovieDetailSchema(BaseModel):
     budget: float
     revenue: float
 
-    # country_id: int
     country: CountrySchema
     genres: list[GenreSchema]
     actors: list[ActorSchema]
