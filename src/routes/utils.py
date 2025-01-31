@@ -10,7 +10,7 @@ from database.models import MovieModel, Base
 
 def extract(field: list[str], model: Type[Base], db: Session) -> list[Base]:
     """
-    filed: list of names, model: Model of instances with name
+    field: list of names, model: Model of instances with name
     extract all names from field: add | create in model & add it to list of model instances
     Returns: list of model instances
     """
@@ -33,7 +33,7 @@ def extract(field: list[str], model: Type[Base], db: Session) -> list[Base]:
     return instances
 
 
-def get_or_404(id: int, model: Type[MovieModel], db: Session):
+def get_or_404(id: int, model: Type[MovieModel], db: Session) -> Type[MovieModel]:
     """ get instance by id or 404"""
     db_movie = db.query(model).filter(model.id == id).first()
     if not db_movie:

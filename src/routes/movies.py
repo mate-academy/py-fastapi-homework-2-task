@@ -73,7 +73,6 @@ def update_movie(movie_id: int, movie_update: MovieUpdateSchema, db: Session = D
 
     # for all schema fields: update model fields only if value is not none
     for field_name, field_value in movie_update.model_dump(exclude_unset=True).items():
-        print(f"Field {field_name}: {field_value}")
         if field_value is not None:
             setattr(db_movie, field_name, field_value)
 
@@ -93,7 +92,7 @@ def create_movie(
         db: Session = Depends(get_db),
 ) -> MovieModel:
 
-    if not (0 < movie.score < 100) or movie.budget < 0 or movie.revenue < 0:
+    if not (0 <= movie.score <= 100) or movie.budget < 0 or movie.revenue < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data. Movie score out of range (0,100) or budget or revenue must be positive."
