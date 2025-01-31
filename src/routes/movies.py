@@ -86,13 +86,14 @@ def update_movie(movie_id: int, movie_update: MovieUpdateSchema, db: Session = D
 
     return {"detail": "Movie updated successfully."}
 
+
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED)
 def create_movie(
         movie: MovieCreateSchema,
         db: Session = Depends(get_db),
 ) -> MovieModel:
 
-    if not(0 < movie.score < 100) or movie.budget < 0 or movie.revenue < 0:
+    if not (0 < movie.score < 100) or movie.budget < 0 or movie.revenue < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data. Movie score out of range (0,100) or budget or revenue must be positive."

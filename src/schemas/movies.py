@@ -57,15 +57,14 @@ class MovieDetailSchema(BaseModel):
 class MovieCreateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    name: str #=Field(max_length=255)
+    name: str
     date: date
-    score: float #=Field(gt=0, lt=100)
+    score: float
     overview: str
     status: MovieStatusEnum
-    budget: float #=Field(ge=0)
-    revenue: float #=Field(ge=0)
+    budget: float
+    revenue: float
 
-    # country_id: int
     country: str
     genres: list[str]
     actors: list[str]
@@ -75,17 +74,17 @@ class MovieCreateSchema(BaseModel):
 class MovieUpdateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    name: Optional[str] = None  #=Field(max_length=255)
+    name: Optional[str] = None
     date: Optional[date] = None
-    score: Optional[float] = None  #=Field(gt=0, lt=100)
+    score: Optional[float] = None
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
-    budget: Optional[float] = None  #=Field(ge=0)
-    revenue: Optional[float] = None   #=Field(ge=0)
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
 
 
 class MovieListSchema(BaseModel):
-    model_config  = ConfigDict(from_attributes=True, use_enum_values=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
     id: int
     name: str

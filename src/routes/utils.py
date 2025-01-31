@@ -25,9 +25,13 @@ def extract(field: list[str], model: Type[Base], db: Session) -> list[Base]:
                 db.refresh(db_model)
             except SQLAlchemyError as e:
                 db.rollback()
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database Error. " + str(e))
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Database Error. " + str(e)
+                )
         instances.append(db_model)
     return instances
+
 
 def get_or_404(id: int, model: Type[MovieModel], db: Session):
     """ get instance by id or 404"""
