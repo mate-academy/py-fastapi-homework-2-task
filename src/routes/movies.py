@@ -26,10 +26,14 @@ def list_movies(
         per_page: int = Query(DEFAULT_PER_PAGE, ge=1, le=20),
         db: Session = Depends(get_db),
 ):
+    """Get list of movies."""
 
     offset = (page - 1) * per_page
     total_items = db.query(MovieModel).count()
     total_pages = math.ceil(total_items / per_page)
+
+    if page > total_pages:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     next_page = f"{ROOT}/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
     prev_page = f"{ROOT}/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
@@ -50,12 +54,14 @@ def list_movies(
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 def get_movie(movie_id: int, db: Session = Depends(get_db)) -> Type[MovieModel]:
+    """Get detailed movie by id."""
     movie = get_or_404(movie_id, MovieModel, db)
     return movie
 
 
 @router.delete("/movies/{movie_id}/", response_model=None)
 def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> Response:
+    """Delete movie by id."""
     db_movie = get_or_404(movie_id, MovieModel, db)
     try:
         db.delete(db_movie)
@@ -69,6 +75,7 @@ def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> Response:
 
 @router.patch("/movies/{movie_id}/", response_model=None, status_code=status.HTTP_200_OK)
 def update_movie(movie_id: int, movie_update: MovieUpdateSchema, db: Session = Depends(get_db)) -> dict:
+    """Partially update movie with only specified fields."""
     db_movie = get_or_404(movie_id, MovieModel, db)
 
     # for all schema fields: update model fields only if value is not none
@@ -91,6 +98,10 @@ def create_movie(
         movie: MovieCreateSchema,
         db: Session = Depends(get_db),
 ) -> MovieModel:
+    """
+    Create new movie with related country, genres, actors, languages,
+    that also will be created if don't exist.
+    """
 
     if not (0 <= movie.score <= 100) or movie.budget < 0 or movie.revenue < 0:
         raise HTTPException(
