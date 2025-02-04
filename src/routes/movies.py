@@ -7,6 +7,7 @@ from fastapi import (
     status,
     Request
 )
+from pydantic.v1 import NoneStr
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 from typing import Annotated, Optional
@@ -178,7 +179,7 @@ def create_movie(
     )
 
 
-@router.patch("/movies/{movie_id}/", response_model=MovieUpdateResponseSchema)
+@router.patch("/movies/{movie_id}/", response_model=None)
 def update_movie(
         movie_id: int,
         movie_data: MovieUpdateResponseSchema,
