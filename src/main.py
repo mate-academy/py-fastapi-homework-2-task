@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from routes import movie_router
 
+
 app = FastAPI(
     title="Movies homework",
     description="Description of project"
