@@ -46,7 +46,7 @@ def movies(
     if not items or page > total_pages:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    if end >= items:
+    if end > items:
         next_page = None
     else:
         next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}"

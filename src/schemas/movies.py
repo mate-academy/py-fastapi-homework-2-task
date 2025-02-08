@@ -122,7 +122,7 @@ class MovieDetailsResponseSchema(MovieBase):
 
 class MovieUpdateSchema(MovieBase):
     name: Optional[str] = None
-    date: Optional[date] = date
+    date: Optional[date] = None
     score: Optional[float] = None
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
