@@ -1,7 +1,6 @@
 import random
 
 import pytest
-
 from database import MovieModel
 from database.models import GenreModel, ActorModel, LanguageModel, CountryModel
 
