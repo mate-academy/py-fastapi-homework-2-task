@@ -77,3 +77,10 @@ def get_movie(movie_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return db_movie
 
+
+@router.post("/movies", response_model=MovieDetail, tags=["movies"])
+def create_movie(movie: MovieCreate, db: Session = Depends(get_db)):
+    db_movie = MovieModel(**movie.model_dump())
+    db.commit()
+    db.refresh(db_movie)
+    return db_movie
