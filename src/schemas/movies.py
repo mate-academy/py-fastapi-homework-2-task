@@ -1,6 +1,6 @@
 from datetime import date
 from typing import List, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CountryBase(BaseModel):
@@ -8,8 +8,7 @@ class CountryBase(BaseModel):
     code: str
     name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GenreBase(BaseModel):
@@ -34,8 +33,7 @@ class MovieListBase(BaseModel):
     score: float
     overview: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListResponseSchema(BaseModel):
@@ -63,8 +61,7 @@ class MovieBase(BaseModel):
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieCreate(MovieBase):
@@ -73,8 +70,7 @@ class MovieCreate(MovieBase):
     actors: List[str]
     languages: List[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieDetail(MovieBase):
@@ -84,8 +80,7 @@ class MovieDetail(MovieBase):
     actors: List[ActorBase | None] = None
     languages: List[LanguageBase | None] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieUpdate(MovieBase):
@@ -105,5 +100,4 @@ class MovieUpdate(MovieBase):
     budget: Optional[float] = None
     revenue: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
