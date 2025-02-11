@@ -1,91 +1,125 @@
-from datetime import date as date_module, timedelta
-from enum import Enum
+import datetime
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from src.database.models import MovieStatusEnum
+
+
+class LanguageSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
 
 
 class CountrySchema(BaseModel):
     id: int
     code: str
-    name: str | None
+    name: Optional[str]
+
+    model_config = {"from_attributes": True}
 
 
-class GenresSchema(BaseModel):
+class GenreSchema(BaseModel):
     id: int
     name: str
 
+    model_config = {"from_attributes": True}
 
-class ActorsSchema(BaseModel):
+
+class ActorSchema(BaseModel):
     id: int
     name: str
 
+    model_config = {"from_attributes": True}
 
-class LanguagesSchema(BaseModel):
+
+class MovieBaseSchema(BaseModel):
+    name: str = Field(..., max_length=255)
+    date: datetime.date
+    score: float = Field(..., ge=0, le=100)
+    overview: str
+    status: MovieStatusEnum
+    budget: float = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
+
+    model_config = {"from_attributes": True}
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value):
+        current_year = datetime.datetime.now().year
+        if value.year > current_year + 1:
+            raise ValueError(
+                f"The year in 'date' cannot be greater than {current_year + 1}."
+            )
+        return value
+
+
+class MovieDetailSchema(MovieBaseSchema):
+    id: int
+    country: CountrySchema
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
+
+    model_config = {"from_attributes": True}
+
+
+class MovieListItemSchema(BaseModel):
     id: int
     name: str
-
-
-class MovieStatus(str, Enum):
-    released = "Released"
-    post_production = "Post Production"
-    in_production = "In Production"
-
-
-class MovieListSchema(BaseModel):
-    id: int
-    name: str
-    date: date_module
+    date: datetime.date
     score: float
     overview: str
 
+    model_config = {"from_attributes": True}
 
-class MoviePageSchema(BaseModel):
-    movies: List[MovieListSchema]
-    prev_page: Optional[str] = None
-    next_page: Optional[str] = None
+
+class MovieListResponseSchema(BaseModel):
+    movies: List[MovieListItemSchema]
+    prev_page: Optional[str]
+    next_page: Optional[str]
     total_pages: int
     total_items: int
 
-
-class MovieDetailSchema(BaseModel):
-    id: int
-    name: str
-    date: date_module
-    score: float = Field(ge=0, le=100)
-    overview: str
-    status: MovieStatus
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
-    country: CountrySchema
-    genres: List[GenresSchema]
-    actors: List[ActorsSchema]
-    languages: List[LanguagesSchema]
+    model_config = {"from_attributes": True}
 
 
 class MovieCreateSchema(BaseModel):
-    name: str = Field(..., max_length=255)
-    date: date_module = Field(..., le=(date_module.today() + timedelta(days=365)))
-    score: float = Field(ge=0, le=100)
+    name: str
+    date: datetime.date
+    score: float = Field(..., ge=0, le=100)
     overview: str
-    status: MovieStatus
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
+    status: MovieStatusEnum
+    budget: float = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
     country: str
     genres: List[str]
     actors: List[str]
     languages: List[str]
 
+    model_config = {"from_attributes": True}
+
+    @field_validator("country", mode="before")
+    @classmethod
+    def normalize_country(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator("genres", "actors", "languages", mode="before")
+    @classmethod
+    def normalize_list_fields(cls, value: List[str]) -> List[str]:
+        return [item.title() for item in value]
+
 
 class MovieUpdateSchema(BaseModel):
-    name: Optional[str] = Field(None, max_length=255)
-    date: Optional[date_module] = Field(None, le=(date_module.today() + timedelta(days=365)))
+    name: Optional[str] = None
+    date: Optional[datetime.date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[MovieStatus] = None
+    status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
-    country: Optional[str] = None
-    genres: Optional[List[str]] = None
-    actors: Optional[List[str]] = None
-    languages: Optional[List[str]] = None
+
+    model_config = {"from_attributes": True}

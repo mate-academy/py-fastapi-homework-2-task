@@ -12,7 +12,7 @@ from database.models import (
     CountryModel,
     GenreModel,
     ActorModel,
-    LanguageModel
+    LanguageModel,
 )
 
 from schemas.movies import (
@@ -20,7 +20,7 @@ from schemas.movies import (
     MovieCreateSchema,
     MovieDetailSchema,
     MovieUpdateSchema,
-    MoviePageSchema
+    MoviePageSchema,
 )
 
 
@@ -29,9 +29,9 @@ router = APIRouter()
 
 @router.get("/movies/", response_model=MoviePageSchema)
 async def list_movies(
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1, le=20),
-        db: Session = Depends(get_db)
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
+    db: Session = Depends(get_db),
 ):
     offset = (page - 1) * per_page
     movies_data = get_movies(db, offset, per_page)
@@ -41,41 +41,51 @@ async def list_movies(
         total_items = db.query(MovieModel).count()
         total_pages = math.ceil(total_items / per_page)
 
-        prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
-        next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
+        prev_page = (
+            f"/theater/movies/?page={page - 1}&per_page={per_page}"
+            if page > 1
+            else None
+        )
+        next_page = (
+            f"/theater/movies/?page={page + 1}&per_page={per_page}"
+            if page < total_pages
+            else None
+        )
 
         return {
             "movies": movies_data,
             "prev_page": prev_page,
             "next_page": next_page,
             "total_pages": total_pages,
-            "total_items": total_items
+            "total_items": total_items,
         }
     raise HTTPException(status_code=404, detail="No movies found.")
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie_detail(
-        movie_id: int = Path(..., gt=0),
-        db: Session = Depends(get_db)
+    movie_id: int = Path(..., gt=0), db: Session = Depends(get_db)
 ):
     movie = get_movie(db, movie_id)
     if movie:
         return movie
-    raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    raise HTTPException(
+        status_code=404, detail="Movie with the given ID was not found."
+    )
 
 
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 def add_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)):
-    movies = db.query(MovieModel).filter(
-        MovieModel.name == movie.name,
-        MovieModel.date == movie.date
-    ).all()
+    movies = (
+        db.query(MovieModel)
+        .filter(MovieModel.name == movie.name, MovieModel.date == movie.date)
+        .all()
+    )
     if not movies:
         return create_movie(db, movie)
     raise HTTPException(
         status_code=409,
-        detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+        detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
     )
 
 
