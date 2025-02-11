@@ -24,14 +24,14 @@ def get_movie_by_id(db, movie_id):
     return movie
 
 
-def get_or_create_country(db: Session, country_name: str):
+def get_or_create_country(db: Session, country_code: str):
     country = (
         db.query(CountryModel)
-        .filter(CountryModel.code == country_name)
+        .filter(CountryModel.code == country_code)
         .first()
     )
     if not country:
-        country = CountryModel(code=country_name)
+        country = CountryModel(code=country_code)
         db.add(country)
         db.flush()
     return country

@@ -102,8 +102,8 @@ class MovieUpdate(MovieBase):
         None,
         pattern="^(Released|Post Production|In Production)$"
     )
-    budget: Optional[float] = Field(0, ge=0)
-    revenue: Optional[float] = Field(0, ge=0)
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
 
     class Config:
         from_attributes = True

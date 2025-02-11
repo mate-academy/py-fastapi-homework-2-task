@@ -135,7 +135,10 @@ def update_film(
         )
     db_film.name = movie.name
     db_film.date = movie.date if movie.date is not None else db_film.date
-    db_film.score = movie.score
+    db_film.score = (
+        movie.score if movie.score is not None
+        else db_film.score
+    )
     db_film.overview = (
         movie.overview
         if movie.overview is not None
@@ -145,8 +148,14 @@ def update_film(
         movie.status if movie.status is not None
         else db_film.status
     )
-    db_film.budget = movie.budget
-    db_film.revenue = movie.revenue
+    db_film.budget = (
+        movie.budget if movie.budget is not None
+        else db_film.budget
+    )
+    db_film.revenue = (
+        movie.revenue if movie.revenue is not None
+        else db_film.revenue
+    )
     db.commit()
     db.refresh(db_film)
     return JSONResponse(content={"detail": "Movie updated successfully."})
