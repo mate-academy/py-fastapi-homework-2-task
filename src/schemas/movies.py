@@ -52,9 +52,7 @@ class LanguageRetrieveSchema(LanguageBaseSchema):
 
 class MovieBaseSchema(BaseModel):
     name: str = Field(max_length=255)
-    date: datetime.date = Field(
-        le=datetime.date.today() + datetime.timedelta(days=365)
-    )
+    date: datetime.date = Field(le=datetime.date.today() + datetime.timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatusEnum
@@ -83,9 +81,7 @@ class MovieRetrieveSchema(MovieBaseSchema):
 class MovieShortSchema(BaseModel):
     id: int
     name: str = Field(max_length=255)
-    date: datetime.date = Field(
-        le=datetime.date.today() + datetime.timedelta(days=365)
-    )
+    date: datetime.date = Field(le=datetime.date.today() + datetime.timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
 
@@ -104,8 +100,7 @@ class MovieListSchema(BaseModel):
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[datetime.date] = Field(
-        None,
-        le=datetime.date.today() + datetime.timedelta(days=365)
+        None, le=datetime.date.today() + datetime.timedelta(days=365)
     )
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
