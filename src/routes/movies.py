@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 from database.models import (
@@ -19,6 +20,17 @@ from schemas.movies import (
 )
 
 router = APIRouter()
+
+
+def safe_commit(db: Session):
+    try:
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error occurred while processing your request."
+        )
 
 
 @router.get("/movies/", response_model=PaginatedMoviesResponse)
@@ -80,7 +92,7 @@ async def create_movie(movie: MovieCreateRequest,
     if not country:
         country = CountryModel(code=movie.country)
         db.add(country)
-        db.commit()
+        safe_commit(db)
 
     genres = []
     for genre_name in movie.genres:
@@ -115,7 +127,7 @@ async def create_movie(movie: MovieCreateRequest,
             db.add(language)
         languages.append(language)
 
-    db.commit()
+    safe_commit(db)
 
     new_movie = MovieModel(
         name=movie.name,
@@ -131,7 +143,7 @@ async def create_movie(movie: MovieCreateRequest,
         languages=languages
     )
     db.add(new_movie)
-    db.commit()
+    safe_commit(db)
     db.refresh(new_movie)
 
     return MovieCreateResponse(
@@ -192,7 +204,7 @@ async def delete_movie(movie_id: int,
                             detail="Movie with the given ID was not found.")
 
     db.delete(movie)
-    db.commit()
+    safe_commit(db)
 
     return {"detail": "Movie deleted successfully."}
 
@@ -242,6 +254,6 @@ async def update_movie(movie_id: int,
     if movie_update.revenue is not None:
         movie.revenue = movie_update.revenue
 
-    db.commit()
+    safe_commit(db)
 
     return {"detail": "Movie updated successfully."}
