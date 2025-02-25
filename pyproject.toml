@@ -20,6 +20,9 @@ psycopg2-binary = "^2.9.10"
 alembic = "^1.14.0"
 
 
+[tool.poetry.group.dev.dependencies]
+setuptools = "^75.8.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
