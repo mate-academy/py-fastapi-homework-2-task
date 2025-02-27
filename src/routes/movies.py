@@ -240,7 +240,7 @@ async def update_movie(
             status_code=404, detail="Movie with the given ID was not found."
         )
 
-    # Update only provided fields
+    # Update only  provided fields
     update_dict = update_data.dict(exclude_unset=True)
     if "date" in update_dict and update_dict[
         "date"
