@@ -3,3 +3,4 @@ from schemas.movies import (
     MovieListResponseSchema,
     MovieListItemSchema
 )
+# noqa: F401
