@@ -160,7 +160,7 @@ async def create_movie(movie: MovieCreateRequestSchema, db: Session = Depends(ge
         .where(MovieModel.id == new_movie.id)
     )
     result = await db.execute(query)
-    return MovieDetailSchema.from_orm(result.scalar_one())
+    return MovieDetailSchema.model_validate(result.scalar_one())
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
@@ -192,7 +192,7 @@ async def update_movie(movie_id: int, update_data: MovieUpdateRequestSchema, db:
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    update_dict = update_data.dict(exclude_unset=True)
+    update_dict = update_data.model_dump(exclude_unset=True)
     if "date" in update_dict and update_dict["date"] > datetime.date.today() + datetime.timedelta(days=365):
         raise HTTPException(status_code=400, detail="Date cannot be more than one year in the future.")
 
