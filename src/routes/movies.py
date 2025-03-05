@@ -10,7 +10,7 @@ from database import get_db, MovieModel
 from src.schemas.movies import (MovieDetailSchema,
                                 MovieUpdateRequestSchema,
                                 MoviesListItemSchema,
-                                MovieCreateRequestShema,
+                                MovieCreateRequestSchema,
                                 MovieUpdateRequestSchema,
                                 MoviesListResponseSchema)
 
@@ -57,6 +57,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
                     joinedload(MovieModel.languages),
                     joinedload(MovieModel.actors),
                     joinedload(MovieModel.genres)).
+                order_by(MovieModel.id.desc()).
                 where(MovieModel.id == movie_id))
     result = await db.execute(queryset)
     movie = result.scalar_one_or_none()
@@ -67,8 +68,8 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return MovieDetailSchema.from_orm(movie)
 
 
-@router.post("/movies/", response_model=MovieCreateRequestShema)
-async def create_movie(movie_data: MovieCreateRequestShema, db: Session = Depends(get_db)):
+@router.post("/movies/", response_model=MovieCreateRequestSchema)
+async def create_movie(movie_data: MovieCreateRequestSchema, db: Session = Depends(get_db)):
     movie = MovieModel(**movie_data.dict())
     exisiting_check_movie_query = select(MovieModel).where(
         MovieModel.name == movie.name,
