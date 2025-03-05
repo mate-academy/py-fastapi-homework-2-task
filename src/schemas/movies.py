@@ -6,38 +6,38 @@ from datetime import date
 class GenreBase(BaseModel):
     id: int
     name: str
-    
+
     class Config:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
 class ActorBase(BaseModel):
     id: int
     name: str
-    
+
     class Config:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
 class CountryBase(BaseModel):
     id: int
     code: str
     name: str
-    
+
     class Config:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
-class LenguageBase(BaseModel):
+class LanguageBase(BaseModel):
     id: int
     name: str
-    
+
     class Config:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
 class MoviesListItemSchema(BaseModel):
@@ -46,10 +46,10 @@ class MoviesListItemSchema(BaseModel):
     date: date
     score: float
     overview: str
-    
+
     class Config:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
 class MovieDetailSchema(BaseModel):
@@ -62,13 +62,13 @@ class MovieDetailSchema(BaseModel):
     budget: float
     revenue: float
     country: CountryBase
-    lenguages: list[LenguageBase]
+    languages: list[LanguageBase]
     actors: list[ActorBase]
     genres: list[GenreBase]
-    
+
     class Confid:
         orm_mode = True
-        from_attriubtes = True
+        from_attributes = True
 
 
 class MoviesListResponseSchema(BaseModel):
@@ -79,23 +79,22 @@ class MoviesListResponseSchema(BaseModel):
     total_items: int
 
 
-class MovieCreateRequestShema(BaseModel):
+class MovieCreateRequestSchema(BaseModel):
     name: str = Field(..., max_length=155)
-    date: date 
+    date: date
     score: float = Field(..., ge=0, le=100)
     overview: str
     status: str = Field(
         ...,
-        pattern=
-        "^(Rumored|Planned|In Production|Post Production|Released|Canceled)$"
-        )
+        pattern="^(Rumored|Planned|In Production|Post\
+            Production|Released|Canceled)$")
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country_id: str = Field(..., min_length=2, max_length=2)
-    lenguages: list[str]
+    languages: list[str]
     actors: list[str]
     genres: list[str]
-    
+
 
 class MovieUpdateRequestSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=155)
@@ -104,13 +103,12 @@ class MovieUpdateRequestSchema(BaseModel):
     overview: Optional[str]
     status: Optional[str] = Field(
         None,
-        pattern=
-        "^(Rumored|Planned|In Production|Post Production|Released|Canceled)$"
-        )
+        pattern="^(Rumored|Planned|In Production|Post\
+            Production|Released|Canceled)$")
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
     country_id: Optional[str] = Field(None, min_length=2, max_length=2)
-    lenguages: Optional[list[str]]
+    languages: Optional[list[str]]
     actors: Optional[list[str]]
     genres: Optional[list[str]]
 
