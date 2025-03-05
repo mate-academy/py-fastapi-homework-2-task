@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr
 from typing import List, Optional
 from datetime import date
 
@@ -84,7 +84,9 @@ class MovieCreateRequestSchema(BaseModel):
     date: date
     score: float = Field(..., ge=0, le=100)
     overview: str
-    status: str = Field(..., pattern="^(Released|Post Production|In Production)$")
+    status: str = constr(
+        pattern="^(Released|Post Production|In Production)$"
+    )
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country: str = Field(
@@ -100,8 +102,8 @@ class MovieUpdateRequestSchema(BaseModel):
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[str] = Field(
-        None, pattern="^(Released|Post Production|In Production)$"
+    status: Optional[str] = constr(
+        pattern="^(Released|Post Production|In Production)$"
     )
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
