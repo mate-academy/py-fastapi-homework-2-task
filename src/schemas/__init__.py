@@ -1,0 +1,1 @@
+from schemas.movies import MovieListSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema
