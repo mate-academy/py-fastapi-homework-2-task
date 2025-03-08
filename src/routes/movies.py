@@ -1,5 +1,3 @@
-from http.client import HTTPResponse
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import Response
 from pytz import country_names
@@ -122,12 +120,15 @@ def create_new_movie(movie_data: MovieCreateSchema, db: Session = Depends(get_db
 def update_movie(update_data: MovieUpdateSchema, movie_id: int, db: Session = Depends(get_db)):
     old_movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
     data_check = update_data.dict(exclude_unset=True)
-    if data_check["score"] and not 0 <= data_check["score"] <= 100:
-        raise HTTPException(status_code=400, detail="Bad request.")
-    if data_check["budget"] and data_check["budget"] < 0:
-        raise HTTPException(status_code=400, detail="Bad request.")
-    if data_check["revenue"] and data_check["revenue"] < 0:
-        raise HTTPException(status_code=400, detail="Bad request.")
+    if data_check.get("score"):
+        if not 0 <= data_check["score"] <= 100:
+            raise HTTPException(status_code=400, detail="Bad request.")
+    if data_check.get("budget"):
+        if data_check["budget"] < 0:
+            raise HTTPException(status_code=400, detail="Bad request.")
+    if data_check.get("revenue"):
+        if data_check["revenue"] < 0:
+            raise HTTPException(status_code=400, detail="Bad request.")
     if not old_movie:
         raise HTTPException(status_code=404, detail="Movie not found.")
     for key, value in update_data.dict(exclude_unset=True).items():
