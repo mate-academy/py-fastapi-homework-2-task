@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
-from src.schemas.movies import MovieCreate, MovieRead, MovieUpdate
+from src.schemas.movies import MovieCreate, MovieRead, MovieUpdate, MovieDetailResponseSchema, MovieListResponseSchema
 
 router = APIRouter()
 
@@ -58,9 +58,13 @@ async def list_movies(
 
 @router.post("/movies/", response_model=MovieRead)
 async def create_movie(film: MovieCreate, db: AsyncSession = Depends(get_db)):
-    existing_movie = await db.execute(select(MovieModel).where(Movie.name == film.name, Movie.date == film.date))
+    existing_movie = await db.execute(select(MovieModel).where(
+        MovieModel.name == film.name,
+        MovieModel.date == film.date))
     if existing_movie.scalar():
-        raise HTTPException(status_code=409, detail=f"A movie with the name '{film.name}' and release date '{film.date}' already exists.")
+        raise HTTPException(status_code=409,
+                            detail=f"A movie with the name '{film.name}'"
+                                   f" and release date '{MovieModel.date}' already exists.")
 
     new_movie = MovieModel(**film.dict())
     db.add(new_movie)
