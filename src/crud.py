@@ -54,7 +54,8 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
 
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie_data['name']}' and release date '{movie_data['date']}' already exists.",
+            detail=f"A movie with the name '{movie_data['name']}'"
+                   f" and release date '{movie_data['date']}' already exists.",
         )
 
     db_genres = [
