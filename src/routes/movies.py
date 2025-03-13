@@ -77,7 +77,6 @@ async def create_movie(
         )
     try:
         new_movie = await create_movie_model(movie_data, db)
-        await db.commit()
     except IntegrityError:
         await db.rollback()
         raise HTTPException(

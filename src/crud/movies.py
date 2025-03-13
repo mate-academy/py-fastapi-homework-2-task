@@ -104,4 +104,5 @@ async def create_movie_model(movie_data: MovieCreateRequestSchema, db: AsyncSess
         languages=languages,
     )
     db.add(new_movie)
+    await db.commit()
     return new_movie
