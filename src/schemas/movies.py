@@ -81,9 +81,7 @@ class MovieCreateRequestSchema(BaseModel):
     status: str
     budget: float
     revenue: float
-    # For country, we expect an ISO alpha-3 code, e.g. "USA"
-    country: str
-    # For genres, actors, and languages, we expect a list of string names.
+    country: Optional[str] = None
     genres: List[str]
     actors: List[str]
     languages: List[str]
