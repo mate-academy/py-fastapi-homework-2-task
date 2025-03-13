@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, desc
@@ -57,7 +57,7 @@ async def get_movies(
 
 @router.post("/movies/", response_model=MovieDetailResponseSchema, status_code=status.HTTP_201_CREATED)
 async def create_movie(movie: MovieCreateResponseSchema, db: AsyncSession = Depends(get_db)):
-    max_date = datetime.date.today() + datetime.timedelta(days=365)
+    max_date = date.today() + timedelta(days=365)
     if movie.date > max_date:
         raise HTTPException(
             status_code=400, detail="Date cannot be more than one year in the future."
