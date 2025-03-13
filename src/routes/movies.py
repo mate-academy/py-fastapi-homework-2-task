@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +32,7 @@ async def list_movies(
     total_pages = (total_items + pagination.per_page - 1) // pagination.per_page
 
     if total_items == 0 or pagination.page > total_pages:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     movies = await get_movies(pagination.offset, pagination.per_page, db)
 
@@ -65,14 +65,14 @@ async def retrieve_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
+@router.post("/movies/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED)
 async def create_movie(
     movie_data: MovieCreateRequestSchema,
     db: AsyncSession = Depends(get_db)
 ):
     if await get_movie_model_by_name_and_date(movie_data.name, movie_data.date, db):
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
         )
     try:
@@ -81,7 +81,7 @@ async def create_movie(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to create movie due to integrity error. Please check the data."
         )
     return new_movie
@@ -89,7 +89,7 @@ async def create_movie(
 
 @router.delete(
     "/movies/{movie_id}/",
-    status_code=204,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 async def destroy_movie(
     movie_id: int,
@@ -99,7 +99,7 @@ async def destroy_movie(
 
     if not movie:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
 
@@ -109,7 +109,7 @@ async def destroy_movie(
 
 @router.patch(
     "/movies/{movie_id}/",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Update specific fields of a movie",
 )
 async def update_movie(
@@ -121,7 +121,7 @@ async def update_movie(
 
     if not movie:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
 
