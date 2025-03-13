@@ -98,8 +98,8 @@ class MovieDetailSchema(BaseMovieSchema):
 
 class MovieCreateResponseSchema(BaseMovieSchema):
     status: MovieStatusEnum
-    budget: float
-    revenue: float
+    budget: Budget
+    revenue: Revenue
     country: Code
     genres: List[str]
     actors: List[str]
