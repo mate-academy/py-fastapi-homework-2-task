@@ -41,7 +41,10 @@ async def list_movies(
         .offset(offset)
         .limit(per_page)
     )
-    movies = [MovieListItemSchema.model_validate(movie, from_attributes=True) for movie in movies_result.scalars().all()]
+    movies = [
+        MovieListItemSchema.model_validate(movie, from_attributes=True)
+        for movie in movies_result.scalars().all()
+    ]
 
     base_path = "/theater/movies/"
     prev_page = f"{base_path}?page={page - 1}&per_page={per_page}" if page > 1 else None
