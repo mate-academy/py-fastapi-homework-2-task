@@ -89,10 +89,15 @@ async def create_movie(
         movie: MovieCreateSchema,
         db: AsyncSession = Depends(get_db)
 ) -> MovieDetailSchema:
-    movie_list = await db.scalars(select(MovieModel).where(MovieModel.name == movie.name))
-    existing_movies = movie_list.all()
+    check_movie = await db.scalars(
+        select(MovieModel).where(
+            MovieModel.name == movie.name,
+            MovieModel.date == movie.date
+        )
+    )
+    existing_movies = check_movie.all()
 
-    if any(existing_movie.date == movie.date for existing_movie in existing_movies):
+    if existing_movies:
         raise HTTPException(
             status_code=409,
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
@@ -157,7 +162,7 @@ async def update_movie(
         movie_id: int,
         movie: MovieUpdateSchema,
         db: AsyncSession = Depends(get_db)
-):
+) -> JSONResponse:
     result = await db.execute(
         select(MovieModel).where(MovieModel.id == movie_id)
     )

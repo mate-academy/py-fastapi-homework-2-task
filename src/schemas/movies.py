@@ -1,7 +1,7 @@
 from typing import Optional
 
 from dateutil.relativedelta import relativedelta
-from pydantic import BaseModel, field_validator, Field, ValidationError
+from pydantic import BaseModel, field_validator, Field
 from datetime import date
 
 
@@ -58,7 +58,7 @@ class MovieCreateSchema(BaseModel):
     @field_validator('date')
     def validate_date(cls, v):
         if v > (date.today() + relativedelta(years=1)):
-            raise ValidationError("Invalid date: exceeds 1 year into the future.")
+            raise ValueError("Invalid date: exceeds 1 year into the future.")
         return v
 
 
