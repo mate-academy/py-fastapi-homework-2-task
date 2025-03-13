@@ -1,30 +1,27 @@
 from datetime import date
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class GenreSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActorSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LanguageSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountrySchema(BaseModel):
@@ -32,8 +29,7 @@ class CountrySchema(BaseModel):
     code: str
     name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListItemSchema(BaseModel):
@@ -43,9 +39,7 @@ class MovieListItemSchema(BaseModel):
     score: float
     overview: str
 
-    class Config:
-        orm_mode = True
-        model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieDetailSchema(BaseModel):
@@ -62,9 +56,7 @@ class MovieDetailSchema(BaseModel):
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
 
-    class Config:
-        orm_mode = True
-        model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieCreateSchema(BaseModel):
@@ -98,6 +90,4 @@ class MovieListResponseSchema(BaseModel):
     prev_page: Optional[str]
     next_page: Optional[str]
 
-    class Config:
-        orm_mode = True
-        model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)

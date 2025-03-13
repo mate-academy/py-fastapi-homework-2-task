@@ -77,7 +77,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     if isinstance(movie.status, str):
         try:
             movie.status = MovieStatusEnum(movie.status)
-        except Exception:
+        except ValueError:
             raise HTTPException(status_code=422, detail="Invalid status value in the database.")
 
     return MovieDetailSchema.model_validate(movie, from_attributes=True)
@@ -99,7 +99,7 @@ async def create_movie(movie_in: MovieCreateSchema, db: AsyncSession = Depends(g
 
     try:
         status_enum = MovieStatusEnum(movie_in.status)
-    except Exception:
+    except ValueError:
         raise HTTPException(status_code=422, detail="Invalid status value.")
 
     country_stmt = select(CountryModel).where(CountryModel.code == movie_in.country)
@@ -184,7 +184,7 @@ async def update_movie(movie_id: int, movie_in: MovieUpdateSchema, db: AsyncSess
     if "status" in update_data:
         try:
             update_data["status"] = MovieStatusEnum(update_data["status"])
-        except Exception:
+        except ValueError:
             raise HTTPException(status_code=422, detail="Invalid status value.")
 
     for field, value in update_data.items():
