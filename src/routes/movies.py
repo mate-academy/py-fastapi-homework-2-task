@@ -37,7 +37,7 @@ async def read_movies(
     query = select(func.count()).select_from(MovieModel)
     total_items_result = await db.execute(query)
     total_items = total_items_result.scalar()
-    total_pages = (total_items // per_page) + 1
+    total_pages = (total_items + per_page - 1) // per_page
 
     prev_page = None
     next_page = None

@@ -71,50 +71,35 @@ class MovieCreate(BaseModel):
     @classmethod
     def validate_name(cls, value: str) -> str:
         if len(value) > 255:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie name is too long: {value}"
-            )
+            raise ValueError("Movie name must be at most 255 characters")
         return value
 
     @field_validator("date")
     @classmethod
     def validate_date(cls, value: datetime.date) -> datetime.date:
         if value.year > datetime.date.today().year + 1:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie date can't be more than one year in the future: {value}"
-            )
+            raise ValueError("Movie date can't be more than one year in the future")
         return value
 
     @field_validator("score")
     @classmethod
     def validate_score(cls, value: float) -> float:
         if not 0 <= value <= 100:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie score must be between 0 and 100: {value}"
-            )
+            raise ValueError("Movie score must be between 0 and 100")
         return value
 
     @field_validator("budget")
     @classmethod
     def validate_budget(cls, value: float) -> float:
         if value < 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie budget can't be negative: {value}"
-            )
+            raise ValueError("Movie budget must be greater than 0")
         return value
 
     @field_validator("revenue")
     @classmethod
     def validate_revenue(cls, value: float) -> float:
         if value < 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie revenue can't be negative: {value}"
-            )
+            raise ValueError("Movie revenue must be greater than 0")
         return value
 
 
@@ -131,28 +116,19 @@ class MovieUpdate(BaseModel):
     @classmethod
     def validate_score(cls, value: float) -> float:
         if not 0 <= value <= 100:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie score must be between 0 and 100: {value}"
-            )
+            raise ValueError("Movie score must be between 0 and 100")
         return value
 
     @field_validator("budget")
     @classmethod
     def validate_budget(cls, value: float) -> float:
         if value < 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie budget can't be negative: {value}"
-            )
+            raise ValueError("Movie budget must be greater than 0")
         return value
 
     @field_validator("revenue")
     @classmethod
     def validate_revenue(cls, value: float) -> float:
         if value < 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Movie revenue can't be negative: {value}"
-            )
+            raise ValueError("Movie revenue must be greater than 0")
         return value
