@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 
 from typing import Annotated, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, PositiveFloat
 
 from database.models import MovieStatusEnum
 
@@ -86,8 +86,8 @@ class MovieListResponseSchema(BaseModel):
 class MovieDetailSchema(BaseMovieSchema):
     id: Id
     status: MovieStatusEnum
-    budget: float
-    revenue: float
+    budget: PositiveFloat
+    revenue: PositiveFloat
     country: Country
     genres: List[Genre]
     actors: List[Actor]
