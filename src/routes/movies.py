@@ -1,35 +1,39 @@
 import math
-from typing import Type
 from datetime import timedelta, date
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.openapi.models import Response
-from sqlalchemy import extract
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session
-from src.routes.utils import get_or_404
-from src.database.models import MovieModel
-from database import get_db
-from src.database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from starlette import status
+from typing import Type
 
-from src.schemas.movies import MovieCreateSchema, MovieListResponseSchema, MovieDetailSchema, MovieUpdateSchema
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response, JSONResponse
+
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session, joinedload
+
+from database import get_db
+from database.models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel, Base
+from routes.utils import get_or_404, extract
+from schemas.movies import MovieDetailSchema, MovieListResponseSchema, MovieCreateSchema, MovieUpdateSchema
+
+router = APIRouter()
 
 DEFAULT_PAGE = 1
 DEFAULT_PER_PAGE = 10
 ROOT = "/theater"
-router = APIRouter()
 
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
 def list_movies(
         page: int = Query(DEFAULT_PAGE, ge=1),
         per_page: int = Query(DEFAULT_PER_PAGE, ge=1, le=20),
-        db: Session = Depends(get_db)
-) -> MovieListResponseSchema:
+        db: Session = Depends(get_db),
+):
+    """Get list of movies."""
 
     offset = (page - 1) * per_page
     total_items = db.query(MovieModel).count()
     total_pages = math.ceil(total_items / per_page)
+
+    if page > total_pages:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     next_page = f"{ROOT}/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
     prev_page = f"{ROOT}/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
@@ -37,7 +41,7 @@ def list_movies(
     movies = db.query(MovieModel).order_by(MovieModel.id.desc()).limit(per_page).offset(offset).all()
 
     if not movies:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     return MovieListResponseSchema(
         movies=movies,
@@ -48,18 +52,19 @@ def list_movies(
     )
 
 
-@router.get("/movies/{movie_id}", response_model=MovieDetailSchema)
-def movie_detail(movie_id: int, db: Session = Depends(get_db)) -> Type[MovieModel]:
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+def get_movie(movie_id: int, db: Session = Depends(get_db)) -> Type[MovieModel]:
+    """Get detailed movie by id."""
     movie = get_or_404(movie_id, MovieModel, db)
     return movie
 
 
-@router.delete("/movies/{movie_id}", response_model=None)
-def movie_delete(movie_id: int, db: Session = Depends(get_db)) -> Response:
-    movie = get_or_404(movie_id, MovieModel, db)
-
+@router.delete("/movies/{movie_id}/", response_model=None)
+def delete_movie(movie_id: int, db: Session = Depends(get_db)) -> Response:
+    """Delete movie by id."""
+    db_movie = get_or_404(movie_id, MovieModel, db)
     try:
-        db.delete(movie)
+        db.delete(db_movie)
         db.commit()
     except SQLAlchemyError as e:
         db.rollback()
@@ -68,10 +73,12 @@ def movie_delete(movie_id: int, db: Session = Depends(get_db)) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.patch("/movies/{movie_id}", response_model=None, status_code=status.HTTP_200_OK)
+@router.patch("/movies/{movie_id}/", response_model=None, status_code=status.HTTP_200_OK)
 def update_movie(movie_id: int, movie_update: MovieUpdateSchema, db: Session = Depends(get_db)) -> dict:
+    """Partially update movie with only specified fields."""
     db_movie = get_or_404(movie_id, MovieModel, db)
 
+    # for all schema fields: update model fields only if value is not none
     for field_name, field_value in movie_update.model_dump(exclude_unset=True).items():
         if field_value is not None:
             setattr(db_movie, field_name, field_value)
@@ -81,33 +88,46 @@ def update_movie(movie_id: int, movie_update: MovieUpdateSchema, db: Session = D
         db.refresh(db_movie)
     except SQLAlchemyError as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="SQLAlchemy Error: " + str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="SQLAlchemyError: " + str(e))
 
     return {"detail": "Movie updated successfully."}
 
 
-@router.post("/movies", response_model=MovieCreateSchema)
-def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> MovieModel:
-    if not (0 <= movie.score <= 100) or movie.revenue < 0 or movie.budget < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid movie score or revenue or budget")
+@router.post("/movies/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED)
+def create_movie(
+        movie: MovieCreateSchema,
+        db: Session = Depends(get_db),
+) -> MovieModel:
+    """
+    Create new movie with related country, genres, actors, languages,
+    that also will be created if don't exist.
+    """
 
-    if len(movie.name) > 255 and len(movie.country) < 3:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid movie name or country")
-
+    if not (0 <= movie.score <= 100) or movie.budget < 0 or movie.revenue < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data. Movie score out of range (0,100) or budget or revenue must be positive."
+        )
     if movie.date > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date range")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data. Date cannot be in so far the future."
+        )
+    if len(movie.name) > 255 or len(movie.country) > 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data. Movie name or country code too long."
+        )
 
     db_movie = db.query(MovieModel).filter(MovieModel.name == movie.name, MovieModel.date == movie.date).first()
-
     if db_movie:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Movie with this name: {movie.name} and this date: {movie.date} already exists"
+            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
 
-    country = db.query(CountryModel).filter(CountryModel.name == movie.country).first()
-
-    if country:
+    country = db.query(CountryModel).filter(CountryModel.code == movie.country).first()
+    if not country:
         country = CountryModel(code=movie.country)
         try:
             db.add(country)
@@ -121,6 +141,7 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
     actors = extract(movie.actors, ActorModel, db)
     languages = extract(movie.languages, LanguageModel, db)
 
+    # add only movie data + country
     db_movie = MovieModel(**movie.model_dump(exclude={"country", "genres", "actors", "languages"}), country=country)
     try:
         db.add(db_movie)
@@ -136,6 +157,7 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error. " + str(e))
 
+    # add relations with 'genres, 'actors, 'languages
     db_movie.genres.extend(genres)
     db_movie.actors.extend(actors)
     db_movie.languages.extend(languages)
