@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy import desc, select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,7 @@ from schemas.movies import (
     MovieListItemSchema,
     MovieDetailSchema,
     MovieCreateSchema,
-    MovieListResponseSchema,
+    MovieListResponseSchema, MovieUpdateSchema,
 )
 
 router = APIRouter()
@@ -183,99 +183,48 @@ async def create_movie(
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
-@router.patch("/movies/{movie_id}/", response_model=MovieUpdateSchema,
-              status_code=201)
-async def create_movie(
-        movie: MovieCreateSchema,
+@router.patch("/movies/{movie_id}/")
+async def update_movie(
+        movie_id: int,
+        movie: MovieUpdateSchema,
         db: AsyncSession = Depends(get_db)
-) -> MovieDetailSchema | HTTPException:
-    if_exist = await db.execute(
-        select(MovieModel).where(
-            (MovieModel.name == movie.name),
-            (MovieModel.date == movie.date),
-        )
-    )
-    if if_exist.scalars().first():
+):
+    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    movie_to_update = result.scalars().first()
+
+    if not movie_to_update:
         raise HTTPException(
-            status_code=409,
-            detail=(
-                f"A movie with the name '{movie.name}' and release date "
-                f"'{movie.date}' already exists."
-            )
+            status_code=404,
+            detail="Movie with the given ID was not found."
         )
 
     try:
-        country_res = await db.execute(
-            select(CountryModel).where(CountryModel.code == movie.country)
-        )
-        country = country_res.scalars().first()
-        if not country:
-            country = CountryModel(code=movie.country)
-            db.add(country)
-            await db.flush()
+        for field, value in movie.model_dump(exclude_unset=True).items():
+            setattr(movie_to_update, field, value)
 
-        genres = []
-        for genre_name in movie.genres:
-            genre = await db.execute(
-                select(GenreModel).where(GenreModel.name == genre_name)
-            )
-            genre = genre.scalars().first()
-
-            if not genre:
-                genre = GenreModel(name=genre_name)
-                db.add(genre)
-                await db.flush()
-
-            genres.append(genre)
-
-        actors = []
-        for actor_name in movie.actors:
-            actor = await db.execute(
-                select(ActorModel).where(ActorModel.name == actor_name)
-            )
-            actor = actor.scalars().first()
-
-            if not actor:
-                actor = ActorModel(name=actor_name)
-                db.add(actor)
-                await db.flush()
-
-            actors.append(actor)
-
-        languages = []
-        for language_name in movie.languages:
-            language = await db.execute(
-                select(LanguageModel).where(LanguageModel.name == language_name)
-            )
-            language = language.scalars().first()
-
-            if not language:
-                language = LanguageModel(name=language_name)
-                db.add(language)
-                await db.flush()
-
-            languages.append(language)
-
-        new_movie = MovieModel(
-            name=movie.name,
-            date=movie.date,
-            score=movie.score,
-            overview=movie.overview,
-            status=movie.status,
-            budget=movie.budget,
-            revenue=movie.revenue,
-            country = country,
-            genres = genres,
-            actors = actors,
-            languages = languages
-        )
-
-        db.add(new_movie)
         await db.commit()
-        await db.refresh(new_movie, [
-            "genres", "actors", "languages"
-        ])
-        return MovieDetailSchema.model_validate(new_movie)
+        await db.refresh(movie_to_update)
+        return {"detail": "Movie updated successfully."}
+
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
+
+
+@router.delete("/movies/{movie_id}/", status_code=204)
+async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(MovieModel).where(
+        MovieModel.id==movie_id
+    ))
+    movie = result.scalars().first()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    await db.delete(movie)
+    await db.commit()
+
+    return {"detail": "Movie deleted successfully."}

@@ -1,4 +1,6 @@
 from datetime import date
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 from database.models import MovieStatusEnum
@@ -84,5 +86,17 @@ class MovieCreateSchema(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+    model_config = {"from_attributes": True}
+
+
+class MovieUpdateSchema(BaseModel):
+    name: str | None = None
+    date: Optional[date] = None
+    score: float | None = None
+    overview: str | None = None
+    status: MovieStatusEnum | None = None
+    budget: float | None = None
+    revenue: float | None = None
 
     model_config = {"from_attributes": True}
