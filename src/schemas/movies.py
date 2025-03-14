@@ -1,48 +1,38 @@
-from typing import List, Optional
-
-from pydantic import BaseModel, ConfigDict
-
 from datetime import date
+from typing import Optional
 
-from src.database.models import MovieStatusEnum
+from pydantic import BaseModel, ConfigDict, Field
+
+from src.database.models import MovieStatusEnum, CountryModel, GenreModel, ActorModel, LanguageModel
+
+
+class CountrySchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str
+    name: str | None
 
 
 class GenreSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
 
 
 class ActorSchema(BaseModel):
-    id: int
-    name: str
+    model_config = ConfigDict(from_attributes=True)
 
-
-class CountrySchema(BaseModel):
     id: int
-    code: str
     name: str
 
 
 class LanguageSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
-
-
-class MovieCreateSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
-
-    name: str
-    date: date
-    score: float
-    overview: str
-    status: str
-    budget: float
-    revenue: float
-
-    country: str
-    genres: List[GenreSchema]
-    actors: List[ActorSchema]
-    languages: List[LanguageSchema]
 
 
 class MovieDetailSchema(BaseModel):
@@ -56,28 +46,46 @@ class MovieDetailSchema(BaseModel):
     status: MovieStatusEnum
     budget: float
     revenue: float
+
     country: CountrySchema
-    genres: List[GenreSchema]
-    actors: List[ActorSchema]
-    languages: List[LanguageSchema]
+    genres: list[GenreSchema]
+    actors: list[ActorSchema]
+    languages: list[LanguageSchema]
+
+
+class MovieCreateSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+
+    name: str
+    date: date
+    score: float
+    overview: str
+    status: MovieStatusEnum
+    budget: float
+    revenue: float
+
+    country: str
+    genres: list[str]
+    actors: list[str]
+    languages: list[str]
 
 
 class MovieUpdateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    name: Optional[str]
-    date: Optional[date]
-    score: Optional[float]
-    overview: Optional[str]
-    status: Optional[MovieStatusEnum]
-    budget: Optional[float]
-    revenue: Optional[float]
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
 
 
 class MovieListSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    id = int
+    id: int
     name: str
     date: date
     score: float
@@ -85,8 +93,8 @@ class MovieListSchema(BaseModel):
 
 
 class MovieListResponseSchema(BaseModel):
-    movies: List[MovieListSchema]
-    prev_page: Optional[int]
-    next_page: Optional[int]
+    movies: list[MovieListSchema]
+    prev_page: Optional[str]
+    next_page: Optional[str]
     total_pages: int
     total_items: int
