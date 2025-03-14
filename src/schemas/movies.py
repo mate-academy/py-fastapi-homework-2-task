@@ -1,10 +1,13 @@
 import decimal
+
 from datetime import date, datetime, timedelta
+
 from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, PositiveFloat
 
 from database.models import MovieStatusEnum
+
 
 Id = Annotated[int, Field(ge=1)]
 Name = Annotated[str, Field(max_length=255)]
