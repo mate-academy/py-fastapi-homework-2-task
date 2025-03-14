@@ -1,1 +1,84 @@
-# Write your code here
+from pydantic import BaseModel, ConfigDict, Field
+import datetime
+
+
+class MovieCreateSchema(BaseModel):
+    name: str = Field(..., max_length=255)
+    date: datetime.date
+    score: float = Field(..., ge=0, le=100)
+    overview: str
+    status: str
+    budget: float = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
+    country: str
+    genres: list[str] = []
+    actors: list[str] = []
+    languages: list[str] = []
+
+
+class MovieUpdateSchema(BaseModel):
+    name: str | None = Field(None, max_length=255)
+    date: datetime.date | None = None
+    score: float | None = Field(None, ge=0, le=100)
+    overview: str | None = None
+    status: str | None = None
+    budget: float | None = Field(None, ge=0)
+    revenue: float | None = Field(None, ge=0)
+
+
+class CountrySchema(BaseModel):
+    id: int | None
+    code: str
+    name: str | None
+
+
+class GenreSchema(BaseModel):
+    id: int | None
+    name: str
+
+
+class ActorSchema(BaseModel):
+    id: int | None
+    name: str
+
+
+class LanguageSchema(BaseModel):
+    id: int | None
+    name: str
+
+
+class MovieDetailResponseSchema(BaseModel):
+    id: int
+    name: str
+    date: datetime.date
+    score: float
+    overview: str
+    status: str
+    budget: float
+    revenue: float
+    country: CountrySchema
+    genres: list[GenreSchema]
+    actors: list[ActorSchema]
+    languages: list[LanguageSchema]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieListItemSchema(BaseModel):
+    id: int
+    name: str
+    date: datetime.date
+    score: float
+    overview: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieListResponseSchema(BaseModel):
+    movies: list[MovieListItemSchema]
+    prev_page: str | None
+    next_page: str | None
+    total_pages: int
+    total_items: int
+
+    model_config = ConfigDict(from_attributes=True)
