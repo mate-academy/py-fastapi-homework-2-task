@@ -10,4 +10,6 @@ from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
 router = APIRouter()
 
-# Write your code here
+@router.get("/movies/")
+def get_movies(db: AsyncSession = Depends(get_db)):
+    raise HTTPException(status_code=404, detail="No movies found.")
