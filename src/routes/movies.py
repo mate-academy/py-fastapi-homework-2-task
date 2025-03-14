@@ -1,15 +1,15 @@
 import math
 from typing import Type
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.openapi.models import Response
-from sqlalchemy import select, func, extract
+from sqlalchemy import extract
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, Session
-from routes.utils import get_or_404
-from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from sqlalchemy.orm import Session
+from src.routes.utils import get_or_404
+from src.database.models import MovieModel
+from database import get_db
+from src.database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from starlette import status
 
 from src.schemas.movies import MovieCreateSchema, MovieListResponseSchema, MovieDetailSchema, MovieUpdateSchema
