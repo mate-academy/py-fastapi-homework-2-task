@@ -1,103 +1,88 @@
-from pydantic import BaseModel, constr, confloat
 from datetime import date
+from pydantic import BaseModel, Field
 
 from database.models import MovieStatusEnum
 
 
-class GenreModelSchema(BaseModel):
+class CountrySchema(BaseModel):
+    id: int
+    code: str
+    name: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class GenreSchema(BaseModel):
     id: int
     name: str
-    movies: list["MovieDetailSchema"]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-class ActorModelSchema(BaseModel):
+class ActorSchema(BaseModel):
     id: int
     name: str
-    movies: list["MovieDetailSchema"]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-class CountryModelSchema(BaseModel):
-    id: int
-    code: constr(max_length=3)
-    name: str
-    movies: list["MovieDetailSchema"]
-
-    class Config:
-        from_attributes = True
-
-
-class LanguageModelSchema(BaseModel):
+class LanguageSchema(BaseModel):
     id: int
     name: str
-    movies: list["MovieDetailSchema"]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-class MovieBaseSchema(BaseModel):
+class MovieDetailSchema(BaseModel):
+    id: int
     name: str
     date: date
-    score: confloat(ge=0, le=100)
+    score: float
     overview: str
     status: MovieStatusEnum
     budget: float
     revenue: float
     country_id: int
 
-    country: "CountryModelSchema"
-    genres: list["GenreModelSchema"]
-    actors: list["ActorModelSchema"]
-    languages: list["LanguageModelSchema"]
+    country: CountrySchema
+    genres: list[GenreSchema]
+    actors: list[ActorSchema]
+    languages: list[LanguageSchema]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
     date: date
-    score: confloat(ge=0, le=100)
+    score: float
     overview: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MovieListResponseSchema(BaseModel):
     movies: list[MovieListItemSchema]
     prev_page: str | None = None
     next_page: str | None = None
-    total_items: int
     total_pages: int
+    total_items: int
 
-    class Config:
-        from_attributes = True
-
-
-class MovieDetailSchema(MovieBaseSchema):
-    id: int
+    model_config = {"from_attributes": True}
 
 
 class MovieCreateSchema(BaseModel):
     name: str
     date: date
-    score: confloat(ge=0, le=100)
+    score: float
     overview: str
     status: MovieStatusEnum
     budget: float
     revenue: float
-    country: str
+    country: str | None
     genres: list[str]
     actors: list[str]
     languages: list[str]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
