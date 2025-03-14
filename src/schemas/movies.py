@@ -90,5 +90,3 @@ class MovieListResponseSchema(BaseModel):
     next_page: Optional[int]
     total_pages: int
     total_items: int
-
-

@@ -101,7 +101,8 @@ def create_movie(movie: MovieCreateSchema, db: Session = Depends(get_db)) -> Mov
 
     if db_movie:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=f"Movie with this name: {movie.name} and this date: {movie.date} already exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Movie with this name: {movie.name} and this date: {movie.date} already exists"
         )
 
     country = db.query(CountryModel).filter(CountryModel.name == movie.country).first()
