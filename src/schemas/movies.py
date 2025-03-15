@@ -122,7 +122,7 @@ class MovieCreateSchema(BaseModel):
 
 class MovieUpdateSchema(BaseModel):
     name: str | None = None
-    date: date = None
+    date: Optional[date] = None
     score: float | None = None
     overview: str | None = None
     status: MovieStatusEnum | None = None
