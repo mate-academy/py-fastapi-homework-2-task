@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+)
 from sqlalchemy import desc, select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,13 +96,13 @@ async def create_movie(
         movie: MovieCreateSchema,
         db: AsyncSession = Depends(get_db)
 ) -> MovieDetailSchema | HTTPException:
-    if_exist = await db.execute(
+    movie_exist_check = await db.execute(
         select(MovieModel).where(
             (MovieModel.name == movie.name),
             (MovieModel.date == movie.date),
         )
     )
-    if if_exist.scalars().first():
+    if movie_exist_check.scalars().first():
         raise HTTPException(
             status_code=409,
             detail=(

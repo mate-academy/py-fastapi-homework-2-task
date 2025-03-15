@@ -1,7 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from database.models import MovieStatusEnum
 
@@ -53,6 +53,16 @@ class MovieDetailSchema(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("date")
+    def validate_data(cls, value: date) -> date:
+        current_year = datetime.now().year
+        if value.year > current_year + 1:
+            raise ValueError(
+                f"The year in 'date' cannot be greater "
+                f"than {current_year + 1}."
+            )
+        return value
+
 
 class MovieListItemSchema(BaseModel):
     id: int
@@ -75,24 +85,44 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieCreateSchema(BaseModel):
-    name: str
+    name: str = Field(..., max_length=255)
     date: date
-    score: float
+    score: float = Field(..., ge=0, le=100)
     overview: str
     status: MovieStatusEnum
-    budget: float
-    revenue: float
-    country: str | None
+    budget: float = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
+    country: str = Field(..., max_length=3)
     genres: list[str]
     actors: list[str]
     languages: list[str]
 
     model_config = {"from_attributes": True}
 
+    @field_validator("date")
+    def validate_data(cls, value: date) -> date:
+        current_year = datetime.now().year
+        if value.year > current_year + 1:
+            raise ValueError(
+                f"The year in 'date' cannot be greater "
+                f"than {current_year + 1}."
+            )
+        return value
+
+    @field_validator("country", mode="before")
+    def normalize_country(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator(
+        "genres", "actors", "languages", mode="before"
+    )
+    def set_name_capitalized(cls, values: list[str]) -> list[str]:
+        return [word.title()for word in values]
+
 
 class MovieUpdateSchema(BaseModel):
     name: str | None = None
-    date: Optional[date] = None
+    date: date = None
     score: float | None = None
     overview: str | None = None
     status: MovieStatusEnum | None = None
