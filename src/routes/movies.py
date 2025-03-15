@@ -1,17 +1,16 @@
 from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, desc, delete
+from sqlalchemy import select, func, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 from starlette import status
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum, MoviesLanguagesModel, \
-    ActorsMoviesModel, MoviesGenresModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
-from schemas.movies import MovieCreateSchema
+from schemas.movies import MovieCreateSchema, MovieUpdateSchema
 
 router = APIRouter()
 
@@ -84,6 +83,7 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post(
     "/movies/",
+    status_code=201,
     response_model=MovieDetailSchema,
 )
 async def create_movie(
@@ -164,6 +164,30 @@ async def create_movie(
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
+@router.patch(
+    "/movies/{movie_id}/",
+    status_code=status.HTTP_200_OK,
+)
+async def update_movie(
+        movie_id: int,
+        new_movie: MovieUpdateSchema,
+        db: AsyncSession = Depends(get_db)
+):
+    movie = await db.get(MovieModel, movie_id)
+
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+
+    update_data = new_movie.model_dump(exclude_unset=True, exclude_none=True)
+    for key, value in update_data.items():
+        setattr(movie, key, value)
+
+    await db.commit()
+    await db.refresh(movie)
+
+    return {"detail": "Movie updated successfully."}
+
+
 @router.delete("/movies/{movie_id}/",
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_movie(
@@ -175,7 +199,7 @@ async def delete_movie(
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Movie with ID {movie_id} not found"
+            detail="Movie with the given ID was not found."
         )
 
     await db.delete(movie)

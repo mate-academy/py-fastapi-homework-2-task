@@ -96,3 +96,29 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     def normalize_list_fields(cls, value: list[str]) -> list[str]:
         return [item.title() for item in value]
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[datetime.date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("score")
+    @classmethod
+    def validate_score(cls, score_value: Optional[float]) -> Optional[float]:
+        if score_value is not None and not (0 <= score_value <= 100):
+            raise ValueError("Score must be between 0 and 100")
+        return score_value
+
+    @field_validator("budget", "revenue")
+    @classmethod
+    def validate_non_negative(cls, value: Optional[float]) -> Optional[float]:
+        if value is not None and value < 0:
+            raise ValueError("Budget and revenue must be non-negative")
+        return value
