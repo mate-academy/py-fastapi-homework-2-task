@@ -43,9 +43,7 @@ async def get_movies(
     )
     result = await db.execute(query)
     movies = [
-        MovieListItemSchema.model_validate(
-            {k: v for k, v in mov.__dict__.items() if not k.startswith("_")}
-        )
+        MovieListItemSchema.model_validate(mov)
         for mov in result.scalars().all()
     ]
 
