@@ -1,13 +1,15 @@
 from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
+from starlette import status
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum, MoviesLanguagesModel, \
+    ActorsMoviesModel, MoviesGenresModel
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
 from schemas.movies import MovieCreateSchema
 
@@ -161,3 +163,22 @@ async def create_movie(
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
+
+@router.delete("/movies/{movie_id}/",
+               status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db)
+):
+    movie = await db.get(MovieModel, movie_id)
+
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Movie with ID {movie_id} not found"
+        )
+
+    await db.delete(movie)
+    await db.commit()
+
+    return
