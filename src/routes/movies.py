@@ -94,7 +94,7 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
                 status_code=422, detail="Invalid status value in the database."
             )
 
-        return MovieDetailSchema.model_validate(movie, from_attributes=True)
+    return MovieDetailSchema.model_validate(movie, from_attributes=True)
 
 
 @router.post(
