@@ -7,7 +7,7 @@ from database.models import MovieStatusEnum
 
 
 class CountrySchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     code: str
     name: str | None = None
 
@@ -15,28 +15,28 @@ class CountrySchema(BaseModel):
 
 
 class GenreSchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     name: str
 
     model_config = {"from_attributes": True}
 
 
 class ActorSchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     name: str
 
     model_config = {"from_attributes": True}
 
 
 class LanguageSchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     name: str
 
     model_config = {"from_attributes": True}
 
 
 class MovieDetailSchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     name: str
     date: date
     score: float
@@ -54,7 +54,7 @@ class MovieDetailSchema(BaseModel):
     model_config = {"from_attributes": True}
 
     @field_validator("date")
-    def validate_data(cls, value: date) -> date:
+    def validate_data(cls, value: date) -> date:  # noqa N805
         current_year = datetime.now().year
         if value.year > current_year + 1:
             raise ValueError(
@@ -65,7 +65,7 @@ class MovieDetailSchema(BaseModel):
 
 
 class MovieListItemSchema(BaseModel):
-    id: int
+    id: int     # noqa VNE003
     name: str
     date: date
     score: float
@@ -100,7 +100,7 @@ class MovieCreateSchema(BaseModel):
     model_config = {"from_attributes": True}
 
     @field_validator("date")
-    def validate_data(cls, value: date) -> date:
+    def validate_data(cls, value: date) -> date:  # noqa N805
         current_year = datetime.now().year
         if value.year > current_year + 1:
             raise ValueError(
@@ -110,13 +110,13 @@ class MovieCreateSchema(BaseModel):
         return value
 
     @field_validator("country", mode="before")
-    def normalize_country(cls, value: str) -> str:
+    def normalize_country(cls, value: str) -> str:  # noqa N805
         return value.upper()
 
     @field_validator(
         "genres", "actors", "languages", mode="before"
     )
-    def set_name_capitalized(cls, values: list[str]) -> list[str]:
+    def set_name_capitalized(cls, values: list[str]) -> list[str]:  # noqa N805
         return [word.title()for word in values]
 
 

@@ -171,10 +171,10 @@ async def create_movie(
             status=movie.status,
             budget=movie.budget,
             revenue=movie.revenue,
-            country = country,
-            genres = genres,
-            actors = actors,
-            languages = languages
+            country=country,
+            genres=genres,
+            actors=actors,
+            languages=languages
         )
 
         db.add(new_movie)
@@ -219,7 +219,7 @@ async def update_movie(
 @router.delete("/movies/{movie_id}/", status_code=204)
 async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(MovieModel).where(
-        MovieModel.id==movie_id
+        MovieModel.id == movie_id
     ))
     movie = result.scalars().first()
 
