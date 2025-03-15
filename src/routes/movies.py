@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas import MovieListResponseSchema, MovieListItemSchema
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
+from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
 
 router = APIRouter()
 
@@ -53,3 +53,37 @@ async def get_movies(
         total_pages=total_pages,
         total_items=total_items,
     )
+
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
+    # query = (select(MovieModel)
+    #          .where(MovieModel.id == movie_id)
+    #          .options(selectinload(MovieModel.country)))
+    # result = await db.execute(query)
+    # movie = result.scalar_one_or_none()
+    #
+    # if movie is None:
+    #     raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    #
+    # return MovieDetailSchema(**movie)
+    result = await db.execute(
+        select(MovieModel)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages),
+        )
+        .where(MovieModel.id == movie_id)
+    )
+    movie = result.scalars().first()
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    if isinstance(movie.status, str):
+        try:
+            movie.status = MovieStatusEnum(movie.status)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid status value in the database.")
+
+        return MovieDetailSchema.model_validate(movie, from_attributes=True)
