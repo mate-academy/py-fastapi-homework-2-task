@@ -9,6 +9,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
+from schemas.movies import MovieCreateSchema
 
 router = APIRouter()
 
@@ -57,16 +58,6 @@ async def get_movies(
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
-    # query = (select(MovieModel)
-    #          .where(MovieModel.id == movie_id)
-    #          .options(selectinload(MovieModel.country)))
-    # result = await db.execute(query)
-    # movie = result.scalar_one_or_none()
-    #
-    # if movie is None:
-    #     raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    #
-    # return MovieDetailSchema(**movie)
     result = await db.execute(
         select(MovieModel)
         .options(
@@ -87,3 +78,86 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
             raise HTTPException(status_code=422, detail="Invalid status value in the database.")
 
         return MovieDetailSchema.model_validate(movie, from_attributes=True)
+
+
+@router.post(
+    "/movies/",
+    response_model=MovieDetailSchema,
+)
+async def create_movie(
+        movie_data: MovieCreateSchema,
+        db: AsyncSession = Depends(get_db)
+) -> MovieDetailSchema:
+    existing_stmt = select(MovieModel).where(
+        (MovieModel.name == movie_data.name),
+        (MovieModel.date == movie_data.date)
+    )
+    existing_result = await db.execute(existing_stmt)
+    existing_movie = existing_result.scalars().first()
+    if existing_movie:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"A movie with the name '{movie_data.name}' and release date "
+                f"'{movie_data.date}' already exists."
+            )
+        )
+    try:
+        country_stmt = select(CountryModel).where(CountryModel.code == movie_data.country)
+        country_result = await db.execute(country_stmt)
+        country = country_result.scalars().first()
+        if not country:
+            country = CountryModel(code=movie_data.country)
+            db.add(country)
+            await db.flush()
+        genres = []
+        for genre_name in movie_data.genres:
+            genre_stmt = select(GenreModel).where(GenreModel.name == genre_name)
+            genre_result = await db.execute(genre_stmt)
+            genre = genre_result.scalars().first()
+            if not genre:
+                genre = GenreModel(name=genre_name)
+                db.add(genre)
+                await db.flush()
+            genres.append(genre)
+        actors = []
+        for actor_name in movie_data.actors:
+            actor_stmt = select(ActorModel).where(ActorModel.name == actor_name)
+            actor_result = await db.execute(actor_stmt)
+            actor = actor_result.scalars().first()
+            if not actor:
+                actor = ActorModel(name=actor_name)
+                db.add(actor)
+                await db.flush()
+            actors.append(actor)
+        languages = []
+        for language_name in movie_data.languages:
+            lang_stmt = select(LanguageModel).where(LanguageModel.name == language_name)
+            lang_result = await db.execute(lang_stmt)
+            language = lang_result.scalars().first()
+            if not language:
+                language = LanguageModel(name=language_name)
+                db.add(language)
+                await db.flush()
+            languages.append(language)
+        movie = MovieModel(
+            name=movie_data.name,
+            date=movie_data.date,
+            score=movie_data.score,
+            overview=movie_data.overview,
+            status=movie_data.status,
+            budget=movie_data.budget,
+            revenue=movie_data.revenue,
+            country=country,
+            genres=genres,
+            actors=actors,
+            languages=languages,
+        )
+        db.add(movie)
+        await db.commit()
+        await db.refresh(movie, ["genres", "actors", "languages"])
+        return MovieDetailSchema.model_validate(movie)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
