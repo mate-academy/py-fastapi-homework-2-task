@@ -11,7 +11,7 @@ Name = Annotated[str, Field(max_length=255)]
 Code = Annotated[str, Field(max_length=3)]
 Score = Annotated[float, Field(ge=0)]
 Budget = Annotated[decimal.Decimal, Field(ge=0, decimal_places=2, max_digits=15)]
-Revenue = Annotated[float, Field(ge=0)]
+Revenue = Annotated[decimal.Decimal, Field(ge=0, decimal_places=2, max_digits=15)]
 
 
 class Genre(BaseModel):
@@ -82,8 +82,8 @@ class MovieListResponseSchema(BaseModel):
 class MovieDetailSchema(BaseMovieSchema):
     id: Id
     status: MovieStatusEnum
-    budget: float
-    revenue: float
+    budget: decimal.Decimal
+    revenue: decimal.Decimal
     country: Country
     genres: List[Genre]
     actors: List[Actor]
@@ -148,7 +148,7 @@ class MovieUpdateSchema(BaseModel):
 
     @field_validator("budget", "revenue")
     @classmethod
-    def validate_non_negative(cls, value: Optional[float]) -> Optional[float]:
+    def validate_non_negative(cls, value: Optional[decimal.Decimal]) -> Optional[decimal.Decimal]:
         if value is not None and value < 0:
             raise ValueError("Budget and revenue must be non-negative")
         return value
