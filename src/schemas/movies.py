@@ -1,4 +1,3 @@
-import decimal
 from datetime import datetime, timedelta, date
 
 from pydantic import BaseModel, Field, field_validator
@@ -10,8 +9,8 @@ Id = Annotated[int, Field(ge=1)]
 Name = Annotated[str, Field(max_length=255)]
 Code = Annotated[str, Field(max_length=3)]
 Score = Annotated[float, Field(ge=0)]
-Budget = Annotated[decimal.Decimal, Field(ge=0, decimal_places=2, max_digits=15)]
-Revenue = Annotated[decimal.Decimal, Field(ge=0, decimal_places=2, max_digits=15)]
+Budget = Annotated[float, Field(ge=0, decimal_places=2,  max_digits=15)]
+Revenue = Annotated[float, Field(ge=0, decimal_places=2, max_digits=15)]
 
 
 class Genre(BaseModel):
@@ -82,8 +81,8 @@ class MovieListResponseSchema(BaseModel):
 class MovieDetailSchema(BaseMovieSchema):
     id: Id
     status: MovieStatusEnum
-    budget: decimal.Decimal
-    revenue: decimal.Decimal
+    budget: float
+    revenue: float
     country: Country
     genres: List[Genre]
     actors: List[Actor]
@@ -112,8 +111,8 @@ class MovieCreateResponseSchema(BaseMovieSchema):
 
 class MovieCreateSchema(BaseMovieSchema):
     status: MovieStatusEnum
-    budget: Budget
-    revenue: Revenue
+    budget: float
+    revenue: float
     country: Code
     genres: List[str]
     actors: List[str]
@@ -148,7 +147,7 @@ class MovieUpdateSchema(BaseModel):
 
     @field_validator("budget", "revenue")
     @classmethod
-    def validate_non_negative(cls, value: Optional[decimal.Decimal]) -> Optional[decimal.Decimal]:
+    def validate_non_negative(cls, value: Optional[float]) -> Optional[float]:
         if value is not None and value < 0:
             raise ValueError("Budget and revenue must be non-negative")
         return value
