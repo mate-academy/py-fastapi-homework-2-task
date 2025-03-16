@@ -31,7 +31,7 @@ async def get_movies(
     if not total_items:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    total_pages = (total_items + per_page - 1) // per_page
+    total_pages = ceil(total_items / per_page)
     if page > total_pages:
         raise HTTPException(
             status_code=404,
@@ -46,8 +46,8 @@ async def get_movies(
     )
     movies_list = movies.all()
 
-    prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
-    next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
+    prev_page = f"/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
+    next_page = f"/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
     return {
         "movies": movies_list,
