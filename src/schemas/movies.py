@@ -9,7 +9,7 @@ Id = Annotated[int, Field(ge=1)]
 Name = Annotated[str, Field(max_length=255)]
 Code = Annotated[str, Field(max_length=3)]
 Score = Annotated[float, Field(ge=0)]
-Budget = Annotated[float, Field(ge=0, decimal_places=2,  max_digits=15)]
+Budget = Annotated[float, Field(ge=0, decimal_places=2, max_digits=15)]
 Revenue = Annotated[float, Field(ge=0, decimal_places=2, max_digits=15)]
 
 
