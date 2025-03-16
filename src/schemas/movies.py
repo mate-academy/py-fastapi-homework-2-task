@@ -26,7 +26,7 @@ class MovieListItemSchema(BaseModel):
     name: str
     date: str
     score: float
-    overwiew: str
+    overview: str
 
 
 class MovieListResponseSchema(MovieBase):

@@ -6,7 +6,7 @@ from database.models import MovieModel as Movie
 from schemas.movies import MovieCreate, MovieUpdate
 
 
-def get_movie(movie_id: int, db: AsyncSession):
+async def get_movie(movie_id: int, db: AsyncSession):
     res = db.execute(select(Movie).where(Movie.id == movie_id))
     movie = res.scalar_one_or_none()
     if movie is None:
@@ -16,7 +16,7 @@ def get_movie(movie_id: int, db: AsyncSession):
     return movie
 
 
-def get_movies(db: AsyncSession):
+async def get_movies(db: AsyncSession):
     res = db.execute(select(Movie))
     movies = res.scalars().all()
     return movies
@@ -47,7 +47,7 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
         )
 
     db_movie = Movie(**movie.dict())
-    db.add(db_movie)
+    await db.add(db_movie)
     await db.commit()
     await db.refresh(db_movie)
     return db_movie
@@ -124,11 +124,11 @@ async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
     return db_movie
 
 
-def delete_movie(db: AsyncSession, movie_id: int):
+async def delete_movie(db: AsyncSession, movie_id: int):
     res = db.execute(select(Movie).where(Movie.id == movie_id))
     movie = res.scalar_one_or_none()
     if movie is None:
         return None
-    db.delete(movie)
-    db.commit()
+    await db.delete(movie)
+    await db.commit()
     return Response(status_code=204)
