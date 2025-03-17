@@ -82,7 +82,8 @@ async def create_movie(
         if existing_movie.scalars().first():
             raise HTTPException(
                 status_code=409,
-                detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
+                detail=f"A movie with the name '{movie_data.name}' and release date "
+                       f"'{movie_data.date}' already exists."
             )
         country = await db.execute(
             select(CountryModel).filter(CountryModel.code == movie_data.country)
