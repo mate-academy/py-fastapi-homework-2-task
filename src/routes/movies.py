@@ -8,6 +8,7 @@ from sqlalchemy import desc, select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError, DataError
 
 from database import get_db, MovieModel
 from database.models import (
@@ -90,8 +91,6 @@ async def get_list_of_movies(
         total_items=total_items
     )
 
-
-from sqlalchemy.exc import IntegrityError, DataError
 
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movie(
