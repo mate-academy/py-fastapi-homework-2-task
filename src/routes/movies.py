@@ -91,11 +91,13 @@ async def get_list_of_movies(
     )
 
 
+from sqlalchemy.exc import IntegrityError, DataError
+
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movie(
         movie: MovieCreateSchema,
         db: AsyncSession = Depends(get_db)
-) -> MovieDetailSchema | HTTPException:
+) -> MovieDetailSchema:
     movie_exist_check = await db.execute(
         select(MovieModel).where(
             (MovieModel.name == movie.name),
@@ -121,46 +123,38 @@ async def create_movie(
             db.add(country)
             await db.flush()
 
-        genres = []
+        genres, actors, languages = [], [], []
         for genre_name in movie.genres:
             genre = await db.execute(
                 select(GenreModel).where(GenreModel.name == genre_name)
             )
             genre = genre.scalars().first()
-
             if not genre:
                 genre = GenreModel(name=genre_name)
                 db.add(genre)
                 await db.flush()
-
             genres.append(genre)
 
-        actors = []
         for actor_name in movie.actors:
             actor = await db.execute(
                 select(ActorModel).where(ActorModel.name == actor_name)
             )
             actor = actor.scalars().first()
-
             if not actor:
                 actor = ActorModel(name=actor_name)
                 db.add(actor)
                 await db.flush()
-
             actors.append(actor)
 
-        languages = []
         for language_name in movie.languages:
             language = await db.execute(
                 select(LanguageModel).where(LanguageModel.name == language_name)
             )
             language = language.scalars().first()
-
             if not language:
                 language = LanguageModel(name=language_name)
                 db.add(language)
                 await db.flush()
-
             languages.append(language)
 
         new_movie = MovieModel(
@@ -179,55 +173,23 @@ async def create_movie(
 
         db.add(new_movie)
         await db.commit()
-        await db.refresh(new_movie, [
-            "genres", "actors", "languages"
-        ])
+        await db.refresh(new_movie)
         return MovieDetailSchema.model_validate(new_movie)
-    except IntegrityError:
+
+    except IntegrityError as e:
         await db.rollback()
+        if "UNIQUE" in str(e.orig):
+            raise HTTPException(
+                status_code=409,
+                detail="Movie with the same name and release date already exists."
+            )
         raise HTTPException(status_code=400, detail="Invalid input data.")
-
-
-@router.patch("/movies/{movie_id}/")
-async def update_movie(
-        movie_id: int,
-        movie: MovieUpdateSchema,
-        db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
-    movie_to_update = result.scalars().first()
-
-    if not movie_to_update:
-        raise HTTPException(
-            status_code=404,
-            detail="Movie with the given ID was not found."
-        )
-
-    try:
-        for field, value in movie.model_dump(exclude_unset=True).items():
-            setattr(movie_to_update, field, value)
-
-        await db.commit()
-        await db.refresh(movie_to_update)
-        return {"detail": "Movie updated successfully."}
-
-    except IntegrityError:
+    except DataError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
-
-
-@router.delete("/movies/{movie_id}/", status_code=204)
-async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(MovieModel).where(
-        MovieModel.id == movie_id
-    ))
-    movie = result.scalars().first()
-
-    if not movie:
+        raise HTTPException(status_code=400, detail="Invalid data format.")
+    except Exception as e:
+        await db.rollback()
         raise HTTPException(
-            status_code=404,
-            detail="Movie with the given ID was not found."
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
         )
-
-    await db.delete(movie)
-    await db.commit()
