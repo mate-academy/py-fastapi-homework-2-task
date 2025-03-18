@@ -8,7 +8,7 @@ from sqlalchemy import desc, select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import DataError
 
 from database import get_db, MovieModel
 from database.models import (
