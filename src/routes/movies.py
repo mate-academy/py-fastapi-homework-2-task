@@ -167,6 +167,7 @@ async def movie_delete(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"detail": "Movie delete successfully"}
 
+
 @router.patch("/movies/{movie_id}/")
 async def movie_update(
         movie_id: int,
