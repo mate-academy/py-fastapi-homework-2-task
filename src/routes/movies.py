@@ -165,8 +165,7 @@ async def movie_delete(movie_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await db.delete(movie)
     await db.commit()
-    return result
-
+    return {"detail": "Movie delete successfully"}
 
 @router.patch("/movies/{movie_id}/")
 async def movie_update(
