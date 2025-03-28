@@ -82,7 +82,6 @@ class MovieListItemSchema(BaseModel):
         from_attributes = True
 
 
-
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieListItemSchema]
     prev_page: Optional[str]
@@ -110,7 +109,6 @@ class MovieCreateSchema(BaseModel):
     class Config:
         from_attributes = True
 
-
     @field_validator("country", mode="before")
     @classmethod
     def normalize_country(cls, value: str) -> str:
@@ -133,4 +131,3 @@ class MovieUpdateSchema(BaseModel):
 
     class Config:
         from_attributes = True
-
