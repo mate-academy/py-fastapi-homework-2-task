@@ -21,8 +21,31 @@ alembic = "^1.14.0"
 aiosqlite = "^0.21.0"
 asyncpg = "^0.30.0"
 pytest-asyncio = "^0.25.3"
+iso3166 = "^2.1.1"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 79  # Максимальна довжина рядка (за замовчуванням 88)
+target-version = ["py38", "py39", "py310"]  # Цільові версії Python
+skip-string-normalization = false  # Не змінювати лапки у рядках (True/False "")
+include = '\.pyi?$'  # Включити лише Python файли (.py, .pyi)
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations/
+)/
+'''  # Шаблон для виключення файлів
+# pip install flake8-pyproject
