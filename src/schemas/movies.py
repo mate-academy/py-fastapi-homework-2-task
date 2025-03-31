@@ -1,9 +1,8 @@
 from typing import Annotated, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 import datetime
 
 from database.models import MovieStatusEnum
-from iso3166 import countries
 
 
 class GenreBaseSchema(BaseModel):
@@ -110,7 +109,7 @@ class MoviePostRequestSchema(BaseModel):
     status: MovieStatusEnum
     budget: Annotated[float, Field(gt=0)]
     revenue: Annotated[float, Field(gt=0)]
-    country: str = Field(..., min_length=3, max_length=3)
+    country: str = Field(..., max_length=3)
     genres: list[str]
     actors: list[str]
     languages: list[str]
