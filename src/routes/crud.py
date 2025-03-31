@@ -1,9 +1,6 @@
-from typing import Type
-from database.models import Base, ActorModel, MovieModel
-from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from iso3166 import countries as iso
+
 
 from schemas import (
     GenreCreateSchema,
@@ -72,29 +69,3 @@ async def create_language(
     await db.refresh(new_language)
     print(f"{new_language} created")
     return new_language
-
-
-# async def create_movie(
-#     db: AsyncSession, movie: LanguageCreateSchema
-# ) -> GenreModel:
-#     country = iso.get(movie["country"])
-#     movie["country"] = (country.name,)
-#     new_movie = CountryModel(**movie.model_dump())
-#
-#     db.add(new_movie)
-#     await db.commit()
-#     await db.refresh(new_movie)
-#     print(f"{new_movie} created")
-#     return new_movie
-
-
-# async def create_instance(
-#     db: AsyncSession,
-#     instance: BaseModel,
-#     model: Type[Base],
-# ) -> Base:
-#     new_instance = model(**instance.model_dump())
-#     db.add(new_instance)
-#     await db.commit()
-#     await db.refresh(new_instance)
-#     return new_instance

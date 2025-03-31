@@ -3,12 +3,13 @@ from typing import Annotated
 from iso3166 import countries as iso
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
+from fastapi.responses import JSONResponse
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-
+from pydantic import ValidationError
 
 from database import get_db, MovieModel
 
@@ -19,7 +20,7 @@ from schemas import (
     MovieListResponseSchema,
     MoviePostRequestSchema,
     MoviePostResponseSchema,
-    MovieUpdateSchema,
+    MovieUpdateRequestSchema,
     GenreCreateSchema,
     LanguageCreateSchema,
     CountryCreateSchema,
@@ -90,24 +91,28 @@ async def get_movies(
     return response
 
 
-@router.post("/movies/", response_model=MoviePostResponseSchema)
+@router.post(
+    "/movies/",
+    # response_model=MoviePostResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_movie(
-    movie_data: MoviePostRequestSchema,  # це об'єкт, який автоматично буде створено з JSON-запиту, використовуючи Pydantic-схему MoviePostRequestSchema.
+    movie_data: MoviePostRequestSchema,
     db: AsyncSession = Depends(get_db),
 ):
-    payload = (
-        movie_data.model_dump()
-    )  # Перетвори Pydantic-об'єкт movie_data у словник (dict).
+    payload = movie_data.model_dump()
 
     # Checking ISO 3166-1 alpha-3 country code and storing country name and code
+    #
     try:
         country = iso.get(payload["country"])
         if country.alpha3 != payload["country"]:
             raise KeyError
         payload["country"] = {"code": country.alpha3, "name": country.name}
     except KeyError:
-        raise ValueError(
-            f"{payload['country']} is not a valid ISO 3166-1 alpha-3 country code"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{payload['country']} is not a valid ISO 3166-1 alpha-3 country code",
         )
 
     # pull data from database
@@ -167,79 +172,118 @@ async def add_movie(
     payload["country"] = country.scalar_one_or_none()
 
     print("start creating movie")
-    new_movie = MovieModel(**payload)
-    print(new_movie)
+    stmt = select(
+        exists().where(
+            (MovieModel.name == payload["name"])
+            & (MovieModel.date == payload["date"])
+        )
+    )
+    result = await db.execute(stmt)
+
+    if result.scalar():
+        name = payload["name"]
+        date = payload["date"]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A movie with the name '{name}' and release date '{date}' already exists.",
+        )
+
+    new_movie = MovieModel(**payload)  # ORM instance
+
     db.add(new_movie)
     await db.commit()
-    return new_movie
+    response_schema = MoviePostResponseSchema.model_validate(
+        new_movie, from_attributes=True
+    )  # Pydantic instance
+    response = response_schema.model_dump(mode="json")  # dict instance
+    return JSONResponse(content=response, status_code=status.HTTP_201_CREATED)
 
 
-#
-# @router.get("/movies/{movie_id}", response_model=MovieDetailSchema)
-# async def get_movie_detail(
-#     db: AsyncSession = Depends(get_db),
-#     movie_id: int = Path(
-#         ge=1,
-#     ),
-# ):
-#     query = (
-#         select(MovieModel)
-#         .where(MovieModel.id == movie_id)
-#         .options(
-#             selectinload(MovieModel.actors),
-#             selectinload(MovieModel.genres),
-#             selectinload(MovieModel.languages),
-#             joinedload(MovieModel.country),
-#         )
-#     )
-#
-#     result = await db.execute(query)
-#     movie = result.scalar_one_or_none()
-#     if not movie:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found."
-#         )
-#     return MovieDetailSchema.from_attributes(movie)
-#
-#
-# @router.delete("/movies/{movie_id}", status_code=status.HTTP_204_NO_CONTENT)
-# async def delete_movie(
-#     db: AsyncSession = Depends(get_db),
-#     movie_id: int = Path(
-#         ge=1,
-#     ),
-# ):
-#     query = select(MovieModel).where(MovieModel.id == movie_id)
-#
-#     result = await db.execute(query)
-#     movie = result.scalar_one_or_none()
-#     if not movie:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Movie with the given ID was not found.",
-#         )
-#     await db.delete(movie)
-#     await db.commit()
-#
-#
-# @router.put("/movies/{movie_id}", status_code=status.HTTP_200_OK)
-# async def update_movie(
-#     movie_update_data: MovieUpdateSchema,
-#     db: AsyncSession = Depends(get_db),
-#     movie_id: int = Path(
-#         ge=1,
-#     ),
-# ):
-#     movie = await get_movie(db, movie_id)
-#
-#     if not movie:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found."
-#         )
-#     for attr in movie_update_data.keys():
-#         setattr(movie, attr, movie_update_data[attr])
-#     await db.update(movie)
-#     await db.commit()
-#     await db.refresh(movie)
-#
-#     return MovieDetailSchema.from_attributes(movie)
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie_detail(
+    db: AsyncSession = Depends(get_db),
+    movie_id: int = Path(ge=1),
+):
+    query = (
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+        .options(
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.languages),
+            joinedload(MovieModel.country),
+        )
+    )
+
+    result = await db.execute(query)
+    movie = result.scalar_one_or_none()
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
+    return movie
+
+
+@router.delete(
+    "/movies/{movie_id}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_movie(
+    db: AsyncSession = Depends(get_db),
+    movie_id: int = Path(
+        ge=1,
+    ),
+):
+    query = select(MovieModel).where(MovieModel.id == movie_id)
+
+    result = await db.execute(query)
+    movie = result.scalar_one_or_none()
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
+    await db.delete(movie)
+    await db.commit()
+
+
+@router.patch("/movies/{movie_id}/", status_code=status.HTTP_200_OK)
+async def update_movie(
+    movie_update_data: MovieUpdateRequestSchema,
+    db: AsyncSession = Depends(get_db),
+    movie_id: int = Path(
+        ge=1,
+    ),
+):
+
+    # @router.patch("/movies/{movie_id}", status_code=status.HTTP_200_OK)
+    # async def update_movie(
+    #     movie_update_data_dict: dict,
+    #     db: AsyncSession = Depends(get_db),
+    #     movie_id: int = Path(
+    #         ge=1,
+    #     ),
+    # ):
+    #     try:
+    #         movie_update_data = MovieUpdateRequestSchema(**movie_update_data_dict)
+    #     except ValidationError:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail="Invalid input data.",
+    #         )
+
+    movie = await get_movie(db, movie_id)
+
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
+    update_data = movie_update_data.model_dump(exclude_unset=True)
+
+    for attr, value in update_data.items():
+        setattr(movie, attr, value)
+    await db.commit()
+    await db.refresh(movie)
+    return {"detail": "Movie updated successfully."}

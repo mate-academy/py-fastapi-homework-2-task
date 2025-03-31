@@ -13,6 +13,8 @@ class GenreBaseSchema(BaseModel):
 class GenreSchema(GenreBaseSchema):
     id: int
 
+    model_config = {"from_attributes": True}
+
 
 class GenreCreateSchema(GenreBaseSchema):
     pass
@@ -29,6 +31,8 @@ class ActorCreateSchema(ActorBaseSchema):
 class ActorSchema(ActorBaseSchema):
     id: int
 
+    model_config = {"from_attributes": True}
+
 
 class LanguageBaseSchema(BaseModel):
     name: Annotated[str, Field(..., max_length=255)]
@@ -41,14 +45,14 @@ class LanguageCreateSchema(LanguageBaseSchema):
 class LanguageSchema(LanguageBaseSchema):
     id: int
 
-
-# class CountryBaseSchema(BaseModel):
-#     code: Annotated[str, Field(..., max_length=3)]
-#     name: Annotated[Optional[str], Field(max_length=255)] = None
+    model_config = {"from_attributes": True}
 
 
 class CountryCreateSchema(BaseModel):
-    code: Annotated[str, Field(..., max_length=3)]
+    code: Annotated[
+        str,
+        Field(..., max_length=3),
+    ]
     name: Annotated[Optional[str], Field(max_length=255)] = None
 
 
@@ -57,6 +61,8 @@ class CountrySchema(BaseModel):
     code: Annotated[str, Field(..., max_length=3)]
     name: Annotated[Optional[str], Field(max_length=255)] = None
 
+    model_config = {"from_attributes": True}
+
 
 class MovieDetailSchema(BaseModel):
     id: int
@@ -64,7 +70,7 @@ class MovieDetailSchema(BaseModel):
     date: datetime.date
     score: float
     overview: str
-    status: MovieStatusEnum  #######
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema
@@ -109,25 +115,6 @@ class MoviePostRequestSchema(BaseModel):
     actors: list[str]
     languages: list[str]
 
-    # Валідація для country за допомогою iso3166
-
-    # @field_validator("country", mode="after")
-    # @classmethod
-    # def validate_country_code(cls, name):
-    #     # Перевіряємо, чи є код країни в списку підтримуваних ISO 3166-1 alpha-3
-    #     try:
-    #         country = countries.get(name)
-    #         if country.alpha3 != name:
-    #             raise KeyError
-    #         return country.alpha3, country.name
-    #     except KeyError:
-    #         raise ValueError(
-    #             f"{name} is not a valid ISO 3166-1 alpha-3 country code"
-    #         )
-
-
-########################################################################
-
 
 class MoviePostResponseSchema(BaseModel):
     id: int
@@ -146,9 +133,6 @@ class MoviePostResponseSchema(BaseModel):
     model_config = {"from_attributes": True}
 
 
-############################################################################
-
-
 class MovieCreateSchema(BaseModel):
     id: int
     name: str
@@ -160,11 +144,11 @@ class MovieCreateSchema(BaseModel):
     revenue: float
 
 
-class MovieUpdateSchema(BaseModel):
-    name: str
-    date: datetime.date
-    score: float
-    overview: str
-    status: MovieStatusEnum
-    budget: Annotated[float, Field(gt=0)]
-    revenue: float
+class MovieUpdateRequestSchema(BaseModel):
+    name: Annotated[Optional[str], Field(max_length=255)] = None
+    date: Annotated[Optional[datetime.date], Field(le=max_date.date())] = None
+    score: Annotated[Optional[float], Field(ge=0, le=100)] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Annotated[Optional[float], Field(gt=0)] = None
+    revenue: Annotated[Optional[float], Field(gt=0)] = None

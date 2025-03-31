@@ -2,7 +2,7 @@ from schemas.movies import (
     MovieDetailSchema,
     MovieListResponseSchema,
     MovieListItemSchema,
-    MovieUpdateSchema,
+    MovieUpdateRequestSchema,
     MoviePostRequestSchema,
     GenreCreateSchema,
     GenreSchema,
