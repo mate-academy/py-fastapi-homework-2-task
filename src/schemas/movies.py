@@ -121,7 +121,7 @@ class MoviePostResponseSchema(BaseModel):
     date: datetime.date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema
@@ -130,17 +130,6 @@ class MoviePostResponseSchema(BaseModel):
     languages: list[LanguageSchema]
 
     model_config = {"from_attributes": True}
-
-
-class MovieCreateSchema(BaseModel):
-    id: int
-    name: str
-    date: datetime.date
-    score: float
-    overview: str
-    status: str
-    budget: float
-    revenue: float
 
 
 class MovieUpdateRequestSchema(BaseModel):

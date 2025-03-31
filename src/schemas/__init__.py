@@ -11,5 +11,4 @@ from schemas.movies import (
     CountryCreateSchema,
     CountrySchema,
     MoviePostResponseSchema,
-    MovieCreateSchema,
 )

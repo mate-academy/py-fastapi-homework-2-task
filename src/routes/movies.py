@@ -1,6 +1,7 @@
 from math import ceil
 from typing import Annotated
-from iso3166 import countries as iso
+
+# from iso3166 import countries as iso
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
 from fastapi.responses import JSONResponse
@@ -9,7 +10,6 @@ from sqlalchemy import select, func, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-from pydantic import ValidationError
 
 from database import get_db, MovieModel
 
@@ -26,7 +26,6 @@ from schemas import (
     CountryCreateSchema,
     ActorCreateSchema,
 )
-
 
 from .crud import (
     create_genre,
