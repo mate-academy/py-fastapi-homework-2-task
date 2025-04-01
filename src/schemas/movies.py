@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from re import M
 from typing import Optional, List
 
 from pydantic import BaseModel, Field, field_validator
@@ -120,7 +121,7 @@ class MovieCreateSchema(BaseModel):
         return [item.title() for item in value]
 
 
-class MovieUpdateSchema(BaseModel):
+class MovieUpdateSchema(MovieBaseSchema):
     name: Optional[str] = None
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0, le=100)

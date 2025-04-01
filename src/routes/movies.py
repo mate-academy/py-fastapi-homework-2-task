@@ -227,9 +227,6 @@ async def get_movie_by_id(
 @router.delete(
     "/movies/{movie_id}/",
     responses={
-        204: {
-            "description": "Movie deleted successfully."
-        },
         404: {
             "description": "Movie not found.",
             "content": {
@@ -257,8 +254,6 @@ async def delete_movie(
 
     await db.delete(movie)
     await db.commit()
-
-    return {"detail": "Movie deleted successfully."}
 
 
 @router.patch(
