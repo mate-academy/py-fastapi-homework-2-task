@@ -173,3 +173,5 @@ cython_debug/
 
 # Project temp files
 bool
+.python-version
+.pylintrc
