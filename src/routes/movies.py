@@ -30,8 +30,6 @@ async def get_movies(
 
     total_movies = await db.scalar(select(func.count(MovieModel.id)))
     total_pages = (total_movies + per_page - 1) // per_page
-    if not total_movies:
-        raise HTTPException(status_code=404, detail="No movies found.")
 
     if not total_movies:
         raise HTTPException(status_code=404, detail="No movies found.")
@@ -68,7 +66,7 @@ async def create_movie(db: AsyncSession = Depends(get_db), movie: MovieCreateSch
             status_code=status.HTTP_409_CONFLICT
         )
     try:
-        country_query = select(CountryModel).filter(CountryModel.name == movie.country)
+        country_query = select(CountryModel).filter(CountryModel.code == movie.country)
         result = await db.execute(country_query)
         country_exists = result.scalar_one_or_none()
         if not country_exists:
