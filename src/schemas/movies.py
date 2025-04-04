@@ -141,3 +141,13 @@ class MovieListItemSchema(BaseModel):
     score: float
     overview: str
 
+
+class MovieListResponseSchema(BaseModel):
+    movies: List[MovieListItemSchema]
+    prev_page: Optional[str]
+    next_page: Optional[str]
+    total_pages: int
+    total_items: int
+
+    class Config:
+        from_attributes = True
