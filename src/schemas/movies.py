@@ -133,3 +133,11 @@ class MovieDetailSchema(MovieBase):
     class Config:
         from_attributes = True
 
+
+class MovieListItemSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+
