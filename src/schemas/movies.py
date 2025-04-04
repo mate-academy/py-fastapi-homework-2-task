@@ -75,3 +75,18 @@ class LanguageDetailResponse(BaseModel):
     id: int
     name: str
 
+
+class MovieBase(BaseModel):
+    name: str
+    date: date
+    score: float = Field(ge=0, le=100, description="Score value must be between 0 and 100")
+    overview: str
+    status: MovieStatusEnum
+    budget: float = Field(ge=0, description="Budget must be greater than or equal to 0")
+    revenue: float = Field(ge=0, description="Revenue must be greater than or equal to 0")
+    country_id: int
+    country: CountryDetail
+    genres: list["GenreDetail"]
+    actors: list["ActorDetail"]
+    languages: list["LanguageDetail"]
+
