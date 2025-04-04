@@ -90,3 +90,17 @@ class MovieBase(BaseModel):
     actors: list["ActorDetail"]
     languages: list["LanguageDetail"]
 
+
+class MoviePutRequest(BaseModel):
+    name: str
+    date: date
+    score: float = Field(ge=0, le=100, description="Score value must be between 0 and 100")
+    overview: str
+    status: MovieStatusEnum
+    budget: float = Field(ge=0, description="Budget must be greater than or equal to 0")
+    revenue: float = Field(ge=0, description="Revenue must be greater than or equal to 0")
+    country: str = Field(pattern=r"^[A-Z]{2}$", description="Must be a valid ISO 3166-1 alpha-3 country code")
+    genres: list[str]
+    actors: list[str]
+    languages: list[str]
+
