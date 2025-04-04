@@ -58,3 +58,20 @@ class CountryDetailResponse(BaseModel):
     code: str
     name: Optional[str] = None
 
+
+class LanguageModel(BaseModel):
+    name: str
+    movies: list["MovieDetailSchema"]
+
+
+class LanguageDetail(LanguageModel):
+    int: int
+
+    class Config:
+        from_attributes = True
+
+
+class LanguageDetailResponse(BaseModel):
+    id: int
+    name: str
+
