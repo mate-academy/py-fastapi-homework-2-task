@@ -104,3 +104,32 @@ class MoviePutRequest(BaseModel):
     actors: list[str]
     languages: list[str]
 
+
+class MoviePostResponseSchema(BaseModel):
+    name: str
+    date: date
+    score: float = Field(ge=0, le=100, description="Score value must be between 0 and 100")
+    overview: str
+    status: MovieStatusEnum
+    budget: float = Field(ge=0, description="Budget must be greater than or equal to 0")
+    revenue: float = Field(ge=0, description="Revenue must be greater than or equal to 0")
+    country_id: int
+    country: CountryDetailResponse
+    genres: list["GenreDetailResponse"]
+    actors: list["ActorDetailResponse"]
+    languages: list["LanguageDetailResponse"]
+
+    class Config:
+
+        json_encoders = {
+            MovieStatusEnum: lambda e: e.value,
+            date: lambda v: v.isoformat()
+        }
+
+
+class MovieDetailSchema(MovieBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
