@@ -18,12 +18,11 @@ from database.models import (
     MovieStatusEnum,
 )
 from schemas.movies import (
-    MovieListResponse,
-    MovieShortResponse,
-    MovieFullResponse,
+    MovieDetailSchema,
+    MovieListResponseSchema,
+    MovieListItemSchema,
     MovieCreateSchema,
     MovieUpdateSchema,
-    MovieUpdateResponse,
 )
 
 router = APIRouter(prefix="/movies", tags=["movies"])
@@ -48,7 +47,7 @@ async def get_or_create_model(
     return items
 
 
-@router.get("/", response_model=MovieListResponse)
+@router.get("/", response_model=MovieListResponseSchema)
 async def get_movies_list(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
@@ -69,7 +68,7 @@ async def get_movies_list(
     total_pages = ceil(total_items / per_page)
 
     return {
-        "movies": [MovieShortResponse.model_validate(movie) for movie in movies],
+        "movies": [MovieListItemSchema.model_validate(movie) for movie in movies],
         "prev_page": (
             f"/theater/movies/?page={page - 1}&per_page={per_page}"
             if page > 1
@@ -85,21 +84,16 @@ async def get_movies_list(
     }
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=MovieFullResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=MovieDetailSchema)
 async def create_movie(
     movie_data: MovieCreateSchema, db: AsyncSession = Depends(get_db)
 ):
-    release_date = (
-        movie_data.date
-        if isinstance(movie_data.date, date)
-        else date.fromisoformat(movie_data.date)
+    existing_stmt = select(MovieModel).where(
+        (MovieModel.name == movie_data.name),
+        (MovieModel.date == movie_data.date)
     )
-
-    existing_movie = await db.scalar(
-        select(MovieModel)
-        .where(MovieModel.name == movie_data.name)
-        .where(MovieModel.date == release_date)
-    )
+    existing_result = await db.execute(existing_stmt)
+    existing_movie = existing_result.scalars().first()
 
     if existing_movie:
         raise HTTPException(
@@ -111,9 +105,14 @@ async def create_movie(
         **movie_data.model_dump(exclude={"genres", "actors", "languages", "country"})
     )
 
-    movie.country = (
-        await get_or_create_model(db, CountryModel, "code", [movie_data.country])
-    )[0]
+    country = await db.scalar(
+        select(CountryModel).where(CountryModel.code == movie_data.country.upper())
+    )
+    if not country:
+        country = CountryModel(code=movie_data.country.upper())
+        db.add(country)
+    movie.country = country
+
     movie.genres = await get_or_create_model(db, GenreModel, "name", movie_data.genres)
     movie.actors = await get_or_create_model(db, ActorModel, "name", movie_data.actors)
     movie.languages = await get_or_create_model(
@@ -122,12 +121,12 @@ async def create_movie(
 
     db.add(movie)
     await db.commit()
-    await db.refresh(movie)
+    await db.refresh(movie, ["genres", "actors", "languages"])
     return movie
 
 
-@router.get("/{movie_id}/", response_model=MovieFullResponse)
-async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
+@router.get("/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.scalar(
         select(MovieModel)
         .where(MovieModel.id == movie_id)
@@ -145,11 +144,20 @@ async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.patch("/{movie_id}/", response_model=MovieUpdateResponse)
+@router.patch("/{movie_id}/")
 async def update_movie(
     movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
 ):
-    movie = await db.get(MovieModel, movie_id)
+    movie = await db.scalar(
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages),
+        )
+    )
     if not movie:
         raise HTTPException(
             status_code=404, detail="Movie with the given ID was not found."
