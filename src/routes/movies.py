@@ -21,6 +21,7 @@ from schemas.movies import (
     MoviePostResponseSchema,
     MovieDetailResponseSchema,
     MoviePatchResponseSchema,
+    MovieListItemSchema,
 )
 
 router = APIRouter()
@@ -58,13 +59,22 @@ async def get_movies(
     next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}"\
         if page < total_pages else None
 
-    return {
-        "movies": movies,
-        "prev_page": prev_page,
-        "next_page": next_page,
-        "total_pages": total_pages,
-        "total_items": total_items
-    }
+    response_data = MovieListResponseSchema(
+        movies=[MovieListItemSchema(
+            id=movie.id,
+            name=movie.name,
+            date=movie.date.isoformat(),
+            score=movie.score,
+            overview=movie.overview)
+            for movie in movies
+        ],
+        prev_page=prev_page,
+        next_page=next_page,
+        total_pages=total_pages,
+        total_items=total_items
+    ).dict()
+
+    return JSONResponse(response_data, status_code=200)
 
 
 @router.post("/movies/")
