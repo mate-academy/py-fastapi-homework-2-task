@@ -149,7 +149,7 @@ async def submit_score(
     response_data = MoviePostResponseSchema(
             id=new_movie.id,
             name=new_movie.name,
-            date=new_movie.date,
+            date=new_movie.date.isoformat(),
             score=new_movie.score,
             overview=new_movie.overview,
             status=new_movie.status,
