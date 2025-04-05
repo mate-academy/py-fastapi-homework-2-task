@@ -499,7 +499,7 @@ async def test_update_movie_success(client, db_session, seed_database):
         "score": 95.0,
     }
 
-    response = await client.patch(f"/api/v1/theater/movies/{movie_id}/", json=update_data)
+    response = await client.patch(f"/api/v1/theater/movies/{movie_id}", json=update_data)
     assert response.status_code == 200, f"Expected status code 200, but got {response.status_code}"
 
     response_data = response.json()
@@ -528,7 +528,7 @@ async def test_update_movie_not_found(client):
         "score": 90.0
     }
 
-    response = await client.patch(f"/api/v1/theater/movies/{non_existent_id}/", json=update_data)
+    response = await client.patch(f"/api/v1/theater/movies/{non_existent_id}", json=update_data)
     assert response.status_code == 404, f"Expected status code 404, but got {response.status_code}"
 
     response_data = response.json()
