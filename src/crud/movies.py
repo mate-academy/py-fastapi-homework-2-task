@@ -48,8 +48,10 @@ async def create_movie(db: AsyncSession, movie: MovieCreateSchema) -> MovieModel
     if result.scalars().first():
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie.name}' and \
-            release date '{movie.date}' already exists."
+            detail=(
+                f"A movie with the name '{movie.name}' and "
+                f"release date '{movie.date}' already exists."
+            )
         )
 
     movie_data = movie.model_dump(
