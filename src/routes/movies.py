@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse
 
 from database import get_db, MovieModel
@@ -53,9 +53,9 @@ async def get_movies(
     result = await db.execute(query)
     movies = result.scalars().all()
 
-    prev_page = f"/movies/?page={page - 1}&per_page={per_page}"\
+    prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}"\
         if page > 1 else None
-    next_page = f"/movies/?page={page + 1}&per_page={per_page}"\
+    next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}"\
         if page < total_pages else None
 
     return {
