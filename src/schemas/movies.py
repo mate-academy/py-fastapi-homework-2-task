@@ -137,7 +137,7 @@ class MovieDetailSchema(MovieBase):
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
-    date: date
+    date: str
     score: float
     overview: str
 
