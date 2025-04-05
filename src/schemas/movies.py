@@ -149,3 +149,25 @@ class MovieListResponseSchema(BaseModel):
     total_pages: int
     total_items: int
 
+
+class MoviePatchResponseSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Score value must be between 0 and 100"
+    )
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description="Budget must be greater than or equal to 0"
+    )
+    revenue: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description="Revenue must be greater than or equal to 0"
+    )
