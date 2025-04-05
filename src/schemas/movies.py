@@ -1,18 +1,16 @@
-from datetime import date, datetime
-from re import M
-from typing import Optional, List, Union
+from datetime import date
+from typing import Optional, List
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict
 
-from database.models import MovieStatusEnum, CountryModel
+from database.models import MovieStatusEnum
 
 
 class LanguageSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountrySchema(BaseModel):
@@ -20,24 +18,21 @@ class CountrySchema(BaseModel):
     code: str
     name: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GenreSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActorSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieBaseSchema(BaseModel):
@@ -49,8 +44,7 @@ class MovieBaseSchema(BaseModel):
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieDetailSchema(MovieBaseSchema):
@@ -60,8 +54,7 @@ class MovieDetailSchema(MovieBaseSchema):
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListItemSchema(BaseModel):
@@ -71,8 +64,7 @@ class MovieListItemSchema(BaseModel):
     score: float
     overview: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListResponseSchema(BaseModel):
@@ -82,8 +74,7 @@ class MovieListResponseSchema(BaseModel):
     total_pages: int
     total_items: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieCreateSchema(BaseModel):
@@ -99,8 +90,7 @@ class MovieCreateSchema(BaseModel):
     actors: List[str]
     languages: List[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieUpdateSchema(MovieBaseSchema):
@@ -112,5 +102,4 @@ class MovieUpdateSchema(MovieBaseSchema):
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

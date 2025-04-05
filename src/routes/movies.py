@@ -1,9 +1,8 @@
-from datetime import date, timedelta
 from math import ceil
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, desc, or_, func
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +14,6 @@ from database.models import (
     GenreModel,
     ActorModel,
     LanguageModel,
-    MovieStatusEnum,
 )
 from schemas.movies import (
     MovieDetailSchema,
@@ -111,6 +109,8 @@ async def create_movie(
     if not country:
         country = CountryModel(code=movie_data.country.upper())
         db.add(country)
+        await db.flush()
+
     movie.country = country
 
     movie.genres = await get_or_create_model(db, GenreModel, "name", movie_data.genres)
@@ -120,6 +120,7 @@ async def create_movie(
     )
 
     db.add(movie)
+    await db.flush()
     await db.commit()
     await db.refresh(movie, ["genres", "actors", "languages"])
     return movie
