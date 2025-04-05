@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from starlette.responses import JSONResponse
@@ -48,7 +48,8 @@ async def get_movies(
     if page > total_pages > 0:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    query = select(MovieModel).offset((page - 1) * per_page).limit(per_page)
+    query = (select(MovieModel).offset((page - 1) * per_page).limit(per_page).
+             order_by(desc(MovieModel.id)))
     result = await db.execute(query)
     movies = result.scalars().all()
 
