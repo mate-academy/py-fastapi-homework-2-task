@@ -120,6 +120,13 @@ class MoviePostResponseSchema(BaseModel):
     languages: list["LanguageDetailResponse"]
 
 
+class MovieDetailResponseSchema(MoviePostResponseSchema):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
 class MovieDetailSchema(MovieBase):
     id: int
 
