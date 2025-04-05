@@ -20,6 +20,7 @@ from schemas.movies import (
     LanguageDetailResponse,
     MoviePostResponseSchema,
     MovieDetailResponseSchema,
+    MoviePatchResponseSchema,
 )
 
 router = APIRouter()
@@ -250,3 +251,33 @@ async def delete_movie(
     await db.commit()
 
     return JSONResponse(content=None, status_code=204)
+
+
+@router.patch("/movies/{movie_id}/")
+async def patch_movie(
+        movie: MoviePatchResponseSchema,
+        movie_id: int,
+        db: AsyncSession = Depends(get_db)
+) -> JSONResponse:
+
+    result = await db.execute(
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+    )
+    db_movie = result.scalar_one_or_none()
+
+    if not db_movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    movie_data = movie.dict(exclude_unset=True)
+    for key, value in movie_data.items():
+        setattr(db_movie, key, value)
+
+    db.add(db_movie)
+    await db.commit()
+    await db.refresh(db_movie)
+
+    return JSONResponse(content={"detail": "Movie updated successfully."}, status_code=200)
