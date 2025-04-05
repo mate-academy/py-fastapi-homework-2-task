@@ -1,7 +1,7 @@
 """initial migration
 
 Revision ID: ea3a65568bd9
-Revises:
+Revises: None
 Create Date: 2025-01-02 21:07:13.284837
 
 """
@@ -11,6 +11,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
+from database.models import MovieStatusEnum
 
 # revision identifiers, used by Alembic.
 revision: str = "ea3a65568bd9"
@@ -57,13 +58,7 @@ def upgrade() -> None:
         sa.Column("date", sa.Date(), nullable=False),
         sa.Column("score", sa.Float(), nullable=False),
         sa.Column("overview", sa.Text(), nullable=False),
-        sa.Column(
-            "status",
-            sa.Enum(
-                "RELEASED", "POST_PRODUCTION", "IN_PRODUCTION", name="moviestatusenum"
-            ),
-            nullable=False,
-        ),
+        sa.Column("status", sa.Enum(MovieStatusEnum, name="moviestatusenum"), nullable=False),
         sa.Column("budget", sa.DECIMAL(precision=15, scale=2), nullable=False),
         sa.Column("revenue", sa.Float(), nullable=False),
         sa.Column("country_id", sa.Integer(), nullable=False),
