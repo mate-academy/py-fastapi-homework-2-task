@@ -119,13 +119,6 @@ class MoviePostResponseSchema(BaseModel):
     actors: list["ActorDetailResponse"]
     languages: list["LanguageDetailResponse"]
 
-    class Config:
-
-        json_encoders = {
-            MovieStatusEnum: lambda e: e.value,
-            date: lambda v: v.isoformat()
-        }
-
 
 class MovieDetailSchema(MovieBase):
     id: int
