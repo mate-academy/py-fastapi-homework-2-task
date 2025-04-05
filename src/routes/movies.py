@@ -196,7 +196,7 @@ async def movie_details(
         )
     )
     db_movie = result.scalar_one_or_none()
-    print(db_movie)
+
     if not db_movie:
         raise HTTPException(
             status_code=404,
@@ -228,3 +228,25 @@ async def movie_details(
         ).dict()
 
     return JSONResponse(content=response_data, status_code=200)
+
+
+@router.delete("/movies/{movie_id}/")
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db)
+) -> JSONResponse:
+
+    result = await db.execute(
+        select(MovieModel).
+        where(MovieModel.id == movie_id)
+    )
+    db_movie = result.scalar_one_or_none()
+    if not db_movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+    await db.delete(db_movie)
+    await db.commit()
+
+    return JSONResponse(content=None, status_code=204)
