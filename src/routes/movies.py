@@ -168,7 +168,6 @@ async def submit_score(
             languages=[LanguageDetailResponse(id=language.id, name=language.name)
                        for language in new_movie.languages]
         ).dict()
-    print(response_data)
 
     return JSONResponse(
         content=response_data,
