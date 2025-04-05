@@ -107,7 +107,7 @@ class MoviePutRequest(BaseModel):
 
 class MoviePostResponseSchema(BaseModel):
     name: str
-    date: date
+    date: str
     score: float = Field(ge=0, le=100, description="Score value must be between 0 and 100")
     overview: str
     status: MovieStatusEnum
