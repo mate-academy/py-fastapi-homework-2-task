@@ -18,7 +18,8 @@ from schemas.movies import (
     GenreDetailResponse,
     ActorDetailResponse,
     LanguageDetailResponse,
-    MoviePostResponseSchema
+    MoviePostResponseSchema,
+    MovieDetailResponseSchema,
 )
 
 router = APIRouter()
@@ -176,3 +177,54 @@ async def submit_score(
         ).dict()
 
     return JSONResponse(content=response_data, status_code=201)
+
+
+@router.get("/movies/{movie_id}/")
+async def movie_details(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db)
+) -> JSONResponse:
+
+    result = await db.execute(
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages)
+        )
+    )
+    db_movie = result.scalar_one_or_none()
+    print(db_movie)
+    if not db_movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    response_data = MovieDetailResponseSchema(
+            id=db_movie.id,
+            name=db_movie.name,
+            date=db_movie.date.isoformat(),
+            score=db_movie.score,
+            overview=db_movie.overview,
+            status=db_movie.status,
+            budget=db_movie.budget,
+            revenue=db_movie.revenue,
+            country_id=db_movie.country.id,
+            country=CountryDetailResponse(
+                id=db_movie.country.id,
+                code=db_movie.country.code,
+                name=db_movie.country.name
+            ),
+            genres=[GenreDetailResponse(id=genre.id, name=genre.name)
+                    for genre in db_movie.genres],
+            actors=[ActorDetailResponse(id=actor.id, name=actor.name)
+                    for actor in db_movie.actors],
+            languages=[LanguageDetailResponse(id=language.id,
+                                              name=language.name)
+                       for language in db_movie.languages]
+        ).dict()
+
+    return JSONResponse(content=response_data, status_code=200)
