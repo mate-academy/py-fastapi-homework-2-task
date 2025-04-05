@@ -26,7 +26,7 @@ def get_pagination_links(
         page: int,
         per_page: int,
         total_pages: int
-) -> tuple[str|None, str|None]:
+) -> tuple[str | None, str | None]:
     prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" \
         if page > 1 else None
     next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" \
