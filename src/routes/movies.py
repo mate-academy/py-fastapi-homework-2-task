@@ -165,28 +165,28 @@ async def submit_score(
     new_movie = result.scalar_one_or_none()
 
     response_data = MoviePostResponseSchema(
-            id=new_movie.id,
-            name=new_movie.name,
-            date=new_movie.date.isoformat(),
-            score=new_movie.score,
-            overview=new_movie.overview,
-            status=new_movie.status,
-            budget=new_movie.budget,
-            revenue=new_movie.revenue,
-            country_id=new_movie.country.id,
-            country=CountryDetailResponse(
-                id=new_movie.country.id,
-                code=new_movie.country.code,
-                name=new_movie.country.name
-            ),
-            genres=[GenreDetailResponse(id=genre.id, name=genre.name)
-                    for genre in new_movie.genres],
-            actors=[ActorDetailResponse(id=actor.id, name=actor.name)
-                    for actor in new_movie.actors],
-            languages=[LanguageDetailResponse(id=language.id,
-                                              name=language.name)
-                       for language in new_movie.languages]
-        ).dict()
+        id=new_movie.id,
+        name=new_movie.name,
+        date=new_movie.date.isoformat(),
+        score=new_movie.score,
+        overview=new_movie.overview,
+        status=new_movie.status,
+        budget=new_movie.budget,
+        revenue=new_movie.revenue,
+        country_id=new_movie.country.id,
+        country=CountryDetailResponse(
+            id=new_movie.country.id,
+            code=new_movie.country.code,
+            name=new_movie.country.name
+        ),
+        genres=[GenreDetailResponse(id=genre.id, name=genre.name)
+                for genre in new_movie.genres],
+        actors=[ActorDetailResponse(id=actor.id, name=actor.name)
+                for actor in new_movie.actors],
+        languages=[LanguageDetailResponse(id=language.id,
+                                          name=language.name)
+                   for language in new_movie.languages]
+    ).dict()
 
     return JSONResponse(content=response_data, status_code=201)
 
@@ -216,28 +216,28 @@ async def movie_details(
         )
 
     response_data = MovieDetailResponseSchema(
-            id=db_movie.id,
-            name=db_movie.name,
-            date=db_movie.date.isoformat(),
-            score=db_movie.score,
-            overview=db_movie.overview,
-            status=db_movie.status,
-            budget=db_movie.budget,
-            revenue=db_movie.revenue,
-            country_id=db_movie.country.id,
-            country=CountryDetailResponse(
-                id=db_movie.country.id,
-                code=db_movie.country.code,
-                name=db_movie.country.name
-            ),
-            genres=[GenreDetailResponse(id=genre.id, name=genre.name)
-                    for genre in db_movie.genres],
-            actors=[ActorDetailResponse(id=actor.id, name=actor.name)
-                    for actor in db_movie.actors],
-            languages=[LanguageDetailResponse(id=language.id,
-                                              name=language.name)
-                       for language in db_movie.languages]
-        ).dict()
+        id=db_movie.id,
+        name=db_movie.name,
+        date=db_movie.date.isoformat(),
+        score=db_movie.score,
+        overview=db_movie.overview,
+        status=db_movie.status,
+        budget=db_movie.budget,
+        revenue=db_movie.revenue,
+        country_id=db_movie.country.id,
+        country=CountryDetailResponse(
+            id=db_movie.country.id,
+            code=db_movie.country.code,
+            name=db_movie.country.name
+        ),
+        genres=[GenreDetailResponse(id=genre.id, name=genre.name)
+                for genre in db_movie.genres],
+        actors=[ActorDetailResponse(id=actor.id, name=actor.name)
+                for actor in db_movie.actors],
+        languages=[LanguageDetailResponse(id=language.id,
+                                          name=language.name)
+                   for language in db_movie.languages]
+    ).dict()
 
     return JSONResponse(content=response_data, status_code=200)
 
@@ -291,4 +291,6 @@ async def patch_movie(
     await db.commit()
     await db.refresh(db_movie)
 
-    return JSONResponse(content={"detail": "Movie updated successfully."}, status_code=200)
+    return JSONResponse(
+        content={"detail": "Movie updated successfully."},
+        status_code=200)
