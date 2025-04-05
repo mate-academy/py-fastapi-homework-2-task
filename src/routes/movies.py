@@ -27,7 +27,12 @@ router = APIRouter()
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movies(
         page: int = Query(1, ge=1, description="Page number (>=1)"),
-        per_page: int = Query(10, ge=1, le=20, description="Number of movies per page (1-20)"),
+        per_page: int = Query(
+            10,
+            ge=1,
+            le=20,
+            description="Number of movies per page (1-20)"
+        ),
         db: AsyncSession = Depends(get_db)
 ):
     total_count = await db.execute(select(MovieModel))
@@ -45,8 +50,10 @@ async def get_movies(
     result = await db.execute(query)
     movies = result.scalars().all()
 
-    prev_page = f"/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
-    next_page = f"/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
+    prev_page = f"/movies/?page={page - 1}&per_page={per_page}"\
+        if page > 1 else None
+    next_page = f"/movies/?page={page + 1}&per_page={per_page}"\
+        if page < total_pages else None
 
     return {
         "movies": movies,
@@ -77,7 +84,6 @@ async def submit_score(
     result = await db.execute(select(CountryModel).where(CountryModel.code == movie.country))
     db_country = result.scalar_one_or_none()
     if db_country is None:
-        # raise HTTPException(status_code=404, detail="Country not found")
         db_country = CountryModel(code=movie.country, name=movie.name)
         db.add(db_country)
         await db.commit()
@@ -87,7 +93,6 @@ async def submit_score(
         result = await db.execute(select(GenreModel).where(GenreModel.name == genre))
         db_genre = result.scalar_one_or_none()
         if db_genre is None:
-            # raise HTTPException(status_code=404, detail="Genre not found")
             db_genre = GenreModel(name=genre)
             db.add(db_genre)
             await db.commit()
@@ -98,7 +103,6 @@ async def submit_score(
         result = await db.execute(select(ActorModel).where(ActorModel.name == actor))
         db_actor = result.scalar_one_or_none()
         if db_actor is None:
-            # raise HTTPException(status_code=404, detail="Actor not found")
             db_actor = ActorModel(name=actor)
             db.add(db_actor)
             await db.commit()
@@ -106,10 +110,11 @@ async def submit_score(
 
     languages = []
     for language in movie.languages:
-        result = await db.execute(select(LanguageModel).where(LanguageModel.name == language))
+        result = await db.execute(
+            select(LanguageModel).where(LanguageModel.name == language)
+        )
         db_language = result.scalar_one_or_none()
         if db_language is None:
-            # raise HTTPException(status_code=404, detail="Language not found")
             db_language = LanguageModel(name=language)
             db.add(db_language)
             await db.commit()
@@ -165,11 +170,9 @@ async def submit_score(
                     for genre in new_movie.genres],
             actors=[ActorDetailResponse(id=actor.id, name=actor.name)
                     for actor in new_movie.actors],
-            languages=[LanguageDetailResponse(id=language.id, name=language.name)
+            languages=[LanguageDetailResponse(id=language.id,
+                                              name=language.name)
                        for language in new_movie.languages]
         ).dict()
 
-    return JSONResponse(
-        content=response_data,
-        status_code=201
-    )
+    return JSONResponse(content=response_data, status_code=201)
