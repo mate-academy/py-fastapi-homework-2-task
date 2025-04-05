@@ -5,13 +5,14 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_total_items(db:AsyncSession, model: Type[Any]) -> int:
+async def get_total_items(db: AsyncSession, model: Type[Any]) -> int:
     total_stmt = select(func.count(model.id))
     result = await db.execute(total_stmt)
     return result.scalar() or 0
 
+
 async def get_paginated_items(
-        db:AsyncSession,
+        db: AsyncSession,
         model: Type[Any],
         offset: int,
         limit: int
@@ -19,6 +20,7 @@ async def get_paginated_items(
     stmt = select(model).order_by(model.id.desc()).offset(offset).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
+
 
 def get_pagination_links(
         page: int,

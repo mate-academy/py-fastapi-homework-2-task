@@ -42,6 +42,7 @@ async def list_movies(
     response = await get_movies_paginated(db, page, per_page)
     return MovieListResponseSchema(**response)
 
+
 @router.post("/", response_model=MovieDetailSchema, status_code=201)
 async def create_movie_endpoint(
         movie: MovieCreateSchema,
