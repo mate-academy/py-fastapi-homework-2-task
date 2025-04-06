@@ -47,7 +47,7 @@ class CountryModel(BaseModel):
 
 
 class CountryDetail(CountryModel):
-    int: int
+    id: int
 
     class Config:
         from_attributes = True
