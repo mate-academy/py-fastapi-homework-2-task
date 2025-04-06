@@ -1,7 +1,7 @@
-from datetime import date
-from typing import List, Optional
+from datetime import date, timedelta, datetime
+from typing import List, Optional, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, constr
 
 from database.models import MovieStatusEnum
 
@@ -103,6 +103,16 @@ class MoviePutRequest(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def date_not_too_far_in_future(cls, value: date) -> date:
+        if isinstance(value, str):
+            value = datetime.strptime(value, "%Y-%m-%d").date()
+        max_allowed_date = date.today() + timedelta(days=365)
+        if value > max_allowed_date:
+            raise ValueError("Date must not be more than one year in the future.")
+        return value
 
 
 class MoviePostResponseSchema(BaseModel):
