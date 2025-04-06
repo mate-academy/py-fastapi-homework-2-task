@@ -65,7 +65,7 @@ class LanguageModel(BaseModel):
 
 
 class LanguageDetail(LanguageModel):
-    int: int
+    id: int
 
     class Config:
         from_attributes = True
