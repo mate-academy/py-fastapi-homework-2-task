@@ -99,7 +99,7 @@ class MoviePutRequest(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(ge=0, description="Budget must be greater than or equal to 0")
     revenue: float = Field(ge=0, description="Revenue must be greater than or equal to 0")
-    country: str = Field(pattern=r"^[A-Z]{2}$", description="Must be a valid ISO 3166-1 alpha-3 country code")
+    country: str = Field(pattern=r"^[A-Z]{2}$", description="Must be a valid ISO 3166-1 alpha-2 country code")
     genres: list[str]
     actors: list[str]
     languages: list[str]
