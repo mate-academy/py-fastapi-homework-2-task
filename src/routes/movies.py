@@ -97,7 +97,7 @@ async def submit_score(
     result = await db.execute(select(CountryModel).where(CountryModel.code == movie.country))
     db_country = result.scalar_one_or_none()
     if db_country is None:
-        db_country = CountryModel(code=movie.country, name=movie.name)
+        db_country = CountryModel(code=movie.country)
         db.add(db_country)
         await db.commit()
 
