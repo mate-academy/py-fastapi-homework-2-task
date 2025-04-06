@@ -92,7 +92,7 @@ class MovieBase(BaseModel):
 
 
 class MoviePutRequest(BaseModel):
-    name: str
+    name: constr(max_length=255)
     date: date
     score: float = Field(ge=0, le=100, description="Score value must be between 0 and 100")
     overview: str
