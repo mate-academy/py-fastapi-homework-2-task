@@ -4,7 +4,7 @@ FROM python:3.10
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=off
-ENV ALEMBIC_CONFIG = /usr/src/alembic/alembic.ini
+ENV ALEMBIC_CONFIG=/usr/src/alembic/alembic.ini
 
 # Installing dependencies
 RUN apt update && apt install -y \
