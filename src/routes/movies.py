@@ -245,7 +245,16 @@ async def update_movie(
             detail="Movie with the given ID was not found."
         )
 
-    for field, value in movie_data.model_dump(exclude_unset=True).items():
+    try:
+        update_fields = movie_data.model_dump(exclude_unset=True)
+        validated_data = MovieUpdate(**update_fields)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Validation failed: {e.errors()}"
+        )
+
+    for field, value in validated_data.model_dump(exclude_unset=True).items():
         setattr(movie, field, value)
 
     try:
