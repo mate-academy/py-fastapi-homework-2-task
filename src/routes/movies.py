@@ -99,7 +99,6 @@ async def submit_score(
     if db_country is None:
         db_country = CountryModel(code=movie.country)
         db.add(db_country)
-        await db.commit()
 
     genres = []
     for genre in movie.genres:
@@ -108,7 +107,6 @@ async def submit_score(
         if db_genre is None:
             db_genre = GenreModel(name=genre)
             db.add(db_genre)
-            await db.commit()
         genres.append(db_genre)
 
     actors = []
@@ -118,7 +116,6 @@ async def submit_score(
         if db_actor is None:
             db_actor = ActorModel(name=actor)
             db.add(db_actor)
-            await db.commit()
         actors.append(db_actor)
 
     languages = []
@@ -130,7 +127,6 @@ async def submit_score(
         if db_language is None:
             db_language = LanguageModel(name=language)
             db.add(db_language)
-            await db.commit()
         languages.append(db_language)
 
     new_movie = MovieModel(
