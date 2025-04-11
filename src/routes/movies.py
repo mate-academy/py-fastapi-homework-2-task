@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, , status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -60,9 +60,7 @@ async def create_film(
     db: AsyncSession = Depends(get_db),
 ):
     # Перевірка на дублікат
-    result = await db.execute(
-        select(MovieModel).where(MovieModel.name == movie.name, MovieModel.date == movie.date)
-    )
+    result = await db.execute(select(MovieModel).where(MovieModel.name == movie.name, MovieModel.date == movie.date))
     existing = result.scalar_one_or_none()
     if existing:
         raise HTTPException(
@@ -237,5 +235,6 @@ async def update_movie(
         setattr(movie, field, value)
 
     await db.commit()
+    await db.refresh(movie)
 
     return {"detail": "Movie updated successfully."}
