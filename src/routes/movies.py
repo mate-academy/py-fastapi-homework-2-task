@@ -1,20 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, FastAPI
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
+from fastapi import APIRouter, Depends, HTTPException, Query, , status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, Session, selectinload
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from database.session_postgresql import get_postgresql_db
-from schemas.movies import MovieListResponseSchema, MovieDetailListSchema, MovieCreateResponseSchema, \
-    MovieDetailResponseSchema
+from schemas.movies import (
+    MovieListResponseSchema,
+    MovieDetailListSchema,
+    MovieCreateResponseSchema,
+    MovieDetailResponseSchema,
+    MovieUpdateSchema
+)
 
 router = APIRouter()
 
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_all_films(
@@ -112,9 +112,12 @@ async def create_film(
     # Мови
     languages = []
     if movie.language_ids:
-        languages = (await db.execute(select(LanguageModel).where(LanguageModel.id.in_(movie.language_ids)))).scalars().all()
+        languages = (
+            await db.execute(select(LanguageModel).where(
+                LanguageModel.id.in_(movie.language_ids)))).scalars().all()
     for name in movie.language_names:
-        language = (await db.execute(select(LanguageModel).where(LanguageModel.name == name))).scalar_one_or_none()
+        language = (await db.execute(select(LanguageModel).where(
+            LanguageModel.name == name))).scalar_one_or_none()
         if not language:
             language = LanguageModel(name=name)
             db.add(language)
@@ -155,6 +158,7 @@ async def create_film(
 
     return movie_with_relations
 
+
 @router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
 async def get_movie_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -172,9 +176,6 @@ async def get_movie_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     return movie
-
-
-from fastapi import status
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
