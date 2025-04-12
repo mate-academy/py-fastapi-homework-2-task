@@ -66,6 +66,8 @@ class MovieListSchema(BaseModel):
     score: float
     overview: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class MovieDetailSchema(BaseModel):
     id: int
@@ -114,6 +116,7 @@ class MovieListItemSchema(BaseModel):
     total_pages: int
     total_items: int
 
+    model_config = ConfigDict(from_attributes=True)
 
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
