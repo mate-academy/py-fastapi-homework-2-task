@@ -118,6 +118,7 @@ class MovieListItemSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
     date: Optional[date] = None
