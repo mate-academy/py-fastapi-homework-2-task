@@ -76,14 +76,21 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
     result = await db.execute(stmt)
     movie = result.scalars().first()
     if movie:
-        raise HTTPException(status_code=409, detail=f"A movie with the name '{data.name}' and release date '{data.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{data.name}' "
+                   f"and release date '{data.date}' already exists."
+        )
 
     genres_obj = []
     actors_obj = []
     languages_obj = []
 
     # Country data link or create
-    result = await db.execute(select(CountryModel).where(CountryModel.code == data.country))
+    result = await db.execute(
+        select(CountryModel)
+        .where(CountryModel.code == data.country)
+    )
     country = result.scalar_one_or_none()
     if not country:
         country = CountryModel(code=data.country)
@@ -92,7 +99,10 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
 
     # Genres data link or create
     for genre_name in data.genres:
-        result = await db.execute(select(GenreModel).where(GenreModel.name == genre_name))
+        result = await db.execute(
+            select(GenreModel)
+            .where(GenreModel.name == genre_name)
+        )
         genre = result.scalar_one_or_none()
         if not genre:
             genre = GenreModel(name=genre_name)
@@ -102,7 +112,10 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
 
     # Actors data link or create
     for actor_name in data.actors:
-        result = await db.execute(select(ActorModel).where(ActorModel.name == actor_name))
+        result = await db.execute(
+            select(ActorModel)
+            .where(ActorModel.name == actor_name)
+        )
         actor = result.scalar_one_or_none()
         if not actor:
             actor = ActorModel(name=actor_name)
@@ -112,12 +125,16 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
 
     # Languages data link or create
     for language_name in data.languages:
-        result = await db.execute(select(LanguageModel).where(LanguageModel.name == language_name))
+        result = await db.execute(
+            select(LanguageModel)
+            .where(LanguageModel.name == language_name)
+        )
         language = result.scalar_one_or_none()
         if not language:
             language = LanguageModel(name=language_name)
             db.add(language)
             await db.flush()
+
         languages_obj.append(language)
 
     new_movie = MovieModel(
@@ -139,7 +156,11 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="The input data is invalid (e.g., missing required fields, invalid values).")
+        raise HTTPException(
+            status_code=400,
+            detail="The input data is invalid "
+                   "(e.g., missing required fields, invalid values)."
+        )
     else:
         await db.refresh(new_movie)
         stmt = (
@@ -175,7 +196,10 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(stmt)
     movie = result.scalars().first()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
 
     return movie
 
