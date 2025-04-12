@@ -2,7 +2,7 @@ import datetime
 from typing import List, Optional
 
 from database.models import MovieStatusEnum
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, Field
 
 
 class MovieBase(BaseModel):
@@ -10,14 +10,6 @@ class MovieBase(BaseModel):
     date: datetime.date
     score: float = Field(ge=0, le=100)
     overview: str
-
-    # @field_validator('date')
-    # def not_more_then_one_year(cls, v: datetime.date):
-    #     date_today = datetime.datetime.today().date()  # convert to date
-    #     date_in_one_year = date_today + datetime.timedelta(days=360)
-    #     if v > date_in_one_year:
-    #         raise ValueError("The date must not be more than one year in the future.")
-    #     return v
 
 
 class MovieListItemSchema(MovieBase):

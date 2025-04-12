@@ -1,12 +1,10 @@
 from math import ceil
 
-from distlib import logger
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import select, func, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-import pycountry
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
@@ -31,7 +29,6 @@ async def check_db_connection(db: AsyncSession = Depends(get_db)):
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movies(
         db: AsyncSession = Depends(get_db),
-        request: Request = None,
         page: int = Query(1, ge=1, description="Page number"),
         per_page: int = Query(10, ge=1, le=20, description="Items per page"),
 ):
@@ -89,7 +86,6 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
     result = await db.execute(select(CountryModel).where(CountryModel.code == data.country))
     country = result.scalar_one_or_none()
     if not country:
-        # country_name = pycountry.countries.get(alpha_3=data.country.upper())
         country = CountryModel(code=data.country)
         db.add(country)
         await db.flush()
@@ -177,7 +173,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     )
 
     result = await db.execute(stmt)
-    movie = movie = result.scalars().first()
+    movie = result.scalars().first()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
@@ -197,7 +193,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
         .where(MovieModel.id == movie_id)
     )
     result = await db.execute(stmt)
-    movie = movie = result.scalars().first()
+    movie = result.scalars().first()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
