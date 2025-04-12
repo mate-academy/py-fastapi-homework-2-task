@@ -74,7 +74,6 @@ class MovieDetailSchema(BaseModel):
     score: float
     overview: str
     status: MovieStatusEnum
-    budget: str
     budget: float = Field(gt=0)
     revenue: float = Field(gt=0)
     country: CountryDetailSchema

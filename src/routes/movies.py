@@ -35,13 +35,13 @@ async def get_movies(page: int = Query(1, ge=1), per_page: int = Query(10, ge=1,
     prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
-    return {
+    return MovieListItemSchema.model_validate({
         "movies": result,
         "prev_page": prev_page,
         "next_page": next_page,
         "total_pages": total_pages,
         "total_items": total_items,
-    }
+    })
 
 
 @router.post('/movies/', response_model=MovieDetailSchema, status_code=201)
