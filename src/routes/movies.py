@@ -10,7 +10,8 @@ from fastapi.responses import Response
 
 from database import get_db, MovieModel
 from database.models import GenreModel, ActorModel, LanguageModel, CountryModel
-from schemas.movies import MovieListItemSchema, MovieCreationSchema, MovieDetailSchema, MovieUpdateSchema
+from schemas.movies import MovieListItemSchema, MovieCreationSchema, MovieDetailSchema, MovieUpdateSchema, \
+    MovieListSchema
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ async def get_movies(page: int = Query(1, ge=1), per_page: int = Query(10, ge=1,
     next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
     return MovieListItemSchema.model_validate({
-        "movies": result,
+        "movies": [MovieListSchema.model_validate(movie) for movie in result],
         "prev_page": prev_page,
         "next_page": next_page,
         "total_pages": total_pages,
