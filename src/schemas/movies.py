@@ -1,1 +1,105 @@
-# Write your code here
+import datetime
+from typing import List, Optional
+
+from database.models import MovieStatusEnum
+from pydantic import BaseModel, field_validator, Field
+
+
+class MovieBase(BaseModel):
+    name: str = Field(None, max_length=255)
+    date: datetime.date
+    score: float = Field(ge=0, le=100)
+    overview: str
+
+    # @field_validator('date')
+    # def not_more_then_one_year(cls, v: datetime.date):
+    #     date_today = datetime.datetime.today().date()  # convert to date
+    #     date_in_one_year = date_today + datetime.timedelta(days=360)
+    #     if v > date_in_one_year:
+    #         raise ValueError("The date must not be more than one year in the future.")
+    #     return v
+
+
+class MovieListItemSchema(MovieBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class MovieListResponseSchema(BaseModel):
+    movies: List[MovieListItemSchema]
+    prev_page: Optional[str] = None
+    next_page: Optional[str] = None
+    total_pages: Optional[int] = None
+    total_items: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = Field(None, max_length=255)
+    date: Optional[datetime.date] = None
+    score: Optional[float] = Field(None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(None, ge=0)
+    revenue: Optional[float] = Field(None, ge=0)
+
+
+class MovieCreateSchema(MovieBase):
+    score: float
+    status: MovieStatusEnum
+    budget: float = Field(None, ge=0)
+    revenue: float = Field(None, ge=0)
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+
+class GenreReadSchema(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class ActorReadSchema(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class CountryReadSchema(BaseModel):
+    id: int
+    code: str
+    name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LanguageReadSchema(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class MovieDetailSchema(MovieListItemSchema):
+    status: MovieStatusEnum
+    budget: float
+    revenue: float
+    country: CountryReadSchema
+    genres: List[GenreReadSchema]
+    actors: List[ActorReadSchema]
+    languages: List[LanguageReadSchema]
+
+    class Config:
+        from_attributes = True
