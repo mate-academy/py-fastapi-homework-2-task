@@ -10,7 +10,7 @@ from schemas.movies import (
     MovieDetailListSchema,
     MovieCreateResponseSchema,
     MovieDetailResponseSchema,
-    MovieUpdateSchema
+    MovieUpdateSchema, MovieCreateRequestSchema
 )
 
 router = APIRouter()
@@ -29,7 +29,7 @@ async def get_all_films(
     if total_items == 0:
         raise HTTPException(
             status_code=404,
-            detail="No movies found for the specified page."
+            detail="No movies found."
         )
 
     total_pages = (total_items + per_page - 1) // per_page
@@ -38,7 +38,7 @@ async def get_all_films(
 
     # Виконуємо запит на отримання фільмів з пагінацією
     result = await db.execute(
-        select(MovieModel).offset((page - 1) * per_page).limit(per_page).order_by(MovieModel.id)
+        select(MovieModel).offset((page - 1) * per_page).limit(per_page).order_by(MovieModel.id.desc())
     )
     movies = result.scalars().all()
 
@@ -54,94 +54,74 @@ async def get_all_films(
     )
 
 
-@router.post("/movies/", response_model=MovieDetailResponseSchema, status_code=201)
-async def create_film(
-    movie: MovieCreateResponseSchema,
-    db: AsyncSession = Depends(get_db),
-):
-    # Перевірка на дублікат
-    result = await db.execute(select(MovieModel).where(MovieModel.name == movie.name, MovieModel.date == movie.date))
-    existing = result.scalar_one_or_none()
-    if existing:
+@router.post("/movies/", status_code=201, response_model=MovieCreateResponseSchema)
+async def create_movie(movie_data: MovieCreateRequestSchema, db: AsyncSession = Depends(get_db)):
+    existing_movie = await db.scalar(
+        select(MovieModel).where(
+            MovieModel.name == movie_data.name,
+            MovieModel.date == movie_data.date
+        )
+    )
+    if existing_movie:
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
         )
 
-    # Країна
-    country = None
-    if movie.country_id:
-        country = await db.get(CountryModel, movie.country_id)
-    elif movie.country_name:
-        result = await db.execute(select(CountryModel).where(CountryModel.name == movie.country_name))
-        country = result.scalar_one_or_none()
-        if not country:
-            country = CountryModel(name=movie.country_name)
-            db.add(country)
-            await db.flush()
-
+    # Get or create country by code
+    country = await db.scalar(select(CountryModel).where(CountryModel.code == movie_data.country))
     if not country:
-        raise HTTPException(status_code=400, detail="Country information is missing or invalid")
+        country = CountryModel(code=movie_data.country, name=movie_data.country)
+        db.add(country)
+        await db.flush()
 
-    # Жанри
+    # Get or create genres
     genres = []
-    if movie.genre_ids:
-        genres = (await db.execute(select(GenreModel).where(GenreModel.id.in_(movie.genre_ids)))).scalars().all()
-    for name in movie.genre_names:
-        genre = (await db.execute(select(GenreModel).where(GenreModel.name == name))).scalar_one_or_none()
+    for name in movie_data.genres:
+        genre = await db.scalar(select(GenreModel).where(GenreModel.name == name))
         if not genre:
             genre = GenreModel(name=name)
             db.add(genre)
             await db.flush()
         genres.append(genre)
 
-    # Актори
+    # Get or create actors
     actors = []
-    if movie.actor_ids:
-        actors = (await db.execute(select(ActorModel).where(ActorModel.id.in_(movie.actor_ids)))).scalars().all()
-    for name in movie.actor_names:
-        actor = (await db.execute(select(ActorModel).where(ActorModel.name == name))).scalar_one_or_none()
+    for name in movie_data.actors:
+        actor = await db.scalar(select(ActorModel).where(ActorModel.name == name))
         if not actor:
             actor = ActorModel(name=name)
             db.add(actor)
             await db.flush()
         actors.append(actor)
 
-    # Мови
+    # Get or create languages
     languages = []
-    if movie.language_ids:
-        languages = (
-            await db.execute(select(LanguageModel).where(
-                LanguageModel.id.in_(movie.language_ids)))).scalars().all()
-    for name in movie.language_names:
-        language = (await db.execute(select(LanguageModel).where(
-            LanguageModel.name == name))).scalar_one_or_none()
+    for name in movie_data.languages:
+        language = await db.scalar(select(LanguageModel).where(LanguageModel.name == name))
         if not language:
             language = LanguageModel(name=name)
             db.add(language)
             await db.flush()
         languages.append(language)
 
-    # Створення фільму
-    db_movie = MovieModel(
-        name=movie.name,
-        date=movie.date,
-        score=movie.score,
-        overview=movie.overview,
-        status=movie.status,
-        budget=movie.budget,
-        revenue=movie.revenue,
+    # Create the movie
+    movie = MovieModel(
+        name=movie_data.name,
+        date=movie_data.date,
+        score=movie_data.score,
+        overview=movie_data.overview,
+        status=movie_data.status,
+        budget=movie_data.budget,
+        revenue=movie_data.revenue,
         country=country,
         genres=genres,
         actors=actors,
         languages=languages,
     )
 
-    db.add(db_movie)
+    db.add(movie)
     await db.commit()
-    await db.refresh(db_movie)
-
-    # Повертаємо фільм з повними зв’язками
     result = await db.execute(
         select(MovieModel)
         .options(
@@ -150,11 +130,10 @@ async def create_film(
             selectinload(MovieModel.actors),
             selectinload(MovieModel.languages),
         )
-        .where(MovieModel.id == db_movie.id)
+        .where(MovieModel.id == movie.id)
     )
-    movie_with_relations = result.scalar_one()
-
-    return movie_with_relations
+    movie = result.scalar_one()
+    return movie
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
@@ -173,7 +152,7 @@ async def get_movie_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    return movie
+    return MovieDetailResponseSchema.model_validate(movie)
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
@@ -202,39 +181,31 @@ async def update_movie(
     movie_data: MovieUpdateSchema,
     db: AsyncSession = Depends(get_db),
 ):
-    # Отримуємо фільм
     movie = await db.get(MovieModel, movie_id)
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
-
-    # Валідуємо вручну числові поля (оскільки вони optional)
     if movie_data.score is not None and not (0 <= movie_data.score <= 100):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data. Score must be between 0 and 100."
         )
-
     if movie_data.budget is not None and movie_data.budget < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data. Budget must be non-negative."
         )
-
     if movie_data.revenue is not None and movie_data.revenue < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data. Revenue must be non-negative."
         )
 
-    # Оновлюємо лише надані поля
-    data_to_update = movie_data.dict(exclude_unset=True)
+    data_to_update = movie_data.model_dump(exclude_unset=True)
     for field, value in data_to_update.items():
         setattr(movie, field, value)
-
     await db.commit()
     await db.refresh(movie)
-
     return {"detail": "Movie updated successfully."}
