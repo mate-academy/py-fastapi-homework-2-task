@@ -91,7 +91,7 @@ async def get_movies(
                 "application/json": {
                     "example": {
                         "detail": "A movie with the name 'MovieName' and "
-                                  "release date 'Date' already exist"
+                                  "release date 'Date' already exists."
                     }
                 }
             }
@@ -109,8 +109,8 @@ async def create_movie(
     if existing_movie:
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name {movie_data.name} "
-                   f"and release date {movie_data.date} already exist"
+            detail=f"A movie with the name '{movie_data.name}' "
+                   f"and release date '{movie_data.date}' already exists."
         )
 
     genres_obj = []
