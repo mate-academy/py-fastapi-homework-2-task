@@ -4,11 +4,12 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import MovieModel
-from database.models import CountryModel, GenreModel, ActorModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas.movies import (
     CountryCreateSchema,
     GenreCreateSchema,
-    ActorCreateSchema
+    ActorCreateSchema,
+    LanguageCreateSchema
 )
 
 
@@ -88,3 +89,18 @@ async def create_actor(db: AsyncSession, actor: ActorCreateSchema):
     await db.commit()
     await db.refresh(new_actor)
     return new_actor
+
+
+async def get_language_by_name(db: AsyncSession, language_name: str):
+    query = select(LanguageModel).where(LanguageModel.name == language_name)
+    result = await db.execute(query)
+    language = result.scalar_one_or_none()
+    return language
+
+
+async def create_language(db: AsyncSession, language: LanguageCreateSchema):
+    new_language = LanguageModel(**language.model_dump())
+    db.add(new_language)
+    await db.commit()
+    await db.refresh(new_language)
+    return new_language
