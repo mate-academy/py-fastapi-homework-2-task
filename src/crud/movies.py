@@ -2,6 +2,7 @@ from datetime import date
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from database import MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
@@ -9,8 +10,7 @@ from schemas.movies import (
     CountryCreateSchema,
     GenreCreateSchema,
     ActorCreateSchema,
-    LanguageCreateSchema,
-    MovieCreateSchema
+    LanguageCreateSchema
 )
 
 
@@ -42,6 +42,18 @@ async def get_movie_by_name_date(
             MovieModel.date == movie_date
         )
     )
+    result = await db.execute(query)
+    movie = result.scalar_one_or_none()
+    return movie
+
+
+async def get_movie_by_id(db: AsyncSession, movie_id: int):
+    query = select(MovieModel).options(
+        selectinload(MovieModel.country),
+        selectinload(MovieModel.genres),
+        selectinload(MovieModel.actors),
+        selectinload(MovieModel.languages)
+    ).where(MovieModel.id == movie_id)
     result = await db.execute(query)
     movie = result.scalar_one_or_none()
     return movie
