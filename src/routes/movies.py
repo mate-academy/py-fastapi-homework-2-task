@@ -1,17 +1,21 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.params import Depends
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import MovieListResponseSchema, MovieDetailSchema
 from crud import movies as crud
-from schemas.movies import MovieCreateSchema
+from schemas.movies import (
+    MovieCreateSchema,
+    CountryCreateSchema,
+    GenreCreateSchema,
+    ActorCreateSchema,
+    LanguageCreateSchema
+)
 
 router = APIRouter()
 
@@ -64,3 +68,124 @@ async def get_movies(
         "total_pages": total_pages,
         "total_items": total_items
     }
+
+
+@router.post(
+    "/movies/", response_model=MovieDetailSchema, status_code=201,
+    responses={
+        400: {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "The input data is invalid (e.g., "
+                                  "missing required fields, invalid values)."
+                    }
+                }
+            }
+        },
+        409: {
+            "description": "Conflict",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "A movie with the name 'MovieName' and "
+                                  "release date 'Date' already exist"
+                    }
+                }
+            }
+        }
+    }
+)
+async def create_movie(
+    movie_data: MovieCreateSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    existing_movie = await crud.get_movie_by_name_date(
+        db=db, movie_name=movie_data.name, movie_date=movie_data.date
+    )
+
+    if existing_movie:
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name {movie_data.name} "
+                   f"and release date {movie_data.date} already exist"
+        )
+
+    genres_obj = []
+    actors_obj = []
+    languages_obj = []
+
+    country = await crud.get_country_by_code(
+        db=db,
+        county_code=movie_data.country
+    )
+    if not country:
+        country_schema = CountryCreateSchema(code=movie_data.country)
+        country = await crud.create_country(db=db, country=country_schema)
+
+    for genre_name in movie_data.genres:
+        genre = await crud.get_genre_by_name(db=db, genre_name=genre_name)
+        if not genre:
+            genre_schema = GenreCreateSchema(name=genre_name)
+            genre = await crud.create_genre(db=db, genre=genre_schema)
+        genres_obj.append(genre)
+
+    for actor_name in movie_data.actors:
+        actor = await crud.get_actor_by_name(db=db, actor_name=actor_name)
+        if not actor:
+            actor_schema = ActorCreateSchema(name=actor_name)
+            actor = await crud.create_actor(db=db, actor=actor_schema)
+        actors_obj.append(actor)
+
+    for language_name in movie_data.languages:
+        language = await crud.get_language_by_name(
+            db=db, language_name=language_name
+        )
+        if not language:
+            language_schema = LanguageCreateSchema(name=language_name)
+            language = await crud.create_language(
+                db=db, language=language_schema
+            )
+        languages_obj.append(language)
+
+    new_movie = MovieModel(
+        name=movie_data.name,
+        date=movie_data.date,
+        score=movie_data.score,
+        overview=movie_data.overview,
+        status=movie_data.status,
+        budget=movie_data.budget,
+        revenue=movie_data.revenue,
+        country=country,
+        genres=genres_obj,
+        actors=actors_obj,
+        languages=languages_obj,
+    )
+
+    try:
+        db.add(new_movie)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="The input data is invalid "
+                   "(e.g., missing required fields, invalid values)."
+        )
+    else:
+        await db.refresh(new_movie)
+        query = (
+            select(MovieModel)
+            .options(
+                selectinload(MovieModel.country),
+                selectinload(MovieModel.genres),
+                selectinload(MovieModel.actors),
+                selectinload(MovieModel.languages),
+            )
+            .where(MovieModel.id == new_movie.id)
+        )
+        result = await db.execute(query)
+        new_movie = result.scalars().first()
+
+    return new_movie
