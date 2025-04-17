@@ -10,7 +10,7 @@ from schemas.movies import (
     CountryCreateSchema,
     GenreCreateSchema,
     ActorCreateSchema,
-    LanguageCreateSchema
+    LanguageCreateSchema, MovieUpdateSchema
 )
 
 
@@ -71,6 +71,27 @@ async def delete_movie(db: AsyncSession, movie_id: int):
     await db.execute(query)
     await db.commit()
     return None
+
+
+async def update_movie(
+    db: AsyncSession,
+    movie_id: int,
+    movie_data: MovieUpdateSchema
+):
+    movie = await get_movie_by_id(db=db, movie_id=movie_id)
+
+    if not movie:
+        return None
+
+    update_data = {k: v for k, v in movie_data.model_dump().items() if
+                   v is not None}
+
+    for key, value in update_data.items():
+        setattr(movie, key, value)
+
+    await db.commit()
+    await db.refresh(movie)
+    return movie
 
 
 async def get_country_by_code(db: AsyncSession, county_code: str):
