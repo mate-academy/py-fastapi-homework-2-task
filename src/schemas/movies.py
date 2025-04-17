@@ -1,4 +1,4 @@
-from datetime import date
+import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -8,7 +8,7 @@ from database.models import MovieStatusEnum
 
 class MovieBase(BaseModel):
     name: str = Field(None, max_length=255)
-    date: date
+    date: datetime.date
     score: float = Field(ge=0, le=100)
     overview: str
 
@@ -30,7 +30,7 @@ class MovieListResponseSchema(BaseModel):
 
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
-    date: Optional[date] = None
+    date: Optional[datetime.date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
