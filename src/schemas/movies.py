@@ -63,12 +63,19 @@ class GenreCreateSchema(GenreBase):
     pass
 
 
-class ActorReadSchema(BaseModel):
-    id: int
+class ActorBase(BaseModel):
     name: str
+
+
+class ActorReadSchema(ActorBase):
+    id: int
 
     class Config:
         from_attributes = True
+
+
+class ActorCreateSchema(ActorBase):
+    pass
 
 
 class CountryBase(BaseModel):
