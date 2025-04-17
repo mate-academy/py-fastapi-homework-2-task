@@ -25,7 +25,7 @@ async def get_movies(db: AsyncSession, page: int = 1, per_page: int = 10):
     return movies, total_items
 
 
-async def check_if_movie_exist(
+async def get_movie_by_name_date(
     db: AsyncSession,
     movie_name: str,
     movie_date: date
@@ -37,7 +37,7 @@ async def check_if_movie_exist(
         )
     )
     result = await db.execute(query)
-    movie = result.scalars().first()
+    movie = result.scalar_one_or_none()
     return movie
 
 
