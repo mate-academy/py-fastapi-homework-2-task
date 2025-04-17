@@ -4,8 +4,12 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import MovieModel
-from database.models import CountryModel, GenreModel
-from schemas.movies import CountryCreateSchema, GenreCreateSchema
+from database.models import CountryModel, GenreModel, ActorModel
+from schemas.movies import (
+    CountryCreateSchema,
+    GenreCreateSchema,
+    ActorCreateSchema
+)
 
 
 async def get_movies(db: AsyncSession, page: int = 1, per_page: int = 10):
@@ -69,3 +73,18 @@ async def create_genre(db: AsyncSession, genre: GenreCreateSchema):
     await db.commit()
     await db.refresh(new_genre)
     return new_genre
+
+
+async def get_actor_by_name(db: AsyncSession, actor_name: str):
+    query = select(ActorModel).where(ActorModel.name == actor_name)
+    result = await db.execute(query)
+    actor = result.scalar_one_or_none()
+    return actor
+
+
+async def create_actor(db: AsyncSession, actor: ActorCreateSchema):
+    new_actor = ActorModel(**actor.model_dump())
+    db.add(new_actor)
+    await db.commit()
+    await db.refresh(new_actor)
+    return new_actor
