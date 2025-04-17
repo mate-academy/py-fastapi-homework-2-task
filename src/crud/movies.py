@@ -47,14 +47,6 @@ async def get_movie_by_name_date(
     return movie
 
 
-async def create_movie(db: AsyncSession, movie: MovieCreateSchema):
-    new_movie = MovieModel(**movie.model_dump())
-    db.add(new_movie)
-    await db.commit()
-    await db.refresh(new_movie)
-    return new_movie
-
-
 async def get_country_by_code(db: AsyncSession, county_code: str):
     query = select(CountryModel).where(CountryModel.code == county_code)
     result = await db.execute(query)
