@@ -56,7 +56,7 @@ async def get_movies(
     if page > total_pages:
         raise HTTPException(
             status_code=404,
-            detail=f"No movies found for the specified page."
+            detail="No movies found for the specified page."
         )
 
     base_url = "/theater/movies/"
