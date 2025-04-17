@@ -1,7 +1,10 @@
-from sqlalchemy import select, func
+from datetime import date
+
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import MovieModel
+from schemas.movies import MovieCreateSchema
 
 
 async def get_movies(db: AsyncSession, page: int = 1, per_page: int = 10):
@@ -19,3 +22,19 @@ async def get_movies(db: AsyncSession, page: int = 1, per_page: int = 10):
     movies = result.scalars().all()
 
     return movies, total_items
+
+
+async def check_if_movie_exist(
+    db: AsyncSession,
+    movie_name: str,
+    movie_date: date
+):
+    query = select(MovieModel).where(
+        and_(
+            MovieModel.name == movie_name,
+            MovieModel.date == movie_date
+        )
+    )
+    result = await db.execute(query)
+    movie = result.scalars().first()
+    return movie
