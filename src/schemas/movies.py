@@ -48,12 +48,19 @@ class MovieCreateSchema(MovieBase):
     languages: List[str]
 
 
-class GenreReadSchema(BaseModel):
-    id: int
+class GenreBase(BaseModel):
     name: str
+
+
+class GenreReadSchema(GenreBase):
+    id: int
 
     class Config:
         from_attributes = True
+
+
+class GenreCreateSchema(GenreBase):
+    pass
 
 
 class ActorReadSchema(BaseModel):
