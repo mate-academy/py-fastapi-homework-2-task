@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ from schemas.movies import (
     CountryCreateSchema,
     GenreCreateSchema,
     ActorCreateSchema,
-    LanguageCreateSchema
+    LanguageCreateSchema, MovieUpdateSchema
 )
 
 router = APIRouter()
@@ -238,3 +239,40 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
         )
     await crud.delete_movie(db=db, movie_id=movie_id)
     return Response(content=None, status_code=204)
+
+
+@router.patch(
+    "/movies/{movie_id}/", responses={
+        404: {
+            "description": "Not found",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Movie with the given ID was not found."
+                    }
+                }
+            }
+        }
+    }
+)
+async def update_movie(
+    movie_id: int,
+    movie_data: MovieUpdateSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    movie = await crud.update_movie(
+        db=db,
+        movie_id=movie_id,
+        movie_data=movie_data
+    )
+
+    if not movie:
+        raise HTTPException(
+            status_code=400,
+            detail="Movie with the given ID was not found."
+        )
+
+    return JSONResponse(
+        status_code=200,
+        content={"detail": "Movie updated successfully."}
+    )
