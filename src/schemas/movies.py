@@ -94,12 +94,19 @@ class CountryCreateSchema(CountryBase):
     pass
 
 
-class LanguageReadSchema(BaseModel):
-    id: int
+class LanguageBase(BaseModel):
     name: str
+
+
+class LanguageReadSchema(LanguageBase):
+    id: int
 
     class Config:
         from_attributes = True
+
+
+class LanguageCreateSchema(LanguageBase):
+    pass
 
 
 class MovieDetailSchema(MovieListItemSchema):
