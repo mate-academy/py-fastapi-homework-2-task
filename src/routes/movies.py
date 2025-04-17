@@ -206,7 +206,7 @@ async def create_movie(
     }
 )
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
-    movie = await crud.get_movie_by_id(db=db, movie_id=movie_id)
+    movie = await crud.get_movie_by_id_with_join(db=db, movie_id=movie_id)
     if not movie:
         raise HTTPException(
             status_code=404,

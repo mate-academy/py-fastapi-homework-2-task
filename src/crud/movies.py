@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -47,7 +47,7 @@ async def get_movie_by_name_date(
     return movie
 
 
-async def get_movie_by_id(db: AsyncSession, movie_id: int):
+async def get_movie_by_id_with_join(db: AsyncSession, movie_id: int):
     query = select(MovieModel).options(
         selectinload(MovieModel.country),
         selectinload(MovieModel.genres),
