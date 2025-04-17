@@ -15,7 +15,8 @@ from schemas.movies import (
     CountryCreateSchema,
     GenreCreateSchema,
     ActorCreateSchema,
-    LanguageCreateSchema, MovieUpdateSchema
+    LanguageCreateSchema,
+    MovieUpdateSchema
 )
 
 router = APIRouter()
