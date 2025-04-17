@@ -268,7 +268,7 @@ async def update_movie(
 
     if not movie:
         raise HTTPException(
-            status_code=400,
+            status_code=404,
             detail="Movie with the given ID was not found."
         )
 
