@@ -94,8 +94,8 @@ async def update_movie(
     return movie
 
 
-async def get_country_by_code(db: AsyncSession, county_code: str):
-    query = select(CountryModel).where(CountryModel.code == county_code)
+async def get_country_by_code(db: AsyncSession, country_code: str):
+    query = select(CountryModel).where(CountryModel.code == country_code)
     result = await db.execute(query)
     country = result.scalar_one_or_none()
     return country

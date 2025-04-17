@@ -120,7 +120,7 @@ async def create_movie(
 
     country = await crud.get_country_by_code(
         db=db,
-        county_code=movie_data.country
+        country_code=movie_data.country
     )
     if not country:
         country_schema = CountryCreateSchema(code=movie_data.country, name=None)
