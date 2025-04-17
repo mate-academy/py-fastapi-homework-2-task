@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -213,3 +213,28 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
             detail="Movie with the given ID was not found."
         )
     return movie
+
+
+@router.delete(
+    "/movies/{movie_id}/", status_code=204, responses={
+        404: {
+            "description": "Not found",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Movie with the given ID was not found."
+                    }
+                }
+            }
+        }
+    }
+)
+async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    movie = await crud.get_movie_by_id(db=db, movie_id=movie_id)
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+    await crud.delete_movie(db=db, movie_id=movie_id)
+    return Response(content=None, status_code=204)
