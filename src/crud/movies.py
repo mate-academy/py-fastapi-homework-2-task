@@ -20,7 +20,7 @@ async def get_movies(db: AsyncSession, page: int = 1, per_page: int = 10):
     total_items = count_result.scalar()
 
     if total_items == 0:
-        return None
+        return None, total_items
 
     offset = (page - 1) * per_page
 
