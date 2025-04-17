@@ -64,13 +64,20 @@ class ActorReadSchema(BaseModel):
         from_attributes = True
 
 
-class CountryReadSchema(BaseModel):
-    id: int
+class CountryBase(BaseModel):
     code: str
-    name: Optional[str] = None
+    name: Optional[str]
+
+
+class CountryReadSchema(CountryBase):
+    id: int
 
     class Config:
         from_attributes = True
+
+
+class CountryCreateSchema(CountryBase):
+    pass
 
 
 class LanguageReadSchema(BaseModel):
