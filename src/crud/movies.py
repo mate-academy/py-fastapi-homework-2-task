@@ -59,6 +59,20 @@ async def get_movie_by_id_with_join(db: AsyncSession, movie_id: int):
     return movie
 
 
+async def get_movie_by_id(db: AsyncSession, movie_id: int):
+    query = select(MovieModel).where(MovieModel.id == movie_id)
+    result = await db.execute(query)
+    movie = result.scalar_one_or_none()
+    return movie
+
+
+async def delete_movie(db: AsyncSession, movie_id: int):
+    query = delete(MovieModel).where(MovieModel.id == movie_id)
+    await db.execute(query)
+    await db.commit()
+    return None
+
+
 async def get_country_by_code(db: AsyncSession, county_code: str):
     query = select(CountryModel).where(CountryModel.code == county_code)
     result = await db.execute(query)
