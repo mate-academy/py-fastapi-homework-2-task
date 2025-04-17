@@ -55,7 +55,7 @@ async def create_movie(db: AsyncSession, movie: MovieCreateSchema):
     return new_movie
 
 
-async def get_country_by_name(db: AsyncSession, county_code: str):
+async def get_country_by_code(db: AsyncSession, county_code: str):
     query = select(CountryModel).where(CountryModel.code == county_code)
     result = await db.execute(query)
     country = result.scalar_one_or_none()
