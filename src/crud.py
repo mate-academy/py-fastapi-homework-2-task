@@ -49,5 +49,5 @@ async def update_film(db: AsyncSession, film_id: int, film: MovieUpdate):
     db_film.revenue = film.revenue
 
     await db.commit()
-    await db.refresh()
+    await db.refresh(db_film)
     return db_film

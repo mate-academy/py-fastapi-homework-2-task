@@ -1,9 +1,7 @@
 import datetime
-from cgi import maxlen
 from enum import Enum
 from typing import Optional
 
-from numpy.ma.core import min_val, max_val
 from sqlalchemy import (
     String,
     Float,
@@ -135,15 +133,15 @@ class LanguageModel(Base):
 class MovieModel(Base):
     __tablename__ = "movies"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, maxlen=255)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
-    score: Mapped[float] = mapped_column(Float, nullable=False, min_val=0, max_val=100)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
     overview: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[MovieStatusEnum] = mapped_column(
         SQLAlchemyEnum(MovieStatusEnum), nullable=False
     )
-    budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False, min_val=1)
+    budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
     revenue: Mapped[float] = mapped_column(Float, nullable=False, min_val=1)
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)

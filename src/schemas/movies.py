@@ -31,12 +31,3 @@ class MovieList(MovieSchema):
 class MovieDetail(MovieSchema):
     pass
 
-
-class MovieCreate(MovieSchema):
-    class Config:
-        from_attributes = True
-
-
-class MovieUpdate(MovieSchema):
-    class Config:
-        from_attributes = True
