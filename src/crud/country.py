@@ -3,7 +3,6 @@ from asgiref.sync import sync_to_async
 from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db
 from database.models import CountryModel
 
 
@@ -13,7 +12,7 @@ def get_country_name_by_code(country_code: str) -> str | None:
     return country.name if country else None
 
 
-async def create_country(country_code: str, db: AsyncSession = Depends(get_db)):
+async def create_country(country_code: str, db: AsyncSession):
     country_name = await get_country_name_by_code(country_code)
     if not country_name:
         raise HTTPException(status_code=400, detail="Incorrect country code")

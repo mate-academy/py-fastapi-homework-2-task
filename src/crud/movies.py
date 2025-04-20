@@ -14,9 +14,9 @@ from utills.get_or_create import get_or_create
 
 
 async def get_all_movies(
-        db: AsyncSession = Depends(get_db),
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1, le=20),
+        db: AsyncSession,
+        page: int,
+        per_page: int,
 ) -> dict:
     total_items = await db.scalar(select(func.count()).select_from(MovieModel))
     total_pages = math.ceil(total_items / per_page)
@@ -56,7 +56,7 @@ async def get_all_movies(
 
 async def get_movie_by_id(
         film_id: int,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
 ):
     result = await db.execute(select(
         MovieModel
@@ -72,7 +72,7 @@ async def get_movie_by_id(
     return film
 
 
-async def create_movie(film: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+async def create_movie(film: MovieCreateSchema, db: AsyncSession):
     existing_movie = await db.execute(
         select(MovieModel).where(
             MovieModel.name == film.name,
@@ -135,7 +135,7 @@ async def create_movie(film: MovieCreateSchema, db: AsyncSession = Depends(get_d
     return result.scalar_one()
 
 
-async def delete_movie_by_id(film_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_movie_by_id(film_id: int, db: AsyncSession):
     result = await db.execute(select(MovieModel).where(MovieModel.id == film_id))
     existing_movie = result.scalar_one_or_none()
 
@@ -149,7 +149,7 @@ async def delete_movie_by_id(film_id: int, db: AsyncSession = Depends(get_db)):
 async def update_movie_by_id(
         film_id: int,
         film: MovieUpdateSchema,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
 ):
     result = await db.execute(select(MovieModel).where(MovieModel.id == film_id))
     existing_movie = result.scalar_one_or_none()
