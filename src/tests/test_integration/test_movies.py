@@ -376,6 +376,10 @@ async def test_create_movie_and_related_models(client, db_session):
     }
 
     response = await client.post("/api/v1/theater/movies/", json=movie_data)
+    print(dir(response))
+    print(response.content)
+    print(response.json)
+    print(response)
     assert response.status_code == 201, f"Expected status code 201, but got {response.status_code}"
 
     response_data = response.json()
