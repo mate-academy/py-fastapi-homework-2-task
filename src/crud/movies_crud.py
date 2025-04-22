@@ -63,11 +63,10 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession):
     country = await get_or_create(
         db=db, model=CountryModel, field="code", value=movie.country
     )
-    genres, actors, languages = await asyncio.gather(
-        asyncio.gather(*[get_or_create(db, GenreModel, "name", genre) for genre in movie.genres]),
-        asyncio.gather(*[get_or_create(db, ActorModel, "name", actor) for actor in movie.actors]),
-        asyncio.gather(*[get_or_create(db, LanguageModel, "name", language) for language in movie.languages]),
-    )
+    genres = await asyncio.gather(*[get_or_create(db, GenreModel, "name", genre) for genre in movie.genres])
+    actors = await asyncio.gather(*[get_or_create(db, ActorModel, "name", actor) for actor in movie.actors])
+    languages = await asyncio.gather(
+        *[get_or_create(db, LanguageModel, "name", language) for language in movie.languages])
 
     new_movie = MovieModel(
         **movie.model_dump(exclude={"genres", "country", "actors", "languages"}),
