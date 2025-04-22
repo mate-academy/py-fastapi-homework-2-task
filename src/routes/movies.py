@@ -17,7 +17,7 @@ from schemas import (
     PaginationQuerySchema
 )
 from crud.movies_crud import (
-    create_movies,
+    create_movie,
     read_movies,
     read_movie,
     remove_movie,
@@ -48,7 +48,7 @@ async def get_movies(q: Annotated[PaginationQuerySchema, Query()], db: AsyncSess
 
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def add_film(film: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
-    return await create_movies(movie=film, db=db)
+    return await create_movie(movie=film, db=db)
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)

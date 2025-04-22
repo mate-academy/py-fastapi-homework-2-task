@@ -4,6 +4,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
+import asyncio
 
 from database import (
     MovieModel,
@@ -13,9 +14,7 @@ from database import (
     ActorModel
 )
 from schemas import (
-    MovieReadSchema,
     MovieCreateSchema,
-    MovieDetailSchema,
     MovieUpdateSchema
 )
 from paginations import (
@@ -31,8 +30,6 @@ async def get_or_create(db: AsyncSession, model, field: str, value: str):
     if not instance:
         instance = model(**{field: value})
         db.add(instance)
-        await db.commit()
-        await db.refresh(instance)
 
     return instance
 
@@ -50,7 +47,7 @@ async def read_movies(db: AsyncSession, page: int = None, per_page: int = None):
     return result.scalars().all()
 
 
-async def create_movies(movie: MovieCreateSchema, db: AsyncSession):
+async def create_movie(movie: MovieCreateSchema, db: AsyncSession):
     """One of CRUD operations C-Create Movie
      and automatically connects to relative models"""
     # Check if movie does not exist
@@ -66,18 +63,12 @@ async def create_movies(movie: MovieCreateSchema, db: AsyncSession):
     country = await get_or_create(
         db=db, model=CountryModel, field="code", value=movie.country
     )
-    genres = [
-        await get_or_create(db, GenreModel, "name", genre)
-        for genre in movie.genres
-    ]
-    actors = [
-        await get_or_create(db, ActorModel, "name", actor)
-        for actor in movie.actors
-    ]
-    languages = [
-        await get_or_create(db, LanguageModel, "name", language)
-        for language in movie.languages
-    ]
+    genres, actors, languages = await asyncio.gather(
+        asyncio.gather(*[get_or_create(db, GenreModel, "name", genre) for genre in movie.genres]),
+        asyncio.gather(*[get_or_create(db, ActorModel, "name", actor) for actor in movie.actors]),
+        asyncio.gather(*[get_or_create(db, LanguageModel, "name", language) for language in movie.languages]),
+    )
+
     new_movie = MovieModel(
         **movie.model_dump(exclude={"genres", "country", "actors", "languages"}),
         country=country,

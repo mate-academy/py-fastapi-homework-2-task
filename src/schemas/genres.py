@@ -5,9 +5,9 @@ from pydantic import (
 )
 
 
-class GenderBaseSchema(BaseModel):
+class GenreBaseSchema(BaseModel):
     name: str
 
 
-class GenderReadSchema(GenderBaseSchema):
+class GenreReadSchema(GenreBaseSchema):
     id: PositiveInt

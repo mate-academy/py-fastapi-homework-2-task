@@ -18,8 +18,8 @@ from schemas.actors import (
     ActorReadSchema
 )
 from schemas.genres import (
-    GenderBaseSchema,
-    GenderReadSchema
+    GenreBaseSchema,
+    GenreReadSchema
 )
 from schemas.languages import (
     LanguageBaseSchema,
@@ -100,7 +100,7 @@ class MovieDetailSchema(BaseModel):
     budget: PositiveFloat
     revenue: PositiveFloat
     country: CountryReadSchema
-    genres: list[GenderReadSchema]
+    genres: list[GenreReadSchema]
     actors: list[ActorReadSchema]
     languages: list[LanguageReadSchema]
 
