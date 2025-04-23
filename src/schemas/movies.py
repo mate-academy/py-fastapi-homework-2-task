@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, constr, model_validator, ConfigDict
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 
 class GenreSchema(BaseModel):
@@ -79,7 +79,8 @@ class MovieCreate(BaseModel):
     status: str = Field(pattern="^(Released|Post Production|In Production)$")
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country: constr(pattern="^[A-Z]{2}$")
+    country: str = Field(pattern="^[A-Z]{2}$")
+
     genres: List[str]
     actors: List[str]
     languages: List[str]
