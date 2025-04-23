@@ -94,5 +94,23 @@ class MovieCreate(BaseModel):
         return self
 
 
-class MovieUpdate(MovieBase):
-    pass
+class MovieUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, max_length=255)
+    date: Optional[date] = None
+    score: Optional[float] = Field(default=None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[str] = Field(
+        default=None, pattern="^(Released|Post Production|In Production)$"
+    )
+    budget: Optional[float] = Field(default=None, ge=0)
+    revenue: Optional[float] = Field(default=None, ge=0)
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_date(self) -> "MovieUpdate":
+        if self.date:
+            max_date = date.today().replace(year=date.today().year + 1)
+            if self.date > max_date:
+                raise ValueError("Date cannot be more than one year in the future")
+        return self

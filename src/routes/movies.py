@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select, func
 from database import MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
-from schemas.movies import MovieBase, MovieList, MovieCreate, MovieDetail
+from schemas.movies import MovieBase, MovieList, MovieCreate, MovieDetail, MovieUpdate
 from database import get_db
 
 
@@ -158,7 +159,7 @@ async def add_film(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/movies/{movie_id}/", status_code=200)
 async def update_movie(
-    movie_id: int, movie_update: dict, db: AsyncSession = Depends(get_db)
+    movie_id: int, movie_update: MovieUpdate, db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
@@ -168,12 +169,16 @@ async def update_movie(
             status_code=404, detail="Movie with the given ID was not found."
         )
 
-    for key, value in movie_update.items():
-        if hasattr(movie, key):
-            setattr(movie, key, value)
+    update_data = movie_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(movie, key, value)
 
-    await db.commit()
-    await db.refresh(movie)
+    try:
+        await db.commit()
+        await db.refresh(movie)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
     return {"detail": "Movie updated successfully."}
 
