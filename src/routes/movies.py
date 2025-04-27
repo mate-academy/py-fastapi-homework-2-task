@@ -159,7 +159,7 @@ async def read_movies(movie_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return movie
 
-@router.put("/movies/{film_id}", response_model=Movie)
+@router.put("/movies/{movie_id}", response_model=Movie)
 async def edit_movie(movie_id: int, movie: MovieUpdate,
 db: AsyncSession = Depends(get_db)):
     updated_movie = await update_movie(db, movie_id, movie)
@@ -167,7 +167,7 @@ db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Film not found")
     return updated_movie
 
-@router.delete("/movies/{film_id}", response_model=Movie)
+@router.delete("/movies/{movie_id}", response_model=Movie)
 async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     deleted_movie = await delete_movie(db, movie_id)
     if not deleted_movie:

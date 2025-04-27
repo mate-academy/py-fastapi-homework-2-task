@@ -21,12 +21,12 @@ class LanguageSchema(BaseModel):
 
 class MovieBase(BaseModel):
     name: constr(max_length=255)
-    data: str
+    date: str
     score: float = Field(..., ge=0, le=100)
     overview: str
 
-    @validator("data")
-    def validate_data(cls, value: str) -> str:
+    @validator("date")
+    def validate_date(cls, value: str) -> str:
         date_value = datetime.strptime(value, "%Y-%m-%d").date()
         max_allowed = datetime.now().date() + timedelta(days=365)
         if date_value > max_allowed:
@@ -47,7 +47,7 @@ class MovieCreate(MovieBase):
 
 class MovieUpdate(BaseModel):
     name: Optional[constr(max_length=255)] = None
-    data: Optional[str] = None
+    date: Optional[str] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[Literal["Released", "Post Production", "In Production"]] = None
