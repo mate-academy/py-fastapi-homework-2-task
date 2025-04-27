@@ -5,7 +5,6 @@ description = "Mate task for first lesson"
 authors = ["Yurii Okal <yurii.okal@mate.com>"]
 
 [tool.poetry.dependencies]
-asgiref = "^3.8.1"
 python = "^3.10"
 fastapi = "^0.115.6"
 sqlalchemy = "^2.0.36"
@@ -15,7 +14,6 @@ pandas = "^2.2.3"
 tqdm = "^4.67.1"
 uvicorn = "^0.34.0"
 httpx = "^0.28.1"
-pycountry = "^24.6.1"
 pytest-env = "^1.1.5"
 flake8 = "^7.1.1"
 psycopg2-binary = "^2.9.10"
