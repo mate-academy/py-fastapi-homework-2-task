@@ -30,9 +30,6 @@ async def get_film(film_id: int, db: AsyncSession = Depends(get_db)):
     return await get_movie_by_id(db=db, film_id=film_id)
 
 
-@router.delete("/movies/{film_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(film_id: int, db: AsyncSession = Depends(get_db)):
-    return await delete_movie_by_id(db=db, film_id=film_id)
 
 
 @router.patch("/movies/{film_id}/")
