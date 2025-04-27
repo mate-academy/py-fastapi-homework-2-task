@@ -157,8 +157,7 @@ async def update_movie_by_id(
     if not existing_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    for key, value in film.model_dump(exclude_unset=True).items():
-        setattr(existing_movie, key, value)
+
 
     await db.commit()
     return {"detail": "Movie updated successfully."}
