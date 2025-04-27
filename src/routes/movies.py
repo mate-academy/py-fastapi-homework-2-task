@@ -5,9 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from starlette import status
 
-from database import get_db, MovieModel
+from crud.movies import create_movie, delete_movie, update_movie, get_movie_by_id, get_movies
+from database import get_db
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieListResponse, MovieCreate, Movie, MovieUpdate
+from schemas.movies import MovieListResponseSchema, MovieCreate, Movie, MovieUpdate, MovieDetailSchema
 
 router = APIRouter()
 
@@ -140,3 +141,35 @@ router = APIRouter()
 # async  def update_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 
+@router.post("/movies/", response_model=Movie)
+async def add_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
+    new_movie = await create_movie(db, movie)
+    return new_movie
+
+@router.get("/movies/", response_model=MovieListResponseSchema)
+async def list_movies(db: AsyncSession = Depends(get_db)):
+    movies = await get_movies(db)
+    return movies
+
+
+@router.get("/movies/{movie_id}", response_model=MovieDetailSchema)
+async def read_movies(movie_id: int, db: AsyncSession = Depends(get_db)):
+    movie = await get_movie_by_id(db, movie_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    return movie
+
+@router.put("/movies/{film_id}", response_model=Movie)
+async def edit_movie(movie_id: int, movie: MovieUpdate,
+db: AsyncSession = Depends(get_db)):
+    updated_movie = await update_movie(db, movie_id, movie)
+    if not updated_movie:
+        raise HTTPException(status_code=404, detail="Film not found")
+    return updated_movie
+
+@router.delete("/movies/{film_id}", response_model=Movie)
+async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    deleted_movie = await delete_movie(db, movie_id)
+    if not deleted_movie:
+        raise HTTPException(status_code=404, detail="Film not found")
+    return deleted_movie
