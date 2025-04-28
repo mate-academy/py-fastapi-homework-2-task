@@ -219,7 +219,9 @@ class CSVDatabaseSeeder:
                 "score": float(row["score"]),
                 "overview": row["overview"],
                 "status": next(
-                        (enum_member.name for enum_member in MovieStatusEnum if enum_member.value.lower() == row["status"].strip().lower()),
+                        (enum_member.name for enum_member in MovieStatusEnum
+                         if enum_member.value.lower() ==
+                         row["status"].strip().lower()),
                         None
                 ),
                 "budget": float(row["budget_x"]),
