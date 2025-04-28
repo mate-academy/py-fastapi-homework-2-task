@@ -67,7 +67,11 @@ class CSVDatabaseSeeder:
             data["crew"]
             .str.replace(r"\s+", "", regex=True)
             .apply(
-                lambda x: ",".join(sorted(set(x.split(",")))) if x != "Unknown" else x
+                lambda x: (
+                    ",".join(sorted(set(x.split(","))))
+                    if x != "Unknown"
+                    else x
+                )
             )
         )
 
@@ -77,7 +81,9 @@ class CSVDatabaseSeeder:
             data["date_x"], format="%Y-%m-%d", errors="raise"
         )
         data["date_x"] = data["date_x"].dt.date
-        data["orig_lang"] = data["orig_lang"].str.replace(r"\s+", "", regex=True)
+        data["orig_lang"] = data["orig_lang"].str.replace(
+            r"\s+", "", regex=True
+        )
         data["status"] = data["status"].str.strip()
 
         print("Preprocessing CSV file...")
@@ -105,7 +111,9 @@ class CSVDatabaseSeeder:
             for i in range(0, len(items), CHUNK_SIZE):
                 chunk = items[i : i + CHUNK_SIZE]
                 result = await self._db_session.execute(
-                    select(model).where(getattr(model, unique_field).in_(chunk))
+                    select(model).where(
+                        getattr(model, unique_field).in_(chunk)
+                    )
                 )
                 existing_in_chunk = result.scalars().all()
                 for obj in existing_in_chunk:
@@ -124,7 +132,9 @@ class CSVDatabaseSeeder:
             for i in range(0, len(new_items), CHUNK_SIZE):
                 chunk = new_items[i : i + CHUNK_SIZE]
                 result_new = await self._db_session.execute(
-                    select(model).where(getattr(model, unique_field).in_(chunk))
+                    select(model).where(
+                        getattr(model, unique_field).in_(chunk)
+                    )
                 )
                 inserted_in_chunk = result_new.scalars().all()
                 for obj in inserted_in_chunk:
@@ -133,7 +143,9 @@ class CSVDatabaseSeeder:
 
         return existing_dict
 
-    async def _bulk_insert(self, table, data_list: List[Dict[str, int]]) -> None:
+    async def _bulk_insert(
+        self, table, data_list: List[Dict[str, int]]
+    ) -> None:
         """
         Insert data_list into the given table in chunks, displaying progress via tqdm.
 
@@ -147,7 +159,9 @@ class CSVDatabaseSeeder:
         num_chunks = math.ceil(total_records / CHUNK_SIZE)
         table_name = getattr(table, "__tablename__", str(table))
 
-        for chunk_index in tqdm(range(num_chunks), desc=f"Inserting into {table_name}"):
+        for chunk_index in tqdm(
+            range(num_chunks), desc=f"Inserting into {table_name}"
+        ):
             start = chunk_index * CHUNK_SIZE
             end = start + CHUNK_SIZE
             chunk = data_list[start:end]
@@ -156,10 +170,11 @@ class CSVDatabaseSeeder:
 
         await self._db_session.flush()
 
-    async def _prepare_reference_data(
-        self, data: pd.DataFrame
-    ) -> Tuple[
-        Dict[str, object], Dict[str, object], Dict[str, object], Dict[str, object]
+    async def _prepare_reference_data(self, data: pd.DataFrame) -> Tuple[
+        Dict[str, object],
+        Dict[str, object],
+        Dict[str, object],
+        Dict[str, object],
     ]:
         """
         Gather unique values for countries, genres, actors, and languages from the DataFrame.
@@ -189,9 +204,15 @@ class CSVDatabaseSeeder:
             if lang.strip()
         }
 
-        country_map = await self._get_or_create_bulk(CountryModel, countries, "code")
-        genre_map = await self._get_or_create_bulk(GenreModel, list(genres), "name")
-        actor_map = await self._get_or_create_bulk(ActorModel, list(actors), "name")
+        country_map = await self._get_or_create_bulk(
+            CountryModel, countries, "code"
+        )
+        genre_map = await self._get_or_create_bulk(
+            GenreModel, list(genres), "name"
+        )
+        actor_map = await self._get_or_create_bulk(
+            ActorModel, list(actors), "name"
+        )
         language_map = await self._get_or_create_bulk(
             LanguageModel, list(languages), "name"
         )
@@ -219,10 +240,13 @@ class CSVDatabaseSeeder:
                 "score": float(row["score"]),
                 "overview": row["overview"],
                 "status": next(
-                        (enum_member.name for enum_member in MovieStatusEnum
-                         if enum_member.value.lower() ==
-                         row["status"].strip().lower()),
-                        None
+                    (
+                        enum_member.name
+                        for enum_member in MovieStatusEnum
+                        if enum_member.value.lower()
+                        == row["status"].strip().lower()
+                    ),
+                    None,
                 ),
                 "budget": float(row["budget_x"]),
                 "revenue": float(row["revenue"]),
@@ -238,7 +262,9 @@ class CSVDatabaseSeeder:
         genre_map: Dict[str, object],
         actor_map: Dict[str, object],
         language_map: Dict[str, object],
-    ) -> Tuple[List[Dict[str, int]], List[Dict[str, int]], List[Dict[str, int]]]:
+    ) -> Tuple[
+        List[Dict[str, int]], List[Dict[str, int]], List[Dict[str, int]]
+    ]:
         """
         Prepare three lists of dictionaries: movie-genre, movie-actor, and movie-language
         associations for all movies in the DataFrame.
@@ -257,7 +283,11 @@ class CSVDatabaseSeeder:
         movie_languages_data: List[Dict[str, int]] = []
 
         for i, (_, row) in enumerate(
-            tqdm(data.iterrows(), total=data.shape[0], desc="Processing associations")
+            tqdm(
+                data.iterrows(),
+                total=data.shape[0],
+                desc="Processing associations",
+            )
         ):
             movie_id = movie_ids[i]
 

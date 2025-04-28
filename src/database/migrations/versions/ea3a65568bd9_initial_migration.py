@@ -60,7 +60,10 @@ def upgrade() -> None:
         sa.Column(
             "status",
             sa.Enum(
-                "RELEASED", "POST_PRODUCTION", "IN_PRODUCTION", name="moviestatusenum"
+                "RELEASED",
+                "POST_PRODUCTION",
+                "IN_PRODUCTION",
+                name="moviestatusenum",
             ),
             nullable=False,
         ),
@@ -78,24 +81,36 @@ def upgrade() -> None:
         "actors_movies",
         sa.Column("movie_id", sa.Integer(), nullable=False),
         sa.Column("actor_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["actor_id"], ["actors.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["movie_id"], ["movies.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["actor_id"], ["actors.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["movie_id"], ["movies.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("movie_id", "actor_id"),
     )
     op.create_table(
         "movies_genres",
         sa.Column("movie_id", sa.Integer(), nullable=False),
         sa.Column("genre_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["genre_id"], ["genres.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["movie_id"], ["movies.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["genre_id"], ["genres.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["movie_id"], ["movies.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("movie_id", "genre_id"),
     )
     op.create_table(
         "movies_languages",
         sa.Column("movie_id", sa.Integer(), nullable=False),
         sa.Column("language_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["language_id"], ["languages.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["movie_id"], ["movies.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["language_id"], ["languages.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["movie_id"], ["movies.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("movie_id", "language_id"),
     )
     # ### end Alembic commands ###

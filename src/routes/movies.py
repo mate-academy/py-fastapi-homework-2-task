@@ -32,7 +32,7 @@ router = APIRouter()
 @router.get(
     "/movies/",
     response_model=MovieListItemSchema,
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
 )
 async def get_movies(
     page: Annotated[int, Query(ge=1)] = 1,
@@ -41,8 +41,10 @@ async def get_movies(
 ):
     params = (page - 1) * per_page
     query = (
-        select(MovieModel).offset(params).
-        limit(per_page).order_by(desc(MovieModel.id))
+        select(MovieModel)
+        .offset(params)
+        .limit(per_page)
+        .order_by(desc(MovieModel.id))
     )
     result = await db.execute(query)
     movies = result.scalars().all()
@@ -112,12 +114,10 @@ async def create_movie(
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid country code '{movie.country}' provided."
+                detail=f"Invalid country code '{movie.country}' provided.",
             )
 
-        country_query = select(CountryModel).filter(
-            CountryModel.code == code
-        )
+        country_query = select(CountryModel).filter(CountryModel.code == code)
         result = await db.execute(country_query)
         country_exists = result.scalar_one_or_none()
         if not country_exists:

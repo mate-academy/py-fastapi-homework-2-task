@@ -10,7 +10,7 @@ class BaseAppSettings(BaseSettings):
     PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
     PATH_TO_MOVIES_CSV: str = os.getenv(
         "PATH_TO_MOVIES_CSV",
-        str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+        str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv"),
     )
 
 
