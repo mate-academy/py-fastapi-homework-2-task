@@ -18,6 +18,7 @@ from database.models import (
     LanguageModel,
     MoviesLanguagesModel,
     MovieModel,
+    MovieStatusEnum,
 )
 from database import get_db_contextmanager
 
@@ -217,7 +218,10 @@ class CSVDatabaseSeeder:
                 "date": row["date_x"],
                 "score": float(row["score"]),
                 "overview": row["overview"],
-                "status": row["status"],
+                "status": next(
+                        (enum_member.name for enum_member in MovieStatusEnum if enum_member.value.lower() == row["status"].strip().lower()),
+                        None
+                ),
                 "budget": float(row["budget_x"]),
                 "revenue": float(row["revenue"]),
                 "country_id": country.id,

@@ -1,6 +1,7 @@
 from math import ceil
 from typing import Annotated
 
+import pycountry
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from fastapi.params import Path
 from sqlalchemy import select, func, desc, and_
@@ -102,16 +103,25 @@ async def create_movie(
         )
 
     try:
+        country_code = movie.country
+        country = pycountry.countries.get(alpha_2=country_code)
+
+        if country:
+            code = country.alpha_2
+            name = country.name
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid country code '{movie.country}' provided."
+            )
+
         country_query = select(CountryModel).filter(
-            CountryModel.name == movie.country
+            CountryModel.code == code
         )
         result = await db.execute(country_query)
         country_exists = result.scalar_one_or_none()
         if not country_exists:
-            new_country = CountryModel(
-                code=movie.country,
-                name=movie.country,
-            )
+            new_country = CountryModel(code=code, name=name)
             db.add(new_country)
             await db.flush()
             country_exists = new_country

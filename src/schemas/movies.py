@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import List, Optional
 
 from pydantic import BaseModel, confloat, field_validator, Field
+from pydantic_extra_types.country import CountryAlpha3
 from database.models import MovieStatusEnum
 
 
@@ -9,6 +10,7 @@ class CountryListSchema(BaseModel):
     id: int
     code: str
     name: Optional[str]
+    model_config = {"from_attributes": True}
 
 
 class GenreListSchema(BaseModel):
@@ -68,7 +70,7 @@ class MovieCreateSchema(BaseModel):
     @field_validator("country")
     def country_validator(cls, value: str) -> str:
         if not value.isalpha() or not value.isupper():
-            raise TypeError("Country code should be in uppercase")
+            raise ValueError("Country code should be in uppercase")
         return value
 
     @classmethod
