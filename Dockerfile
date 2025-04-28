@@ -5,6 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=off
 ENV ALEMBIC_CONFIG = /usr/src/alembic/alembic.ini
+ENV PYTHONPATH=/usr/src/fastapi/src
+
 
 # Installing dependencies
 RUN apt update && apt install -y \
@@ -38,7 +40,7 @@ RUN poetry install --no-root --only main
 WORKDIR /usr/src/fastapi
 
 # Copy the source code
-COPY ./src .
+COPY ./src ./src
 
 # Copy commands
 COPY ./commands /commands
