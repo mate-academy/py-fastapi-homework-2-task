@@ -2,7 +2,6 @@ from datetime import date, timedelta
 from typing import List, Optional
 
 from pydantic import BaseModel, confloat, field_validator, Field
-from pydantic_extra_types.country import CountryAlpha3
 from database.models import MovieStatusEnum
 
 
@@ -69,6 +68,8 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     @field_validator("country")
     def country_validator(cls, value: str) -> str:
+        if len(value) != 3:
+            raise ValueError("Country must be 3 characters long")
         if not value.isalpha() or not value.isupper():
             raise ValueError("Country code should be in uppercase")
         return value

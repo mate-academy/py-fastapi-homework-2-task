@@ -105,23 +105,25 @@ async def create_movie(
         )
 
     try:
-        country_code = movie.country
-        country = pycountry.countries.get(alpha_2=country_code)
+        # country_code = movie.country
+        # country = pycountry.countries.get(alpha_3=country_code)
+        #
+        # if country:
+        #     code = country.alpha_3
+        #     name = country.name
+        # else:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail=f"Invalid country code '{movie.country}' provided.",
+        #     )
 
-        if country:
-            code = country.alpha_2
-            name = country.name
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid country code '{movie.country}' provided.",
-            )
-
-        country_query = select(CountryModel).filter(CountryModel.code == code)
+        country_query = select(CountryModel).filter(
+            CountryModel.code == movie.country
+        )
         result = await db.execute(country_query)
         country_exists = result.scalar_one_or_none()
         if not country_exists:
-            new_country = CountryModel(code=code, name=name)
+            new_country = CountryModel(code=movie.country)
             db.add(new_country)
             await db.flush()
             country_exists = new_country

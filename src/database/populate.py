@@ -239,15 +239,7 @@ class CSVDatabaseSeeder:
                 "date": row["date_x"],
                 "score": float(row["score"]),
                 "overview": row["overview"],
-                "status": next(
-                    (
-                        enum_member.name
-                        for enum_member in MovieStatusEnum
-                        if enum_member.value.lower()
-                        == row["status"].strip().lower()
-                    ),
-                    None,
-                ),
+                "status": row["status"],
                 "budget": float(row["budget_x"]),
                 "revenue": float(row["revenue"]),
                 "country_id": country.id,
