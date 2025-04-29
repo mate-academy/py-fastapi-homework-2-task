@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from starlette import status
+from pydantic import BaseModel
 
 from database.session_postgresql import get_postgresql_db as get_session
 from schemas.movies import (
@@ -225,10 +226,6 @@ async def delete_movie(movie_id: int, session: AsyncSession = Depends(get_sessio
     await session.commit()
 
     return
-
-
-# PATCH endpoint to update a movie
-from pydantic import BaseModel
 
 
 class MovieUpdateSchema(BaseModel):
