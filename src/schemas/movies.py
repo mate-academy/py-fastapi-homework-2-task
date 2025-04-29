@@ -75,7 +75,7 @@ class MovieDetailInfo(BaseModel):
     date: date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountryResponse
