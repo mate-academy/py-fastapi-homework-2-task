@@ -6,17 +6,25 @@ from sqlalchemy.future import select
 from starlette import status
 
 from database.session_postgresql import get_postgresql_db as get_session
-from schemas.movies import MovieSchema, MoviesListResponse, MovieResponseSchema, MovieCreateSchema
+from schemas.movies import (
+    MovieSchema,
+    MoviesListResponse,
+    MovieResponseSchema,
+    MovieCreateSchema,
+)
 from typing import Optional
 from fastapi import Depends
-from database.models import MovieModel, GenreModel, CountryModel, ActorModel, LanguageModel
+from database.models import (
+    MovieModel,
+    GenreModel,
+    CountryModel,
+    ActorModel,
+    LanguageModel,
+)
 
 import math
 
-router = APIRouter(
-    prefix="/movies",
-    tags=["Movies"]
-)
+router = APIRouter(prefix="/movies", tags=["Movies"])
 
 
 @router.get("/", response_model=MoviesListResponse)
@@ -65,41 +73,61 @@ async def list_movies(
                 name=movie.name,
                 date=str(movie.date),
                 score=movie.score,
-                overview=movie.overview
+                overview=movie.overview,
             )
             for movie in movies
         ],
         prev_page=prev_page,
         next_page=next_page,
         total_pages=total_pages,
-        total_items=total_items_count
+        total_items=total_items_count,
     )
 
 
-@router.post("/", response_model=MovieResponseSchema, status_code=status.HTTP_201_CREATED)
-async def create_movie(movie_data: MovieCreateSchema, session: AsyncSession = Depends(get_session)):
+@router.post(
+    "/", response_model=MovieResponseSchema, status_code=status.HTTP_201_CREATED
+)
+async def create_movie(
+    movie_data: MovieCreateSchema, session: AsyncSession = Depends(get_session)
+):
     # 1. Перевірка дублікату фільму (по name і date)
     existing_movie = await session.execute(
-        select(MovieModel).where(MovieModel.name == movie_data.name, MovieModel.date == movie_data.date)
+        select(MovieModel).where(
+            MovieModel.name == movie_data.name, MovieModel.date == movie_data.date
+        )
     )
     if existing_movie.scalar():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
+            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
         )
 
     # 2. Валідація даних
     if len(movie_data.name) > 255:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name must be <= 255 characters.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name must be <= 255 characters.",
+        )
     if movie_data.date > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date must not be more than 1 year in the future.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Date must not be more than 1 year in the future.",
+        )
     if not (0 <= movie_data.score <= 100):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Score must be between 0 and 100.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Score must be between 0 and 100.",
+        )
     if movie_data.budget < 0 or movie_data.revenue < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Budget and revenue must be non-negative.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget and revenue must be non-negative.",
+        )
 
     # 3. Пошук або створення країни
-    result = await session.execute(select(CountryModel).where(CountryModel.code == movie_data.country))
+    result = await session.execute(
+        select(CountryModel).where(CountryModel.code == movie_data.country)
+    )
     country = result.scalar_one_or_none()
     if not country:
         country = CountryModel(code=movie_data.country)
@@ -109,7 +137,9 @@ async def create_movie(movie_data: MovieCreateSchema, session: AsyncSession = De
     # 4. Пошук або створення жанрів
     genres = []
     for genre_name in movie_data.genres:
-        result = await session.execute(select(GenreModel).where(GenreModel.name == genre_name))
+        result = await session.execute(
+            select(GenreModel).where(GenreModel.name == genre_name)
+        )
         genre = result.scalar_one_or_none()
         if not genre:
             genre = GenreModel(name=genre_name)
@@ -120,7 +150,9 @@ async def create_movie(movie_data: MovieCreateSchema, session: AsyncSession = De
     # 5. Пошук або створення акторів
     actors = []
     for actor_name in movie_data.actors:
-        result = await session.execute(select(ActorModel).where(ActorModel.name == actor_name))
+        result = await session.execute(
+            select(ActorModel).where(ActorModel.name == actor_name)
+        )
         actor = result.scalar_one_or_none()
         if not actor:
             actor = ActorModel(name=actor_name)
@@ -131,7 +163,9 @@ async def create_movie(movie_data: MovieCreateSchema, session: AsyncSession = De
     # 6. Пошук або створення мов
     languages = []
     for language_name in movie_data.languages:
-        result = await session.execute(select(LanguageModel).where(LanguageModel.name == language_name))
+        result = await session.execute(
+            select(LanguageModel).where(LanguageModel.name == language_name)
+        )
         language = result.scalar_one_or_none()
         if not language:
             language = LanguageModel(name=language_name)
@@ -161,7 +195,6 @@ async def create_movie(movie_data: MovieCreateSchema, session: AsyncSession = De
     return new_movie
 
 
-
 @router.get("/{movie_id}/", response_model=MovieSchema)
 async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(MovieModel).where(MovieModel.id == movie_id))
@@ -170,7 +203,7 @@ async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session))
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie with the given ID was not found."
+            detail="Movie with the given ID was not found.",
         )
 
     return MovieSchema.from_orm(movie)
@@ -185,7 +218,7 @@ async def delete_movie(movie_id: int, session: AsyncSession = Depends(get_sessio
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie with the given ID was not found."
+            detail="Movie with the given ID was not found.",
         )
 
     await session.delete(movie)
@@ -193,8 +226,10 @@ async def delete_movie(movie_id: int, session: AsyncSession = Depends(get_sessio
 
     return
 
+
 # PATCH endpoint to update a movie
 from pydantic import BaseModel
+
 
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
@@ -208,6 +243,7 @@ class MovieUpdateSchema(BaseModel):
     class Config:
         orm_mode = True
 
+
 @router.patch("/{movie_id}/", status_code=status.HTTP_200_OK)
 async def update_movie(
     movie_id: int,
@@ -220,21 +256,38 @@ async def update_movie(
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie with the given ID was not found."
+            detail="Movie with the given ID was not found.",
         )
 
     update_fields = movie_data.dict(exclude_unset=True)
 
     if "name" in update_fields and len(update_fields["name"]) > 255:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name must be <= 255 characters.")
-    if "date" in update_fields and update_fields["date"] > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date must not be more than 1 year in the future.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name must be <= 255 characters.",
+        )
+    if "date" in update_fields and update_fields["date"] > date.today() + timedelta(
+        days=365
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Date must not be more than 1 year in the future.",
+        )
     if "score" in update_fields and not (0 <= update_fields["score"] <= 100):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Score must be between 0 and 100.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Score must be between 0 and 100.",
+        )
     if "budget" in update_fields and update_fields["budget"] < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Budget must be non-negative.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Budget must be non-negative.",
+        )
     if "revenue" in update_fields and update_fields["revenue"] < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Revenue must be non-negative.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Revenue must be non-negative.",
+        )
 
     for field, value in update_fields.items():
         setattr(movie, field, value)
