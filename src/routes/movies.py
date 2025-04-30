@@ -98,7 +98,6 @@ async def create_movie(
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
         )
 
-
     if len(movie_data.name) > 255:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -120,7 +119,6 @@ async def create_movie(
             detail="Budget and revenue must be non-negative.",
         )
 
-
     result = await session.execute(
         select(CountryModel).where(CountryModel.code == movie_data.country)
     )
@@ -129,7 +127,6 @@ async def create_movie(
         country = CountryModel(code=movie_data.country)
         session.add(country)
         await session.flush()
-
 
     genres = []
     for genre_name in movie_data.genres:
@@ -143,7 +140,6 @@ async def create_movie(
             await session.flush()
         genres.append(genre)
 
-
     actors = []
     for actor_name in movie_data.actors:
         result = await session.execute(
@@ -155,7 +151,6 @@ async def create_movie(
             session.add(actor)
             await session.flush()
         actors.append(actor)
-
 
     languages = []
     for language_name in movie_data.languages:
