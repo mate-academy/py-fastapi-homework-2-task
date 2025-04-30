@@ -54,6 +54,24 @@ services:
     networks:
       - theater_network
 
+#  web-test:
+#    build: .
+#    container_name: backend_theater_test
+#    command: [ "pytest", "-vv" ]
+#    env_file:
+#      - .env
+#    environment:
+#      - LOG_LEVEL=debug
+#      - PYTHONPATH=/usr/src/fastapi
+#      - WATCHFILES_FORCE_POLLING=true
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#    volumes:
+#      - ./src:/usr/src/fastapi
+#    networks:
+#      - theater_network
+
   migrator:
     build: .
     container_name: alembic_migrator_theater
