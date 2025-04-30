@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
 
@@ -8,32 +8,36 @@ class CountrySchema(BaseModel):
     code: str
     name: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class GenreSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class ActorSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class LanguageSchema(BaseModel):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class MovieCreateSchema(BaseModel):
@@ -64,16 +68,37 @@ class MovieResponseSchema(BaseModel):
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class MovieSchema(MovieResponseSchema):
-    pass  # Спадковується для сумісності в MoviesListResponse
+    pass
 
 
 class MoviesListResponse(BaseModel):
     movies: List[MovieSchema]
+    prev_page: Optional[str]
+    next_page: Optional[str]
+    total_pages: int
+    total_items: int
+
+
+class MovieShortSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class MoviesListResponse(BaseModel):
+    movies: List[MovieShortSchema]
     prev_page: Optional[str]
     next_page: Optional[str]
     total_pages: int

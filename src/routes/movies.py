@@ -6,12 +6,13 @@ from sqlalchemy.future import select
 from starlette import status
 from pydantic import BaseModel
 
-from database.session_postgresql import get_postgresql_db as get_session
+from database import get_db as get_session
 from schemas.movies import (
     MovieSchema,
     MoviesListResponse,
     MovieResponseSchema,
     MovieCreateSchema,
+    MovieShortSchema,
 )
 from typing import Optional
 from fastapi import Depends
@@ -57,7 +58,7 @@ async def list_movies(
     result = await session.execute(stmt)
     movies = result.scalars().all()
 
-    base_url = str(request.url_for("list_movies"))
+    base_url = request.scope.get("root_path", "") + "/theater/movies/"
 
     def build_page_url(page_num: int) -> Optional[str]:
         if page_num < 1 or page_num > total_pages:
@@ -69,13 +70,7 @@ async def list_movies(
 
     return MoviesListResponse(
         movies=[
-            MovieSchema(
-                id=movie.id,
-                name=movie.name,
-                date=str(movie.date),
-                score=movie.score,
-                overview=movie.overview,
-            )
+            MovieShortSchema.model_validate(movie)
             for movie in movies
         ],
         prev_page=prev_page,
@@ -193,13 +188,37 @@ async def create_movie(
     await session.commit()
     await session.refresh(new_movie)
 
+    # Eagerly load related data to avoid lazy loading outside greenlet
+    from sqlalchemy.orm import joinedload
+    result = await session.execute(
+        select(MovieModel)
+        .where(MovieModel.id == new_movie.id)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages),
+        )
+    )
+    new_movie = result.unique().scalar_one()
+
     return new_movie
 
 
 @router.get("/{movie_id}/", response_model=MovieSchema)
 async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(MovieModel).where(MovieModel.id == movie_id))
-    movie = result.scalar_one_or_none()
+    from sqlalchemy.orm import joinedload
+    result = await session.execute(
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages),
+        )
+    )
+    movie = result.unique().scalar_one_or_none()
 
     if not movie:
         raise HTTPException(
@@ -207,7 +226,7 @@ async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session))
             detail="Movie with the given ID was not found.",
         )
 
-    return MovieSchema.from_orm(movie)
+    return MovieSchema.model_validate(movie)
 
 
 # Delete movie endpoint
