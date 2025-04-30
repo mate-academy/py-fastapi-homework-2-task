@@ -86,7 +86,7 @@ async def list_movies(
 async def create_movie(
     movie_data: MovieCreateSchema, session: AsyncSession = Depends(get_session)
 ):
-    # 1. Перевірка дублікату фільму (по name і date)
+
     existing_movie = await session.execute(
         select(MovieModel).where(
             MovieModel.name == movie_data.name, MovieModel.date == movie_data.date
@@ -98,7 +98,7 @@ async def create_movie(
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
         )
 
-    # 2. Валідація даних
+
     if len(movie_data.name) > 255:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -120,7 +120,7 @@ async def create_movie(
             detail="Budget and revenue must be non-negative.",
         )
 
-    # 3. Пошук або створення країни
+
     result = await session.execute(
         select(CountryModel).where(CountryModel.code == movie_data.country)
     )
@@ -130,7 +130,7 @@ async def create_movie(
         session.add(country)
         await session.flush()
 
-    # 4. Пошук або створення жанрів
+
     genres = []
     for genre_name in movie_data.genres:
         result = await session.execute(
@@ -143,7 +143,7 @@ async def create_movie(
             await session.flush()
         genres.append(genre)
 
-    # 5. Пошук або створення акторів
+
     actors = []
     for actor_name in movie_data.actors:
         result = await session.execute(
@@ -156,7 +156,7 @@ async def create_movie(
             await session.flush()
         actors.append(actor)
 
-    # 6. Пошук або створення мов
+
     languages = []
     for language_name in movie_data.languages:
         result = await session.execute(
@@ -169,7 +169,6 @@ async def create_movie(
             await session.flush()
         languages.append(language)
 
-    # 7. Створення фільму
     new_movie = MovieModel(
         name=movie_data.name,
         date=movie_data.date,
@@ -188,7 +187,6 @@ async def create_movie(
     await session.commit()
     await session.refresh(new_movie)
 
-    # Eagerly load related data to avoid lazy loading outside greenlet
     from sqlalchemy.orm import joinedload
     result = await session.execute(
         select(MovieModel)
