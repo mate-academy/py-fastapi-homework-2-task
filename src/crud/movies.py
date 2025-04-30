@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from database.models import MovieModel
-from schemas.movies import MovieCreate, Movie, MovieUpdate
+from schemas.movies import MovieCreate, MovieUpdate
 
 
 async def create_movie(db: AsyncSession, movie: MovieCreate):

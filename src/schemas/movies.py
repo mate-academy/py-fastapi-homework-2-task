@@ -1,78 +1,116 @@
-from datetime import datetime, timedelta
-from pydantic import BaseModel, condecimal, constr, Field, validator
-from typing import Optional, Literal
+from datetime import date
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, model_validator, ConfigDict
+
+
+class GenreSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ActorSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LanguageSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class CountrySchema(BaseModel):
     id: int
     code: str
     name: Optional[str]
 
-class GenreSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieDetail(BaseModel):
     id: int
     name: str
-
-class ActorSchema(BaseModel):
-    id: int
-    name: str
-
-class LanguageSchema(BaseModel):
-    id: int
-    name: str
-
-class MovieBase(BaseModel):
-    name: constr(max_length=255)
-    date: str
-    score: float = Field(..., ge=0, le=100)
+    date: date
+    score: float
     overview: str
-
-    @validator("date")
-    def validate_date(cls, value: str) -> str:
-        date_value = datetime.strptime(value, "%Y-%m-%d").date()
-        max_allowed = datetime.now().date() + timedelta(days=365)
-        if date_value > max_allowed:
-            raise ValueError("The release date cannot be more than one year in the future.")
-        return value
-
-class Movie(MovieBase):
-    id: int
-
-class MovieCreate(MovieBase):
-    status: Literal["Released", "Post Production", "In Production"]
-    budget: condecimal(ge=0)
-    revenue: condecimal(ge=0)
-    country: CountrySchema
-    genres: list[GenreSchema]
-    actors: list[ActorSchema]
-    languages: list[LanguageSchema]
-
-class MovieUpdate(BaseModel):
-    name: Optional[constr(max_length=255)] = None
-    date: Optional[str] = None
-    score: Optional[float] = Field(None, ge=0, le=100)
-    overview: Optional[str] = None
-    status: Optional[Literal["Released", "Post Production", "In Production"]] = None
-    budget: Optional[condecimal(ge=0)] = None
-    revenue: Optional[condecimal(ge=0)] = None
-
-
-class MovieDetailSchema(Movie):
     status: str
     budget: float
     revenue: float
     country: CountrySchema
-    genres: list[GenreSchema]
-    actors: list[ActorSchema]
-    languages: list[LanguageSchema]
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class MovieListItemSchema(Movie):
-    status: Literal["Released", "Post Production", "In Production"]
+class MovieBase(BaseModel):
+    id: int
+    name: str
+    date: date
     score: float
+    overview: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class MovieListResponseSchema(BaseModel):
-    movies: list[Movie]
-    prev_page: Optional[str]
-    next_page: Optional[str]
-    total_pages: int
+class MovieList(BaseModel):
     total_items: int
+    total_pages: int
+    current_page: int
+    prev_page: str | None
+    next_page: str | None
+    movies: List[MovieBase]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieCreate(BaseModel):
+    name: str = Field(max_length=255)
+    date: date
+    score: float = Field(ge=0, le=100)
+    overview: str
+    status: str = Field(pattern="^(Released|Post Production|In Production)$")
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+    country: str = Field(pattern="^[A-Z]{2}$")
+
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+    @model_validator(mode="after")
+    def validate_date(self) -> "MovieCreate":
+        max_date = date.today().replace(year=date.today().year + 1)
+        if self.date > max_date:
+            raise ValueError("Date cannot be more than one year in the future")
+
+        return self
+
+
+class MovieUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, max_length=255)
+    date: Optional[date] = None
+    score: Optional[float] = Field(default=None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[str] = Field(
+        default=None, pattern="^(Released|Post Production|In Production)$"
+    )
+    budget: Optional[float] = Field(default=None, ge=0)
+    revenue: Optional[float] = Field(default=None, ge=0)
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_date(self) -> "MovieUpdate":
+        if self.date:
+            max_date = date.today().replace(year=date.today().year + 1)
+            if self.date > max_date:
+                raise ValueError("Date cannot be more than one year in the future")
+        return self
