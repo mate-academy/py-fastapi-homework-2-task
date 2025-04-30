@@ -69,10 +69,7 @@ async def list_movies(
     next_page = build_page_url(page + 1) if page < total_pages else None
 
     return MoviesListResponse(
-        movies=[
-            MovieShortSchema.model_validate(movie)
-            for movie in movies
-        ],
+        movies=[MovieShortSchema.model_validate(movie) for movie in movies],
         prev_page=prev_page,
         next_page=next_page,
         total_pages=total_pages,
@@ -190,6 +187,7 @@ async def create_movie(
 
     # Eagerly load related data to avoid lazy loading outside greenlet
     from sqlalchemy.orm import joinedload
+
     result = await session.execute(
         select(MovieModel)
         .where(MovieModel.id == new_movie.id)
@@ -208,6 +206,7 @@ async def create_movie(
 @router.get("/{movie_id}/", response_model=MovieSchema)
 async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
     from sqlalchemy.orm import joinedload
+
     result = await session.execute(
         select(MovieModel)
         .where(MovieModel.id == movie_id)

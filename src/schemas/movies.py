@@ -8,36 +8,28 @@ class CountrySchema(BaseModel):
     code: str
     name: Optional[str] = None
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class GenreSchema(BaseModel):
     id: int
     name: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class ActorSchema(BaseModel):
     id: int
     name: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class LanguageSchema(BaseModel):
     id: int
     name: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class MovieCreateSchema(BaseModel):
@@ -68,9 +60,7 @@ class MovieResponseSchema(BaseModel):
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class MovieSchema(MovieResponseSchema):
@@ -92,9 +82,7 @@ class MovieShortSchema(BaseModel):
     score: float
     overview: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class MoviesListResponse(BaseModel):
