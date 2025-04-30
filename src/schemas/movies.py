@@ -83,6 +83,3 @@ class MovieShortSchema(BaseModel):
     overview: str
 
     model_config = {"from_attributes": True}
-
-
-
