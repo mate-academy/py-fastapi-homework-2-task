@@ -35,7 +35,7 @@ async def list_movies(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
     session: AsyncSession = Depends(get_session),
-):
+) -> MoviesListResponse:
 
     total_items_result = await session.execute(select(MovieModel))
     total_items = total_items_result.scalars().all()
@@ -82,7 +82,7 @@ async def list_movies(
 )
 async def create_movie(
     movie_data: MovieCreateSchema, session: AsyncSession = Depends(get_session)
-):
+) -> MovieResponseSchema:
     # 1. Перевірка дублікату фільму (по name і date)
     existing_movie = await session.execute(
         select(MovieModel).where(
@@ -204,7 +204,7 @@ async def create_movie(
 
 
 @router.get("/{movie_id}/", response_model=MovieSchema)
-async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
+async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session)) -> MovieSchema:
     from sqlalchemy.orm import joinedload
 
     result = await session.execute(
@@ -230,7 +230,7 @@ async def get_movie(movie_id: int, session: AsyncSession = Depends(get_session))
 
 # Delete movie endpoint
 @router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(movie_id: int, session: AsyncSession = Depends(get_session)):
+async def delete_movie(movie_id: int, session: AsyncSession = Depends(get_session)) -> None:
     result = await session.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
 
@@ -264,7 +264,7 @@ async def update_movie(
     movie_id: int,
     movie_data: MovieUpdateSchema,
     session: AsyncSession = Depends(get_session),
-):
+) -> dict:
     result = await session.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
 

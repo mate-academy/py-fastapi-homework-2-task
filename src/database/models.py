@@ -19,7 +19,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 
 class Base(DeclarativeBase):
     @classmethod
-    def default_order_by(cls):
+    def default_order_by(cls) -> Optional[list]:
         return None
 
 
@@ -76,35 +76,35 @@ MoviesLanguagesModel = Table(
 class GenreModel(Base):
     __tablename__ = "genres"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    genre_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel", secondary=MoviesGenresModel, back_populates="genres"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Genre(name='{self.name}')>"
 
 
 class ActorModel(Base):
     __tablename__ = "actors"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    actor_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel", secondary=ActorsMoviesModel, back_populates="actors"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Actor(name='{self.name}')>"
 
 
 class CountryModel(Base):
     __tablename__ = "countries"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    country_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     code: Mapped[str] = mapped_column(String(3), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
@@ -112,28 +112,28 @@ class CountryModel(Base):
         "MovieModel", back_populates="country"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Country(code='{self.code}', name='{self.name}')>"
 
 
 class LanguageModel(Base):
     __tablename__ = "languages"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    language_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel", secondary=MoviesLanguagesModel, back_populates="languages"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Language(name='{self.name}')>"
 
 
 class MovieModel(Base):
     __tablename__ = "movies"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    movie_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
@@ -164,8 +164,8 @@ class MovieModel(Base):
     __table_args__ = (UniqueConstraint("name", "date", name="unique_movie_constraint"),)
 
     @classmethod
-    def default_order_by(cls):
-        return [cls.id.desc()]
+    def default_order_by(cls) -> Optional[list]:
+        return [cls.movie_id.desc()]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Movie(name='{self.name}', release_date='{self.date}', score={self.score})>"
