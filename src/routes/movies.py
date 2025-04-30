@@ -311,4 +311,4 @@ async def update_movie(
     session.add(movie)
     await session.commit()
 
-    return {"detail": "Movie updated successfully."}
+    return {"detail": "Movie updated successfully."} # lol
