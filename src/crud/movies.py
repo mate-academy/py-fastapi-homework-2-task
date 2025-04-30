@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-
 from database.models import MovieModel
 from schemas.movies import MovieCreate, MovieUpdate
 
@@ -12,6 +11,7 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
     await db.commit()
     await db.refresh(new_movie)
     return new_movie
+
 
 async def get_movie_by_id(db: AsyncSession, movie_id: int):
     result = await db.execute(
@@ -31,7 +31,8 @@ async def get_movie_by_id(db: AsyncSession, movie_id: int):
 async def get_movies(db: AsyncSession):
     result = await db.execute(select(MovieModel))
     movies = result.scalars().all()
-    return  movies
+    return movies
+
 
 async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
@@ -55,4 +56,3 @@ async def delete_movie(db: AsyncSession, movie_id: int):
     await db.delete(db_movie)
     await db.commit()
     return db_movie
-
