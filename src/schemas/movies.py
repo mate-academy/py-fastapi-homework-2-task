@@ -4,7 +4,7 @@ from datetime import date
 
 
 class CountrySchema(BaseModel):
-    country_id: int
+    id: int
     code: str
     name: Optional[str] = None
 
@@ -14,7 +14,7 @@ class CountrySchema(BaseModel):
 
 
 class GenreSchema(BaseModel):
-    genre_id: int
+    id: int
     name: str
 
     model_config = {
@@ -23,7 +23,7 @@ class GenreSchema(BaseModel):
 
 
 class ActorSchema(BaseModel):
-    actor_id: int
+    id: int
     name: str
 
     model_config = {
@@ -32,7 +32,7 @@ class ActorSchema(BaseModel):
 
 
 class LanguageSchema(BaseModel):
-    language_id: int
+    id: int
     name: str
 
     model_config = {
@@ -55,7 +55,7 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieResponseSchema(BaseModel):
-    movie_id: int
+    id: int
     name: str
     date: date
     score: float
@@ -78,7 +78,7 @@ class MovieSchema(MovieResponseSchema):
 
 
 class MoviesListResponse(BaseModel):
-    movies: List[MovieSchema]
+    movies: List["MovieShortSchema"]
     prev_page: Optional[str]
     next_page: Optional[str]
     total_pages: int
@@ -86,7 +86,7 @@ class MoviesListResponse(BaseModel):
 
 
 class MovieShortSchema(BaseModel):
-    movie_id: int
+    id: int
     name: str
     date: date
     score: float
