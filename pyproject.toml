@@ -21,6 +21,8 @@ alembic = "^1.14.0"
 aiosqlite = "^0.21.0"
 asyncpg = "^0.30.0"
 pytest-asyncio = "^0.25.3"
+black = "^25.1.0"
+greenlet = "^3.2.1"
 
 
 [build-system]
