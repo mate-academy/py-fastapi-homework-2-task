@@ -95,3 +95,15 @@ class MovieCreateSchema(BaseModel):
                 "Release date cannot be more than one year in the future."
             )
         return v
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[datetime.date] = None
+    score: Optional[float] = Field(None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[Decimal] = Field(None, ge=0)
+    revenue: Optional[float] = Field(None, ge=0)
+
+    model_config = {"from_attributes": True}

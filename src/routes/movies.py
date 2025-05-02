@@ -1,3 +1,4 @@
+from http.client import HTTPResponse
 from math import ceil
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -7,12 +8,13 @@ from sqlalchemy.orm import joinedload, selectinload
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import MovieListResponseSchema, MovieDetailSchema
-from schemas.movies import MovieCreateSchema
+from schemas.movies import MovieCreateSchema, MovieUpdateSchema
 
 router = APIRouter()
 
 NO_MOVIES_ERROR = "No movies found."
 NO_MOVIE_ID_ERROR = "Movie with the given ID was not found."
+MOVIE_UPDATED = "Movie updated successfully."
 
 
 @router.get(
@@ -187,10 +189,37 @@ async def create_movie(
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(
-    movie_id: int, db: AsyncSession = Depends(get_db)
-):
+async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await _get_movie_by_id(db, movie_id)
     await db.delete(movie)
     await db.commit()
     return None
+
+
+@router.patch(
+    "/movies/{movie_id}/",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {
+            "content": {
+                "application/json": {"example": {"detail": MOVIE_UPDATED}}
+            }
+        },
+        404: {
+            "content": {
+                "application/json": {"example": {"detail": NO_MOVIES_ERROR}}
+            }
+        },
+    },
+)
+async def update_movie(
+    movie_id: int,
+    payload: MovieUpdateSchema,
+    db: AsyncSession = Depends(get_db),
+):
+    movie = await _get_movie_by_id(db, movie_id)
+    data = payload.model_dump(exclude_unset=True)
+    for field, value in data.items():
+        setattr(movie, field, value)
+    await db.commit()
+    return {"detail": MOVIE_UPDATED}
