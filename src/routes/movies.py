@@ -184,3 +184,13 @@ async def create_movie(
     )
 
     return movie
+
+
+@router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(
+    movie_id: int, db: AsyncSession = Depends(get_db)
+):
+    movie = await _get_movie_by_id(db, movie_id)
+    await db.delete(movie)
+    await db.commit()
+    return None
