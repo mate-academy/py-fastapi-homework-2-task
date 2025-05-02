@@ -1,12 +1,13 @@
 from math import ceil
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-
 from database import get_db, MovieModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import MovieListResponseSchema, MovieDetailSchema
+from schemas.movies import MovieCreateSchema
 
 router = APIRouter()
 
@@ -90,4 +91,96 @@ async def _get_movie_by_id(db: AsyncSession, movie_id: int) -> MovieModel:
 )
 async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await _get_movie_by_id(db, movie_id)
+    return movie
+
+
+@router.post(
+    "/movies/",
+    response_model=MovieDetailSchema,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"description": "Invalid input data."},
+        409: {"description": "Movie already exists"},
+    },
+)
+async def create_movie(
+    payload: MovieCreateSchema,
+    db: AsyncSession = Depends(get_db),
+):
+    exists = await db.scalar(
+        select(func.count())
+        .select_from(MovieModel)
+        .where(
+            MovieModel.name == payload.name,
+            MovieModel.date == payload.date,
+        )
+    )
+    if exists:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"A movie with the name '{payload.name}' "
+                f"and release date '{payload.date}' already exists."
+            ),
+        )
+    country = await db.scalar(
+        select(CountryModel).where(CountryModel.code == payload.country)
+    )
+    if not country:
+        country = CountryModel(code=payload.country)
+        db.add(country)
+        await db.flush()
+
+    genres = []
+    for name in payload.genres:
+        genre = await db.scalar(
+            select(GenreModel).where(GenreModel.name == name)
+        )
+        if not genre:
+            genre = GenreModel(name=name)
+            db.add(genre)
+            await db.flush()
+        genres.append(genre)
+
+    actors = []
+    for name in payload.actors:
+        actor = await db.scalar(
+            select(ActorModel).where(ActorModel.name == name)
+        )
+        if not actor:
+            actor = ActorModel(name=name)
+            db.add(actor)
+            await db.flush()
+        actors.append(actor)
+
+    languages = []
+    for name in payload.languages:
+        language = await db.scalar(
+            select(LanguageModel).where(LanguageModel.name == name)
+        )
+        if not language:
+            language = LanguageModel(name=name)
+            db.add(language)
+            await db.flush()
+        languages.append(language)
+
+    movie = MovieModel(
+        name=payload.name,
+        date=payload.date,
+        score=payload.score,
+        overview=payload.overview,
+        status=payload.status,
+        budget=payload.budget,
+        revenue=payload.revenue,
+        country=country,
+        genres=genres,
+        actors=actors,
+        languages=languages,
+    )
+    db.add(movie)
+    await db.commit()
+    await db.refresh(
+        movie, attribute_names=["country", "genres", "actors", "languages"]
+    )
+
     return movie
