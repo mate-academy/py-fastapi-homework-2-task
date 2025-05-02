@@ -41,13 +41,13 @@ async def get_movies(
 
     result = await db.execute(
         select(MovieModel)
-        .order_by(MovieModel.id)
+        .order_by(MovieModel.id.desc())
         .limit(per_page)
         .offset((page - 1) * per_page)
     )
     movies = result.scalars().all()
 
-    url_ = "/theater/movies?page="
+    url_ = "/theater/movies/?page="
     next_page = (
         f"{url_}{page + 1}&per_page={per_page}" if page < total_pages else None
     )

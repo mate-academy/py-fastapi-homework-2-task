@@ -43,7 +43,7 @@ class MovieDetailSchema(BaseModel):
     score: float
     overview: str
     status: MovieStatusEnum
-    budget: Decimal
+    budget: float
     revenue: float
     country: CountrySchema
     genres: List[GenreSchema]
@@ -79,9 +79,9 @@ class MovieCreateSchema(BaseModel):
     score: float = Field(..., ge=0, le=100)
     overview: str
     status: MovieStatusEnum
-    budget: Decimal = Field(..., ge=0)
-    revenue: float = Field(..., ge=0)
-    country: str = Field(..., max_length=3, min_length=3)
+    budget: Decimal = Field(..., ge=1)
+    revenue: float = Field(..., ge=1)
+    country: str = Field(..., max_length=3, min_length=2)
     genres: List[str] = Field(..., min_length=1)
     actors: List[str] = Field(..., min_length=1)
     languages: List[str] = Field(..., min_length=1)
@@ -103,7 +103,7 @@ class MovieUpdateSchema(BaseModel):
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
-    budget: Optional[Decimal] = Field(None, ge=0)
-    revenue: Optional[float] = Field(None, ge=0)
+    budget: Optional[Decimal] = Field(None, ge=1)
+    revenue: Optional[float] = Field(None, ge=1)
 
     model_config = {"from_attributes": True}
