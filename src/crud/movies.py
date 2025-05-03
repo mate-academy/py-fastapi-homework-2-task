@@ -1,8 +1,16 @@
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request
+from sqlalchemy.orm import joinedload
 
 from database import MovieModel
+from schemas import MovieDetailSchema
+from schemas.movies import (
+    CountryResponse,
+    GenreResponse,
+    ActorResponse,
+    LanguageResponse,
+)
 
 
 def build_page_url(page_num: int, per_page: int) -> str:
@@ -26,3 +34,18 @@ async def get_movies_count(db: AsyncSession):
         select(func.count()).select_from(MovieModel)
     )
     return total_count.scalar_one()
+
+
+async def get_movie_by_id(db: AsyncSession, movie_id: int):
+    result = await db.execute(
+        select(MovieModel)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages),
+        )
+        .where(MovieModel.id == movie_id)
+    )
+    movie = result.scalars().first()
+    return movie
