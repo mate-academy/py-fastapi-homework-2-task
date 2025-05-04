@@ -63,7 +63,7 @@ async def create_new_movie(movie: MovieCreateSchema, db: AsyncSession):
             genre = GenreModel(name=name)
             db.add(genre)
             await db.flush()
-            genres.append(genre)
+        genres.append(genre)
 
     actors = []
     for name in movie.actors:
@@ -74,7 +74,7 @@ async def create_new_movie(movie: MovieCreateSchema, db: AsyncSession):
             actor = ActorModel(name=name)
             db.add(actor)
             await db.flush()
-            actors.append(actor)
+        actors.append(actor)
 
     languages = []
     for name in movie.languages:
@@ -85,7 +85,7 @@ async def create_new_movie(movie: MovieCreateSchema, db: AsyncSession):
             language = LanguageModel(name=name)
             db.add(language)
             await db.flush()
-            languages.append(language)
+        languages.append(language)
 
     new_movie = MovieModel(
         name=movie.name,
