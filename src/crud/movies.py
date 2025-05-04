@@ -128,4 +128,24 @@ async def get_movie_by_id(db: AsyncSession, movie_id: int):
         .where(MovieModel.id == movie_id)
     )
     movie = result.scalars().first()
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
     return movie
+
+
+async def delete_movie(db: AsyncSession, movie_id: int):
+    result = await db.execute(
+        select(MovieModel).where(MovieModel.id == movie_id)
+    )
+    movie_db = result.scalar_one_or_none()
+    if not movie_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
+    await db.delete(movie_db)
+    await db.commit()
+    return {"detail": "The movie was successfully deleted."}
