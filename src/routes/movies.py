@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,10 +9,11 @@ from crud.movies import (
     get_movies_count,
     build_page_url,
     get_movie_by_id,
+    create_new_movie,
 )
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema
+from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema
 
 router = APIRouter()
 
@@ -27,7 +28,7 @@ async def get_movies(
     movies = await get_paginated_movies(db=db, offset=skip, limit=per_page)
     if not movies:
         # this logic is specified in the task, it is not an error!
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     total_items = await get_movies_count(db=db)
     total_pages = (total_items + per_page - 1) // per_page
@@ -43,9 +44,15 @@ async def get_movies(
     )
 
 
+@router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
+async def create_movie(movie_to_create: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+    movie = await create_new_movie(movie=movie_to_create, db=db)
+    return movie
+
+
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await get_movie_by_id(db=db, movie_id=movie_id)
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
     return movie
