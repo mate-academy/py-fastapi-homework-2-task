@@ -1,30 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from crud.movies import (
     get_paginated_movies,
     get_movies_count,
     build_page_url,
-    get_movie_by_id,
     create_new_movie,
     delete_movie,
+    get_movie_data,
+    patch_movie,
 )
-from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from database import get_db
 from schemas.movies import (
     MovieListResponseSchema,
     MovieDetailSchema,
     MovieCreateSchema,
+    MovieUpdateSchema,
 )
 
 router = APIRouter()
 
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
-async def get_movies(
+async def get_movie_list(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
@@ -72,11 +70,20 @@ async def create_movie(
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
-async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
-    movie = await get_movie_by_id(db=db, movie_id=movie_id)
+async def get_movie_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
+    movie = await get_movie_data(db=db, movie_id=movie_id)
     return movie
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return await delete_movie(db=db, movie_id=movie_id)
+
+
+@router.patch("/movies/{movie_id}/")
+async def update_movie(
+    movie_id: int,
+    patch_data: MovieUpdateSchema,
+    db: AsyncSession = Depends(get_db),
+):
+    return await patch_movie(db=db, movie_id=movie_id, movie_data=patch_data)

@@ -1,6 +1,7 @@
 import datetime
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from database.models import MovieStatusEnum
 
@@ -9,16 +10,14 @@ class GenreResponse(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ActorResponse(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class CountryResponse(BaseModel):
@@ -26,16 +25,14 @@ class CountryResponse(BaseModel):
     code: str
     name: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class LanguageResponse(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MovieListItemSchema(BaseModel):
@@ -45,8 +42,7 @@ class MovieListItemSchema(BaseModel):
     score: float
     overview: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MovieListResponseSchema(BaseModel):
@@ -70,8 +66,18 @@ class MovieCreateSchema(BaseModel):
     actors: list[str]
     languages: list[str]
 
-    class Config:
-        from_attributes = True
+    @field_validator("date")
+    @classmethod
+    def validate_release_date(cls, value: datetime.date) -> datetime.date:
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+        if value > max_date:
+            raise ValueError(
+                "The date must not be more than one year in the future."
+            )
+        return value
+
+    model_config = {"from_attributes": True}
+
 
 class MovieDetailSchema(BaseModel):
     id: int
@@ -87,5 +93,26 @@ class MovieDetailSchema(BaseModel):
     actors: list[ActorResponse]
     languages: list[LanguageResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = Field(None, max_length=255)
+    date: Optional[datetime.date] = None
+    score: Optional[float] = Field(None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(None, ge=0)
+    revenue: Optional[float] = Field(None, ge=0)
+
+    @field_validator("date")
+    @classmethod
+    def validate_release_date(cls, value: datetime.date) -> datetime.date:
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+        if value > max_date:
+            raise ValueError(
+                "The date must not be more than one year in the future."
+            )
+        return value
+
+    model_config = {"from_attributes": True}

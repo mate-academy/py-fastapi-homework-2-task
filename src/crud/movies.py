@@ -1,21 +1,13 @@
-import asyncio
-from typing import Type
-
-from pydantic import ValidationError
+from fastapi import status, HTTPException
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import status, HTTPException
 from sqlalchemy.orm import joinedload
 
-from database import MovieModel, Base
+from database import MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas import MovieDetailSchema
 from schemas.movies import (
-    CountryResponse,
-    GenreResponse,
-    ActorResponse,
-    LanguageResponse,
     MovieCreateSchema,
+    MovieUpdateSchema,
 )
 
 
@@ -116,7 +108,7 @@ async def create_new_movie(movie: MovieCreateSchema, db: AsyncSession):
     return new_movie
 
 
-async def get_movie_by_id(db: AsyncSession, movie_id: int):
+async def get_movie_data(db: AsyncSession, movie_id: int):
     result = await db.execute(
         select(MovieModel)
         .options(
@@ -136,7 +128,7 @@ async def get_movie_by_id(db: AsyncSession, movie_id: int):
     return movie
 
 
-async def delete_movie(db: AsyncSession, movie_id: int):
+async def get_movie_by_id(db: AsyncSession, movie_id: int):
     result = await db.execute(
         select(MovieModel).where(MovieModel.id == movie_id)
     )
@@ -146,6 +138,26 @@ async def delete_movie(db: AsyncSession, movie_id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found.",
         )
-    await db.delete(movie_db)
+    return movie_db
+
+
+async def delete_movie(db: AsyncSession, movie_id: int):
+    movie_to_delete = await get_movie_by_id(db=db, movie_id=movie_id)
+    await db.delete(movie_to_delete)
     await db.commit()
     return {"detail": "The movie was successfully deleted."}
+
+
+async def patch_movie(
+    db: AsyncSession, movie_id: int, movie_data: MovieUpdateSchema
+):
+    movie_to_update = await get_movie_by_id(db=db, movie_id=movie_id)
+
+    update_data = movie_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(movie_to_update, field, value)
+
+    db.add(movie_to_update)
+    await db.commit()
+    await db.refresh(movie_to_update)
+    return {"detail": "Movie updated successfully."}
