@@ -8,7 +8,13 @@ from starlette import status
 
 from schemas.movies import MovieUpdate
 from src.database import get_db, MovieModel
-from src.database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from src.database.models import (
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel,
+    MovieStatusEnum,
+)
 from src.schemas.movies import MoviesList, MovieCreate, MovieDetail, MovieShort
 
 router = APIRouter()
@@ -193,7 +199,15 @@ async def update_movie(
             status_code=404, detail="Movie with the given ID was not found."
         )
 
-    for key, value in data_movie.model_dump(exclude_unset=True).items():
+    update_data = data_movie.model_dump(exclude_unset=True)
+
+    if "status" in update_data:
+        try:
+            update_data["status"] = MovieStatusEnum(update_data["status"]).value
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status value")
+
+    for key, value in update_data.items():
         setattr(movie, key, value)
 
     db.add(movie)
