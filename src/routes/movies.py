@@ -19,6 +19,7 @@ from schemas.movies import (
 
 router = APIRouter()
 
+
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movie_list(
     db: AsyncSession = Depends(get_db),
