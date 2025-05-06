@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -184,7 +184,7 @@ async def delete_movie(
 )
 async def update_movie(
     movie_id: int,
-    updates: dict,
+    updates: dict = Body(...),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(
