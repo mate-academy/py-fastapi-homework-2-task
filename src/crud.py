@@ -71,7 +71,7 @@ async def validate_movie_data(movie: MovieCreate):
         raise HTTPException(status_code=400, detail="Date cannot be in the future.")
     if len(movie.name) > 255:
         raise HTTPException(status_code=400, detail=f"Movie {movie.name} cannot be longer than 255 characters.")
-    if not 0 < movie.score < 100:
+    if not 0 <= movie.score <= 100:
         raise HTTPException(status_code=400, detail="Score must be between 0 and 100.")
     if movie.budget < 0 or movie.revenue < 0:
         raise HTTPException(status_code=400, detail="Budget and revenue must be positive.")

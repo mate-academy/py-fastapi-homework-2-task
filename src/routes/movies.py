@@ -49,4 +49,3 @@ async def remove_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     deleted_movie = await delete_movie(db, movie_id)
     if not deleted_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    return deleted_movie
