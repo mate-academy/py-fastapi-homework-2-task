@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import crud
 
-from database.models import MovieModel
+from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from database.session_postgresql import get_postgresql_db
 
 from schemas.movies import MoviesListSchema, MovieDetailSchema, MovieCreateSchema, MoviePatchSchema
 from sources.movie_create import (
@@ -27,7 +26,7 @@ router = APIRouter()
 async def get_movies(
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20),
-        db: AsyncSession = Depends(get_postgresql_db)
+        db: AsyncSession = Depends(get_db)
 ):
     # Порахувати всі елементи, щоб можна було потім їх розприділити по сторінках
     total_items = await db.scalar(select(func.count()).select_from(MovieModel))
@@ -64,7 +63,7 @@ async def get_movies(
 @router.post("/movies/", response_model=MovieDetailSchema)
 async def create_movie(
         movie: MovieCreateSchema,
-        db: AsyncSession = Depends(get_postgresql_db)
+        db: AsyncSession = Depends(get_db)
 ):
     await check_if_movie_exist(movie.name, movie.date, db)
 
@@ -84,7 +83,7 @@ async def create_movie(
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie(
         movie_id: int,
-        db: AsyncSession = Depends(get_postgresql_db)
+        db: AsyncSession = Depends(get_db)
 ):
     movie = await get_movie_or_404(movie_id, db)
     return MovieDetailSchema.model_validate(movie, from_attributes=True)
@@ -94,7 +93,7 @@ async def get_movie(
 async def update_movie(
         movie_id: int,
         movie_data: MoviePatchSchema,
-        db: AsyncSession = Depends(get_postgresql_db)
+        db: AsyncSession = Depends(get_db)
 ):
     movie = await get_movie_or_404(movie_id, db)
 
@@ -130,9 +129,9 @@ async def update_movie(
 @router.delete("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def delete_movie(
         movie_id: int,
-        db: AsyncSession = Depends(get_postgresql_db)
+        db: AsyncSession = Depends(get_db)
 ):
-    movie = await get_or_create_entity(MovieModel, movie_id)
+    movie = await get_movie_or_404(movie_id, db)
     await db.delete(movie)
     await db.commit()
     return MovieDetailSchema.model_validate(movie, from_attributes=True)

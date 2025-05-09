@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import MovieModel
-from src.database.models import CountryModel
-from src.schemas.movies import MovieCreateSchema
+from database.models import MovieModel
+from database.models import CountryModel
+from schemas.movies import MovieCreateSchema
 
 
 # перевіряємо чи є такі сущності як актори, жанри і мови в БД, якщо немає - свторюємо
@@ -29,8 +29,9 @@ async def get_or_create_entity(model, names, db: AsyncSession):
 # Перевіряємо наявність країни в БД, якщо немає - створюємо
 async def get_or_create_country(name, code, db: AsyncSession):
     get_country = await db.execute(select(CountryModel).where(CountryModel.name == name))
-    if get_country:
-        return get_country
+    country = get_country.scalar_one_or_none()
+    if country:
+        return country
 
     new_country = CountryModel(name=name, code=code)
     db.add(new_country)
@@ -55,7 +56,7 @@ async def check_if_movie_exist(name, date, db: AsyncSession, movie_id: Optional[
 def create_movie_instance(
         movie_data: MovieModel | None,
         data: MovieCreateSchema,
-        country: list,
+        country: str,
         actors: list,
         genres: list,
         languages: list
