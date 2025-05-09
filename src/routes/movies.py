@@ -38,7 +38,9 @@ async def get_movies(
     # визначаємо offcet тобто к-сть записів які ми будемо зміщувати при вибірці
     offset = (page - 1) * per_page
     # ну і нарешті проводимо саму вибірку
-    movies = await db.query(MovieModel).offset(offset).limit(per_page).all()
+    request = select(MovieModel).offset(offset).limit(per_page)
+    result = await db.execute(request)
+    movies = result.scalars().all()
 
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
