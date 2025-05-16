@@ -2,9 +2,18 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import (
+    String,
+    Float,
+    Text,
+    DECIMAL,
+    UniqueConstraint,
+    Date, ForeignKey,
+    Table,
+    Column
+)
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 
 
 class Base(DeclarativeBase):
@@ -24,10 +33,16 @@ MoviesGenresModel = Table(
     Base.metadata,
     Column(
         "movie_id",
-        ForeignKey("movies.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    ),
     Column(
         "genre_id",
-        ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("genres.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    ),
 )
 
 ActorsMoviesModel = Table(
@@ -35,10 +50,16 @@ ActorsMoviesModel = Table(
     Base.metadata,
     Column(
         "movie_id",
-        ForeignKey("movies.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    ),
     Column(
         "actor_id",
-        ForeignKey("actors.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("actors.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False
+    ),
 )
 
 MoviesLanguagesModel = Table(
@@ -118,9 +139,7 @@ class MovieModel(Base):
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     overview: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[MovieStatusEnum] = mapped_column(
-        SQLAlchemyEnum(MovieStatusEnum), nullable=False
-    )
+    status: Mapped[MovieStatusEnum] = mapped_column(SQLAlchemyEnum(MovieStatusEnum), nullable=False)
     budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
 
