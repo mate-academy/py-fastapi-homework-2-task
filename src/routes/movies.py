@@ -13,6 +13,7 @@ from schemas.movies import MovieListResponseSchema, MovieBaseSchema, MovieCreate
 
 router = APIRouter()
 
+
 @router.get("/movies/", response_model=MovieListResponseSchema, status_code=200)
 async def get_movies(
         db: AsyncSession = Depends(get_db),
@@ -53,7 +54,11 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_
         )
     )
     if result.scalars().first():
-        raise HTTPException(status_code=409, detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie.name}' and"
+                   f" release date '{movie.date}' already exists."
+        )
 
     try:
         result = await db.execute(select(CountryModel).where(CountryModel.code == movie.country))
@@ -169,31 +174,3 @@ async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSe
 
     await db.commit()
     return {"detail": "Movie updated successfully."}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
