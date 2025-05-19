@@ -99,13 +99,13 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = None
-    date: date = None
-    score: float = None
-    overview: str = None
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
     status: MovieStatusEnum = None
-    budget: float = None
-    revenue: float = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
 
     class Config:
         from_attributes = True
