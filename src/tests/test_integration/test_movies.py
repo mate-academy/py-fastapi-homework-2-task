@@ -70,13 +70,13 @@ async def test_get_movies_with_custom_parameters(client, seed_database):
     assert response_data["total_items"] > 0, "Expected total_items > 0, but got a non-positive value"
 
     if page > 1:
-        assert response_data["prev_page"] == f"/theater/movies/?page={page - 1}&per_page={per_page}", (
+        assert response_data["prev_page"] == f"/api/v1/theater/movies/?page={page - 1}&per_page={per_page}", (
             f"Expected prev_page to be '/theater/movies/?page={page - 1}&per_page={per_page}', "
             f"but got {response_data['prev_page']}"
         )
 
     if page < response_data["total_pages"]:
-        assert response_data["next_page"] == f"/theater/movies/?page={page + 1}&per_page={per_page}", (
+        assert response_data["next_page"] == f"/api/v1/theater/movies/?page={page + 1}&per_page={per_page}", (
             f"Expected next_page to be '/theater/movies/?page={page + 1}&per_page={per_page}', "
             f"but got {response_data['next_page']}"
         )
@@ -215,8 +215,8 @@ async def test_movie_list_with_pagination(client, db_session, seed_database):
 
     assert expected_movie_ids == returned_movie_ids, "Movies on the page mismatch."
 
-    expected_prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
-    expected_next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
+    expected_prev_page = f"/api/v1/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
+    expected_next_page = f"/api/v1/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
     assert response_data["prev_page"] == expected_prev_page, "Previous page link mismatch."
     assert response_data["next_page"] == expected_next_page, "Next page link mismatch."
