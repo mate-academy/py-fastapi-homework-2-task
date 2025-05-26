@@ -66,7 +66,7 @@ async def create_movie_handler(
     return new_movie
 
 
-@router.put("/movies/{movie_id}/", response_model=MovieDetailSchema)
+@router.put("/movies/{movie_id}/", response_model=None)
 async def update_movie_handler(
         movie_id: int,
         updated_movie: MovieUpdate,
@@ -76,7 +76,7 @@ async def update_movie_handler(
     return movie
 
 
-@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema)
+@router.patch("/movies/{movie_id}/", response_model=None)
 async def patch_movie_handler(
         movie_id: int,
         updated_movie: MoviePatch,

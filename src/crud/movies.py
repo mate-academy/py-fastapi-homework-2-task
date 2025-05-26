@@ -159,7 +159,7 @@ async def update_movie(
 async def delete_movie(
         movie_id: int,
         db: AsyncSession
-) -> JSONResponse:
+) -> None:
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
     if not movie:
@@ -169,7 +169,4 @@ async def delete_movie(
         )
     await db.delete(movie)
     await db.commit()
-    return JSONResponse(
-        status_code=status.HTTP_204_NO_CONTENT,
-        content={}
-    )
+    return None
