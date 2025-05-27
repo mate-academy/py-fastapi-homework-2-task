@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, status, Body
 from sqlalchemy import func, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,7 +13,7 @@ from schemas.movies import (
     MovieListResponseSchema,
     MovieDetailSchema,
 )
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError, constr, confloat, condecimal, validator
 
 router = APIRouter(prefix="/movies", tags=["movies"])
 
@@ -172,7 +172,7 @@ async def delete_movie(
 @router.patch("/{movie_id}/", status_code=status.HTTP_200_OK)
 async def update_movie(
     movie_id: int = Path(..., ge=1),
-    movie_data: dict = None,
+    movie_data: dict = Body(...),  # ✅ FIXED: parse body properly
     db: AsyncSession = Depends(get_sqlite_db)
 ):
     stmt = select(MovieModel).where(MovieModel.id == movie_id)
@@ -181,9 +181,6 @@ async def update_movie(
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-
-
-    from pydantic import BaseModel, ValidationError, constr, confloat, condecimal, validator
 
     class MovieUpdateSchema(BaseModel):
         name: Optional[constr(max_length=255)]
@@ -214,3 +211,4 @@ async def update_movie(
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     return {"detail": "Movie updated successfully."}
+
