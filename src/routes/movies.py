@@ -90,7 +90,10 @@ async def movie_create(
             "UNIQUE constraint failed" in error_message
             or "duplicate key" in error_message
         ):
-            if "movies.name" and "movies.date" in error_message:
+            if (
+                "movies.name" in error_message
+                and "movies.date" in error_message
+            ):
                 raise HTTPException(
                     status_code=409,
                     detail=(
