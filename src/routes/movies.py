@@ -22,7 +22,7 @@ from database.models import (
     LanguageModel
 )
 
-from src.schemas.movies import MovieCreateBaseSchem, MovieOutShort
+from src.schemas.movies import MovieCreateBaseSchem, MovieOutShort, MovieOutDetailed, MovieUpdateSchema
 
 router = APIRouter()
 
@@ -78,6 +78,89 @@ async def get_movies(
         "total_pages": total_pages,
         "total_items": total_items
     }
+
+
+@router.get("/movies/{movie_id}/", response_model=MovieOutDetailed)
+async def get_movie_details(
+    movie_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(MovieModel)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages)
+        )
+        .where(MovieModel.id == movie_id)
+    )
+    movie = result.scalar_one_or_none()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    return movie
+
+
+@router.delete("/movies/{movie_id}/", status_code=204)
+async def delete_movie(
+    movie_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(
+            MovieModel
+        ).where(
+            MovieModel.id == movie_id
+        )
+    )
+
+    movie = result.scalar_one_or_none()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    await db.delete(movie)
+    await db.commit()
+
+
+@router.patch("/movies/{movie_id}/")
+async def update_movie(
+        movie_id: int,
+        movie_data: MovieUpdateSchema,
+        db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    movie = result.scalar_one_or_none()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    try:
+        update_data = movie_data.dict(
+            exclude_unset=True
+        )
+        for field, value in update_data.items():
+            setattr(movie, field, value)
+
+        await db.commit()
+        return {"detail": "Movie updated successfully."}
+
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data."
+        )
 
 
 @router.post("/movies/", status_code=status.HTTP_201_CREATED)

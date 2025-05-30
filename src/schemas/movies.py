@@ -5,7 +5,7 @@ from database.models import MovieStatusEnum
 from pydantic import BaseModel, Field, ConfigDict
 from pydantic_extra_types.country import CountryAlpha2
 
-from typing import List
+from typing import List, Optional
 from datetime import date
 
 
@@ -76,3 +76,30 @@ class MovieOutShort(BaseModel):
     date: date
     score: float
     overview: str
+
+
+class MovieOutDetailed(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+    status: str
+    budget: float
+    revenue: float
+    country: CountrySchem
+    genres: List[GenreSchem]
+    actors: List[ActorSchem]
+    languages: List[LanguageSchem]
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = Field(default=None, ge=0, le=100)
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(default=None, ge=0)
+    revenue: Optional[float] = Field(default=None, ge=0)
