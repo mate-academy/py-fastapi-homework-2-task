@@ -232,7 +232,7 @@ async def create_movie(
 
             actors_objects.append(actor)
 
-        language_objects= []
+        language_objects = []
 
         for language_name in movie_data.languages:
             language = await db.scalar(
@@ -276,6 +276,6 @@ async def create_movie(
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"The input data is invalid "
-                   f"(e.g., missing required fields, invalid values)."
+            detail="The input data is invalid "
+                   "(e.g., missing required fields, invalid values)."
         )

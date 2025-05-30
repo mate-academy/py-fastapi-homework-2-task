@@ -9,7 +9,6 @@ from typing import List, Optional
 from datetime import date
 
 
-
 class MovieCreateBaseSchem(BaseModel):
     name: str
     date: date
