@@ -1,11 +1,14 @@
+from typing import Optional
+
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query
+    Query,
+    Request
 )
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -19,10 +22,62 @@ from database.models import (
     LanguageModel
 )
 
-from src.schemas.movies import MovieCreateBaseSchem
-
+from src.schemas.movies import MovieCreateBaseSchem, MovieOutShort
 
 router = APIRouter()
+
+
+@router.get("/movies/")
+async def get_movies(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20)
+):
+    total_items_result = await db.execute(
+        select(
+            func.count()
+        ).select_from(
+            MovieModel
+        )
+    )
+    total_items = total_items_result.scalar()
+
+    total_pages = (total_items + per_page - 1) // per_page
+    offset = (page - 1) * per_page
+
+    result = await db.execute(
+        select(MovieModel)
+        .order_by(desc(MovieModel.id))
+        .offset(offset)
+        .limit(per_page)
+    )
+
+    movies = result.scalars().all()
+
+    if not movies:
+        raise HTTPException(
+            status_code=404,
+            detail="No movies found."
+        )
+
+    base_url = str(request.url).split("?")[0]
+
+    def make_page_url(page_num: int) -> Optional[str]:
+        if 1 <= page_num <= total_pages:
+            return f"{base_url}?page={page_num}&per_page={per_page}"
+        return None
+
+    return {
+        "movies": [
+            MovieOutShort.model_validate(movie).model_dump()
+            for movie in movies
+        ],
+        "prev_page": make_page_url(page - 1),
+        "next_page": make_page_url(page + 1),
+        "total_pages": total_pages,
+        "total_items": total_items
+    }
 
 
 @router.post("/movies/", status_code=status.HTTP_201_CREATED)

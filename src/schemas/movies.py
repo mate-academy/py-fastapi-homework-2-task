@@ -69,3 +69,10 @@ class MovieOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class MovieOutShort(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str

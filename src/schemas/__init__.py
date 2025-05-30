@@ -4,4 +4,5 @@ from schemas.movies import (
     # MovieListItemSchema
     MovieCreateBaseSchem,
     MovieOut,
+    MovieOutShort,
 )
