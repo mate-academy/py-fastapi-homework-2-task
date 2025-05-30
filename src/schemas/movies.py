@@ -54,6 +54,8 @@ class LanguageSchem(BaseModel):
 
 
 class MovieOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     date: date
@@ -67,10 +69,10 @@ class MovieOut(BaseModel):
     actors: List[ActorSchem]
     languages: List[LanguageSchem]
 
-    class Config:
-        orm_mode = True
 
 class MovieOutShort(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     date: date
@@ -79,8 +81,6 @@ class MovieOutShort(BaseModel):
 
 
 class MovieOutDetailed(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
     name: str
     date: date

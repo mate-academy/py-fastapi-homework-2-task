@@ -61,7 +61,12 @@ async def get_movies(
             detail="No movies found."
         )
 
-    base_url = str(request.url).split("?")[0]
+    base_url = str(request.url.path)
+
+    api_prefix = "/api/v1"
+
+    if base_url.startswith(api_prefix):
+        base_url = base_url[len(api_prefix):]
 
     def make_page_url(page_num: int) -> Optional[str]:
         if 1 <= page_num <= total_pages:
@@ -95,7 +100,7 @@ async def get_movie_details(
         )
         .where(MovieModel.id == movie_id)
     )
-    movie = result.scalar_one_or_none()
+    movie = result.unique().scalar_one_or_none()
 
     if not movie:
         raise HTTPException(
@@ -147,7 +152,7 @@ async def update_movie(
         )
 
     try:
-        update_data = movie_data.dict(
+        update_data = movie_data.model_dump(
             exclude_unset=True
         )
         for field, value in update_data.items():
