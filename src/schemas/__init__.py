@@ -1,5 +1,5 @@
 from schemas.movies import (
-    MovieCreateBaseSchem,
+    MovieCreateBaseSchema,
     MovieOut,
     MovieOutShort,
     MovieOutDetailed,

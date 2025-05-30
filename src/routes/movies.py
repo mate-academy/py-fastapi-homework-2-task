@@ -22,7 +22,12 @@ from database.models import (
     LanguageModel
 )
 
-from src.schemas.movies import MovieCreateBaseSchem, MovieOutShort, MovieOutDetailed, MovieUpdateSchema
+from src.schemas.movies import (
+    MovieOutShort,
+    MovieOutDetailed,
+    MovieUpdateSchema,
+    MovieCreateBaseSchema,
+)
 
 router = APIRouter()
 
@@ -170,7 +175,7 @@ async def update_movie(
 
 @router.post("/movies/", status_code=status.HTTP_201_CREATED)
 async def create_movie(
-        movie_data: MovieCreateBaseSchem,
+        movie_data: MovieCreateBaseSchema,
         db: AsyncSession = Depends(get_db)
 ):
     existing_movie = await db.scalar(

@@ -1,5 +1,3 @@
-from starlette.config import Config
-
 from database.models import MovieStatusEnum
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -9,7 +7,7 @@ from typing import List, Optional
 from datetime import date
 
 
-class MovieCreateBaseSchem(BaseModel):
+class MovieCreateBaseSchema(BaseModel):
     name: str
     date: date
     score: float = Field(ge=0, le=100)
@@ -23,7 +21,7 @@ class MovieCreateBaseSchem(BaseModel):
     languages: List[str]
 
 
-class CountrySchem(BaseModel):
+class CountrySchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -31,21 +29,21 @@ class CountrySchem(BaseModel):
     name: str | None
 
 
-class GenreSchem(BaseModel):
+class GenreSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
 
 
-class ActorSchem(BaseModel):
+class ActorSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
 
 
-class LanguageSchem(BaseModel):
+class LanguageSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -63,10 +61,10 @@ class MovieOut(BaseModel):
     status: str
     budget: float
     revenue: float
-    country: CountrySchem
-    genres: List[GenreSchem]
-    actors: List[ActorSchem]
-    languages: List[LanguageSchem]
+    country: CountrySchema
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
 
 
 class MovieOutShort(BaseModel):
@@ -88,10 +86,10 @@ class MovieOutDetailed(BaseModel):
     status: str
     budget: float
     revenue: float
-    country: CountrySchem
-    genres: List[GenreSchem]
-    actors: List[ActorSchem]
-    languages: List[LanguageSchem]
+    country: CountrySchema
+    genres: List[GenreSchema]
+    actors: List[ActorSchema]
+    languages: List[LanguageSchema]
 
 
 class MovieUpdateSchema(BaseModel):
