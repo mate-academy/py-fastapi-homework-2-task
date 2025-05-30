@@ -195,7 +195,7 @@ async def create_movie(
             select(
                 CountryModel
             ).where(
-                CountryModel.name == movie_data.country
+                CountryModel.code == movie_data.country
             )
         )
         if not country:
