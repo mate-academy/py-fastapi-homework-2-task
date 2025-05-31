@@ -119,7 +119,7 @@ async def create_movie(
         )
         db.add(movie)
         await db.commit()
-        return movie
+        return MovieCreateResponseSchema.model_validate(movie)
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
