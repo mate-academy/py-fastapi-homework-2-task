@@ -94,11 +94,12 @@ async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     if not country:
         country = CountryModel(
             code=country_code,
-            name=None
+            name=country_code
         )
         db.add(country)
         if country.name and len(country.name) > 255:
             raise HTTPException(status_code=400, detail=f"Movie {country.name} cannot be longer than 255 characters.")
+
         await db.commit()
         await db.refresh(country)
 

@@ -2,7 +2,7 @@ import datetime
 from typing import List, Optional, Any
 
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from database.models import MovieStatusEnum
 
@@ -132,11 +132,12 @@ class MovieCreate(BaseModel):
     actor_name: Optional[str] = Field(None, max_length=255)
     language_name: Optional[str] = Field(None, max_length=255)
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Map country to country_code
-        if self.country and not self.country_code:
-            self.country_code = self.country
+    @model_validator(mode="before")
+    @classmethod
+    def set_country_code(cls, values: dict) -> dict:
+        if "country" in values and not values.get("country_code"):
+            values["country_code"] = values["country"]
+        return values
 
 
 class MovieUpdate(BaseModel):
@@ -163,7 +164,9 @@ class MovieUpdate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        if self.country and not self.country_code:
-            self.country_code = self.country
+    @model_validator(mode="before")
+    @classmethod
+    def set_country_code(cls, values: dict) -> dict:
+        if "country" in values and not values.get("country_code"):
+            values["country_code"] = values["country"]
+        return values
