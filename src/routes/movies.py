@@ -9,5 +9,3 @@ from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
 
 router = APIRouter()
-
-# Write your code here
