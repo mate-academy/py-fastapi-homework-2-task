@@ -34,10 +34,11 @@ async def get_or_create_by_field(
 async def process_many_to_many(
     db: AsyncSession, model, field_name: str, values: list[str]
 ):
-    return [
-        await get_or_create_by_field(db, model, field_name, value)
-        for value in values
-    ]
+    result = []
+    for value in values:
+        item = await get_or_create_by_field(db, model, field_name, value)
+        result.append(item)
+    return result
 
 
 @router.get("/{movie_id}/", response_model=MovieCreateResponseSchema)
