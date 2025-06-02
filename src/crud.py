@@ -78,28 +78,22 @@ async def validate_movie_data(movie: MovieCreate):
 
 
 async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
-    # Check if country_code or country is provided
-    if movie.country_code:
-        country_code = movie.country_code
-    elif movie.country:
-        country_code = movie.country
-    else:
+    if not movie.country_code or not movie.country:
         raise HTTPException(
             status_code=400,
-            detail="Country code is required. Please provide a value for 'country' field."
+            detail="Both 'country_code' and 'country' (name) are required."
         )
 
-    country_query = await db.execute(select(CountryModel).where(CountryModel.code == country_code))
+    country_query = await db.execute(
+        select(CountryModel).where(CountryModel.code == movie.country_code)
+    )
     country = country_query.scalar_one_or_none()
-    if not country:
-        country = CountryModel(
-            code=country_code,
-            name=country_code
-        )
-        db.add(country)
-        if country.name and len(country.name) > 255:
-            raise HTTPException(status_code=400, detail=f"Movie {country.name} cannot be longer than 255 characters.")
 
+    if not country:
+        if len(movie.country) > 255:
+            raise HTTPException(status_code=400, detail=f"Country name cannot be longer than 255 characters.")
+        country = CountryModel(code=movie.country_code, name=movie.country)
+        db.add(country)
         await db.commit()
         await db.refresh(country)
 

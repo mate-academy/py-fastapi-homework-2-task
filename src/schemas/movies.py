@@ -17,7 +17,7 @@ class CountrySchema(BaseModel):
 
 class CountryCreateSchema(BaseModel):
     code: str
-    name: Optional[str] = None
+    name: str
 
 
 class GenreSchema(BaseModel):
