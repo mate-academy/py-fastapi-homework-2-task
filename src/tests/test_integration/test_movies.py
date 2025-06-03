@@ -179,7 +179,7 @@ async def test_movie_list_with_pagination(client, db_session, seed_database):
 
     Verifies the following:
     - The response status code is 200.
-    - Total items and total pages match the expected values from the database.
+    - Total items and total pagination match the expected values from the database.
     - The movies returned match the expected movies for the given page and per_page.
     - The `prev_page` and `next_page` links are correct.
     """
@@ -199,7 +199,7 @@ async def test_movie_list_with_pagination(client, db_session, seed_database):
     total_pages = (total_items + per_page - 1) // per_page
 
     assert response_data["total_items"] == total_items, "Total items mismatch."
-    assert response_data["total_pages"] == total_pages, "Total pages mismatch."
+    assert response_data["total_pages"] == total_pages, "Total pagination mismatch."
 
     stmt = (
         select(MovieModel)
