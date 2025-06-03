@@ -6,9 +6,10 @@ from pydantic_settings import BaseSettings
 
 
 class BaseAppSettings(BaseSettings):
-    BASE_DIR: Path = Path(__file__).parent.parent
-    PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
-    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+    BASE_DIR: Path = Path(__file__).parent.parent.parent
+    PATH_TO_DB: str = str(BASE_DIR / "src" / "database" / "source" / "theater.db")
+
+    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "src" / "database" / "seed_data" / "imdb_movies.csv")
 
 
 class Settings(BaseAppSettings):
@@ -26,7 +27,7 @@ class TestingSettings(BaseAppSettings):
         object.__setattr__(
             self,
             'PATH_TO_MOVIES_CSV',
-            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv")
+            str(self.BASE_DIR / "src" / "database" / "seed_data" / "test_data.csv")
         )
 
 

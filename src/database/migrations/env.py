@@ -1,15 +1,19 @@
+import os
+import sys
 from logging.config import fileConfig
 
 from alembic import context
 
 from database import models  # noqa: F401
 from database.models import Base
-from database.session_postgresql import sync_postgresql_engine
+# from database.session_postgresql import sync_postgresql_engine
+from database.session_sqlite import SQLITE_ENGINE, SQLITE_DATABASE_URL # <--- ADD THIS LINE
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -40,7 +44,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    connectable = sync_postgresql_engine
+    connectable = SQLITE_ENGINE
 
     with connectable.connect() as connection:
         context.configure(
@@ -61,7 +65,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = sync_postgresql_engine
+    connectable = SQLITE_ENGINE
 
     with connectable.connect() as connection:
         context.configure(

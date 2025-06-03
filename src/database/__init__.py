@@ -2,9 +2,15 @@ import os
 
 from database.models import (
     Base,
-    MovieModel
+    MovieModel,
 )
-from database.session_sqlite import reset_sqlite_database as reset_database
+
+from database.session_sqlite import (
+    reset_sqlite_database as reset_database,
+    init_db,
+    close_db,
+    SQLITE_DATABASE_URL
+)
 
 environment = os.getenv("ENVIRONMENT", "developing")
 
@@ -14,7 +20,7 @@ if environment == "testing":
         get_sqlite_db as get_db,
     )
 else:
-    from database.session_postgresql import (
-        get_postgresql_db_contextmanager as get_db_contextmanager,
-        get_postgresql_db as get_db,
+    from database.session_sqlite import (
+        get_sqlite_db_contextmanager as get_db_contextmanager,
+        get_sqlite_db as get_db,
     )
