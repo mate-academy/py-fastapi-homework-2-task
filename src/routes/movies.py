@@ -8,7 +8,7 @@ from crud.movies import delete_movie, create_movie
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import PaginatedMoviesResponseSchema, MovieDetailSchema, MovieCreateSchema
-from crud import get_movies, get_movie_by_id, update
+from crud import get_movies, get_movie_by_id, update_movie_by_id
 from schemas.movies import MovieResponseSchema, MovieUpdate
 
 router = APIRouter()
@@ -79,5 +79,5 @@ async def update_movie(
     movie_update: MovieUpdate,
     db: AsyncSession = Depends(get_db)
 ):
-    db_movie = await update(movie_id, movie_update, db)
+    db_movie = await update_movie_by_id(movie_id, movie_update, db)
     return db_movie

@@ -147,7 +147,7 @@ async def delete_movie(db: AsyncSession, movie_id: int):
     return db_movie
 
 
-async def update(
+async def update_movie_by_id(
         movie_id: int,
         movie_update: MovieUpdate,
         db: AsyncSession
