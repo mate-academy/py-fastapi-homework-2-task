@@ -1,1 +1,1 @@
-from crud.movies import get_movies, get_movie_by_id, create_movie
+from crud.movies import get_movies, get_movie_by_id, create_movie, update

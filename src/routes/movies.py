@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import ValidationError
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from crud.movies import delete_movie, create_movie
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import PaginatedMoviesResponseSchema, MovieDetailSchema, MovieCreateSchema
-from crud import get_movies, get_movie_by_id, create_movie
+from crud import get_movies, get_movie_by_id, update
+from schemas.movies import MovieResponseSchema, MovieUpdate
 
 router = APIRouter()
+
 
 @router.get("/movies/", response_model=PaginatedMoviesResponseSchema)
 async def list_movies(
@@ -34,8 +38,46 @@ async def detail_movie(db: AsyncSession = Depends(get_db), movie_id: int = 1):
     return movie
 
 
-@router.post("/movies/", response_model=MovieCreateSchema)
+@router.post("/movies/", response_model=MovieResponseSchema, status_code=201)
 async def add_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
-    movie = await create_movie(db, movie)
+    db_movie = await create_movie(db, movie)
 
-    return movie
+    return {
+        "id": db_movie.id,
+        "name": db_movie.name,
+        "date": db_movie.date,
+        "score": db_movie.score,
+        "overview": db_movie.overview,
+        "status": db_movie.status,
+        "budget": db_movie.budget,
+        "revenue": db_movie.revenue,
+        "country": db_movie.country.name,
+        "genres": [g.name for g in db_movie.genres],
+        "actors": [a.name for a in db_movie.actors],
+        "languages": [lang.name for lang in db_movie.languages],
+    }
+
+
+@router.delete("/movies/{movie_id}/", status_code=204)
+async def del_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    await delete_movie(db, movie_id)
+
+
+@router.patch(
+    "/movies/{movie_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Update a movie by ID",
+    response_model=dict,
+    responses={
+        200: {"description": "Movie updated successfully."},
+        404: {"description": "Movie not found."},
+        400: {"description": "Invalid input data."}
+    }
+)
+async def update_movie(
+    movie_id: int,
+    movie_update: MovieUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    db_movie = await update(movie_id, movie_update, db)
+    return db_movie

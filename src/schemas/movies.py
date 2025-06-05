@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List, Union
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date
 
 
@@ -31,6 +31,7 @@ class CountryResponseSchema(BaseModel):
     class Config:
         orm_mode = True
 
+
 class GenresResponseSchema(BaseModel):
     id: int
     name: str
@@ -38,12 +39,14 @@ class GenresResponseSchema(BaseModel):
     class Config:
         orm_mode = True
 
+
 class ActorResponseSchema(BaseModel):
     id: int
     name: str
 
     class Config:
         orm_mode = True
+
 
 class LanguageResponseSchema(BaseModel):
     id: int
@@ -77,5 +80,44 @@ class MovieDetailSchema(BaseModel):
         orm_mode = True
 
 
-class MovieCreateSchema(MovieDetailSchema):
-    pass
+class MovieCreateSchema(BaseModel):
+    name: str
+    date: Union[date, str]
+    score: float
+    overview: str
+    status: MovieStatus
+    budget: float
+    revenue: float
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+    class Config:
+        orm_mode = True
+
+
+class MovieResponseSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+    status: MovieStatus
+    budget: float
+    revenue: float
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+    class Config:
+        orm_mode = True
+
+
+class MovieUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=255)
+    date: Optional[date] = None
+    score: Optional[float] = Field(None, ge=0.0, le=100.0)
+    overview: Optional[str] = None
+    status: Optional[str] = Field(None, max_length=15, pattern="^(Released|Post Production|In Production)$")
