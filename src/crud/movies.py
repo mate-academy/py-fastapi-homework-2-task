@@ -126,15 +126,60 @@ async def delete_movie(db: AsyncSession, movie_id: int):
 
 async def update_movie(db: AsyncSession, movie_id: int, data: MovieUpdateRequest):
     result = await db.execute(
-        select(MovieModel).filter(MovieModel.id == movie_id)
+        select(MovieModel)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages)
+        )
+        .filter(MovieModel.id == movie_id)
     )
     movie = result.scalar_one_or_none()
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(movie, field, value)
+    update_data = data.model_dump(exclude_unset=True)
+    relationship_fields = {"genres", "actors", "languages", "country"}
+    for field, value in update_data.items():
+        if field not in relationship_fields:
+            setattr(movie, field, value)
+    if "genres" in update_data:
+        movie.genres.clear()
+        for genre_name in update_data["genres"]:
+            genre = await db.execute(select(GenreModel).filter(GenreModel.name == genre_name))
+            genre = genre.scalar_one_or_none()
+            if not genre:
+                genre = GenreModel(name=genre_name)
+                db.add(genre)
+            movie.genres.append(genre)
+    if "actors" in update_data:
+        movie.actors.clear()
+        for actor_name in update_data["actors"]:
+            actor = await db.execute(select(ActorModel).filter(ActorModel.name == actor_name))
+            actor = actor.scalar_one_or_none()
+            if not actor:
+                actor = ActorModel(name=actor_name)
+                db.add(actor)
+            movie.actors.append(actor)
+    if "languages" in update_data:
+        movie.languages.clear()
+        for language_name in update_data["languages"]:
+            language = await db.execute(select(LanguageModel).filter(LanguageModel.name == language_name))
+            language = language.scalar_one_or_none()
+            if not language:
+                language = LanguageModel(name=language_name)
+                db.add(language)
+            movie.languages.append(language)
+    if "country" in update_data:
+        country = await db.execute(select(CountryModel).filter(CountryModel.code == update_data["country"]))
+        country = country.scalar_one_or_none()
+        if not country:
+            country = CountryModel(code=update_data["country"])
+            db.add(country)
+        movie.country = country
     try:
         await db.commit()
+        await db.refresh(movie)
     except Exception:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
