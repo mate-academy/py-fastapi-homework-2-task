@@ -65,6 +65,10 @@ class MovieUpdateRequest(BaseModel):
     status: Optional[MovieStatusEnum] = None
     budget: Optional[confloat(ge=0)] = None
     revenue: Optional[confloat(ge=0)] = None
+    country: Optional[str] = None
+    genres: Optional[list[str]] = None
+    actors: Optional[list[str]] = None
+    languages: Optional[list[str]] = None
 
 
 class MovieDetailInfo(BaseModel):
