@@ -22,6 +22,9 @@ async def get_movies_list(
     result = await db.execute(select(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(per_page))
     movies = result.scalars().all()
 
+    if not movies:
+        raise HTTPException(status_code=404, detail="No movies found.")
+
     return {
         "movies": movies,
         "prev_page": f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None,
@@ -145,6 +148,8 @@ async def delete_movie(db: AsyncSession, movie_id: int):
         selectinload(MovieModel.languages)).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
 
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await db.delete(movie)
     await db.commit()
 
