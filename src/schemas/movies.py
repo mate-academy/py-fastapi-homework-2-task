@@ -103,7 +103,7 @@ class MovieDetailResponseSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str = Field(max_length=255)
+    name: Optional[str] = Field(default=None, max_length=255)
     date: Optional[datetime.date] = None
     score: Optional[float] = Field(default=None, gt=0, le=100)
     overview: Optional[str] = None

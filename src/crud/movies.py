@@ -7,6 +7,11 @@ from database.models import CountryModel, GenreModel, ActorModel, LanguageModel,
 from schemas import MovieCreate, MovieUpdateSchema
 
 
+async def count_movies(db: AsyncSession):
+    result = await db.execute(select(func.count(MovieModel.id)))
+    return result.scalar()
+
+
 async def get_movies_list(
         db: AsyncSession,
         page: int,
@@ -17,16 +22,16 @@ async def get_movies_list(
 
     total_pages = (total_items + per_page - 1) // per_page if total_items else 0
 
+    if page > total_pages:
+        raise HTTPException(status_code=404, detail="No movies found.")
+
     offset = (page - 1) * per_page
 
     result = await db.execute(select(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(per_page))
-    movies = result.scalars().all()
-
-    if not movies:
-        raise HTTPException(status_code=404, detail="No movies found.")
+    movies_db = result.scalars().all()
 
     return {
-        "movies": movies,
+        "movies": movies_db,
         "prev_page": f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None,
         "next_page": f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None,
         "total_pages": total_pages,

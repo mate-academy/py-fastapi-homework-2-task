@@ -12,7 +12,8 @@ from crud.movies import (
     create_movie,
     get_movie,
     delete_movie,
-    update_movie
+    update_movie,
+    count_movies
 )
 
 
@@ -25,12 +26,13 @@ async def movies_list(
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20)
 ):
-    movies = await get_movies_list(db, page, per_page)
+    db_movies = await get_movies_list(db, page, per_page)
 
-    if not movies:
+    total_items = await count_movies(db)
+    if total_items == 0:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    return movies
+    return db_movies
 
 
 @router.post("/movies/", response_model=MovieDetailResponseSchema, status_code=201)
@@ -58,6 +60,9 @@ async def delete_movie_by_id(
         movie_id: int,
         db: AsyncSession = Depends(get_db)
 ):
+    movie = await get_movie(db, movie_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await delete_movie(db, movie_id)
 
 
