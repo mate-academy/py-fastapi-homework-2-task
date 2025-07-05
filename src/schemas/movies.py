@@ -58,8 +58,9 @@ class LanguageResponseSchema(BaseModel):
 
 class MovieStatus(str, Enum):
     released = "Released"
-    upcoming = "Post Production"
-    canceled = "In Production"
+    post_production = "Post Production"
+    in_production = "In Production"
+
 
 
 class MovieDetailSchema(BaseModel):
@@ -120,4 +121,4 @@ class MovieUpdate(BaseModel):
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0.0, le=100.0)
     overview: Optional[str] = None
-    status: Optional[str] = Field(None, max_length=15, pattern="^(Released|Post Production|In Production)$")
+    status: Optional[MovieStatus] = None

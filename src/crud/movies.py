@@ -80,8 +80,12 @@ async def create_movie(db: AsyncSession, movie: MovieCreateSchema):
         revenue=movie.revenue,
     )
 
-    question = await db.execute(select(MovieModel).filter_by(name=movie.name))
-    existing_movie = question.scalar_one_or_none()
+    existing_movie = await db.execute(
+        select(MovieModel).where(
+            MovieModel.name == movie.name,
+            MovieModel.date == movie.date
+        )
+    )
 
     if existing_movie is not None:
         raise HTTPException(
@@ -147,6 +151,19 @@ async def delete_movie(db: AsyncSession, movie_id: int):
     return db_movie
 
 
+async def get_or_create_genres(db: AsyncSession, genre_names: list[str]) -> list:
+    genres = []
+    for name in genre_names:
+        result = await db.execute(select(GenreModel).where(GenreModel.name == name))
+        genre = result.scalars().first()
+        if not genre:
+            genre = GenreModel(name=name)
+            db.add(genre)
+            await db.flush()
+        genres.append(genre)
+    return genres
+
+
 async def update_movie_by_id(
         movie_id: int,
         movie_update: MovieUpdate,
@@ -165,8 +182,8 @@ async def update_movie_by_id(
     try:
         update_data = movie_update.model_dump(exclude_unset=True)
 
-        for key, value in update_data.items():
-            setattr(movie_to_update, key, value)
+        if "genres" in update_data:
+            movie_to_update.genres = await get_or_create_genres(db, update_data["genres"])
 
         await db.commit()
         await db.refresh(movie_to_update)

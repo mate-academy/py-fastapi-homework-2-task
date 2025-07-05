@@ -5,7 +5,7 @@ from crud.movies import delete_movie, create_movie
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import PaginatedMoviesResponseSchema, MovieDetailSchema, MovieCreateSchema
-from crud import get_movies, get_movie_by_id, update_movie_by_id
+from crud.movies import get_movies, get_movie_by_id, update_movie_by_id
 from schemas.movies import MovieResponseSchema, MovieUpdate
 
 router = APIRouter()
