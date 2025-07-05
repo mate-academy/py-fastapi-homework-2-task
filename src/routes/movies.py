@@ -1,7 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import ValidationError
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.movies import delete_movie, create_movie
