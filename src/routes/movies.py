@@ -4,8 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from database.crud import create_movie, get_movie, get_movies, delete_movie, \
-    update_movie_partial
+from database.crud import (
+    create_movie,
+    get_movie,
+    get_movies,
+    delete_movie,
+    update_movie_partial,
+)
 from schemas import (
     MovieListResponseSchema,
     MovieDetailSchema,
