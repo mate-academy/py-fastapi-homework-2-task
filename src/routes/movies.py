@@ -83,10 +83,5 @@ async def patch_movie(
         movie_update: MovieUpdateSchema,
         db: AsyncSession = Depends(get_db)
 ):
-    try:
-        await update_movie_partial(db, movie_id, movie_update)
-        return {"detail": "Movie updated successfully."}
-    except HTTPException as e:
-        raise e
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+    await update_movie_partial(db, movie_id, movie_update)
+    return {"detail": "Movie updated successfully."}
