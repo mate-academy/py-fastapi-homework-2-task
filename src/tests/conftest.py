@@ -9,6 +9,9 @@ from database import (
 from database.populate import CSVDatabaseSeeder
 from main import app
 
+import os
+os.environ["ENVIRONMENT"] = "testing"
+
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def reset_db():

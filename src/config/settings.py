@@ -19,7 +19,13 @@ class Settings(BaseAppSettings):
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "test_db")
 
 
-class TestingSettings(BaseAppSettings):
+class TestingSettings(Settings):
+    # Додаємо змінні, щоб уникнути AttributeError
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_DB_PORT: int = 5432
+    POSTGRES_DB: str = "test_db"
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
         object.__setattr__(self, 'PATH_TO_DB', ":memory:")
