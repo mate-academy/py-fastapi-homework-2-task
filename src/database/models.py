@@ -1,4 +1,5 @@
 import datetime
+import decimal
 from enum import Enum
 from typing import Optional
 
@@ -121,8 +122,8 @@ class MovieModel(Base):
     status: Mapped[MovieStatusEnum] = mapped_column(
         SQLAlchemyEnum(MovieStatusEnum), nullable=False
     )
-    budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
-    revenue: Mapped[float] = mapped_column(Float, nullable=False)
+    budget: Mapped[decimal.Decimal] = mapped_column(DECIMAL(15, 2), nullable=False)
+    revenue: Mapped[decimal.Decimal] = mapped_column(DECIMAL(15, 2), nullable=False)
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
     country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
