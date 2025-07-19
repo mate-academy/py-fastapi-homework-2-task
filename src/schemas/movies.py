@@ -1,6 +1,6 @@
-from pydantic import BaseModel, confloat, constr, validator
-from datetime import date, datetime
-from typing import List, Optional, Literal, Union
+from pydantic import BaseModel, confloat, constr
+from datetime import date, timedelta
+from typing import List, Optional
 from enum import Enum
 
 class MovieStatusEnum(str, Enum):
@@ -8,45 +8,38 @@ class MovieStatusEnum(str, Enum):
     POST_PRODUCTION = "Post Production"
     IN_PRODUCTION = "In Production"
 
-# Pagination and Movie List Schemas
-class MovieListResponseItem(BaseModel):
+class MovieListItem(BaseModel):
     id: int
     name: str
     date: date
     score: float
     overview: str
 
-    class Config:
-        orm_mode = True
-
-class MovieListResponseSchema(BaseModel):
-    movies: List[MovieListResponseItem]
+class MovieListResponse(BaseModel):
+    movies: List[MovieListItem]
     prev_page: Optional[str] = None
     next_page: Optional[str] = None
     total_pages: int
     total_items: int
 
-# Country Schema
-class CountryResponseSchema(BaseModel):
+class CountryResponse(BaseModel):
     id: int
     code: str
     name: Optional[str] = None
 
-# Genre/Actor/Language Schemas
-class GenreResponseSchema(BaseModel):
+class GenreResponse(BaseModel):
     id: int
     name: str
 
-class ActorResponseSchema(BaseModel):
+class ActorResponse(BaseModel):
     id: int
     name: str
 
-class LanguageResponseSchema(BaseModel):
+class LanguageResponse(BaseModel):
     id: int
     name: str
 
-# Detailed Movie Schema
-class MovieDetailResponseSchema(BaseModel):
+class MovieDetailResponse(BaseModel):
     id: int
     name: str
     date: date
@@ -55,17 +48,13 @@ class MovieDetailResponseSchema(BaseModel):
     status: MovieStatusEnum
     budget: float
     revenue: float
-    country: CountryResponseSchema
-    genres: List[GenreResponseSchema]
-    actors: List[ActorResponseSchema]
-    languages: List[LanguageResponseSchema]
+    country: CountryResponse
+    genres: List[GenreResponse]
+    actors: List[ActorResponse]
+    languages: List[LanguageResponse]
 
-    class Config:
-        orm_mode = True
-
-# Movie Creation Schema
-class MovieCreateRequestSchema(BaseModel):
-    name: constr(max_length=255)
+class MovieCreateRequest(BaseModel):
+    name: str
     date: date
     score: confloat(ge=0, le=100)
     overview: str
@@ -77,27 +66,11 @@ class MovieCreateRequestSchema(BaseModel):
     actors: List[str]
     languages: List[str]
 
-    @validator('date')
-    def validate_date(cls, value):
-        max_date = date.today() + datetime.timedelta(days=365)
-        if value > max_date:
-            raise ValueError('Date cannot be more than one year in the future')
-        return value
-
-# Movie Update Schema
-class MovieUpdateRequestSchema(BaseModel):
-    name: Optional[constr(max_length=255)] = None
+class MovieUpdateRequest(BaseModel):
+    name: Optional[str] = None
     date: Optional[date] = None
     score: Optional[confloat(ge=0, le=100)] = None
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
     budget: Optional[confloat(ge=0)] = None
     revenue: Optional[confloat(ge=0)] = None
-
-    @validator('date')
-    def validate_date(cls, value):
-        if value:
-            max_date = date.today() + datetime.timedelta(days=365)
-            if value > max_date:
-                raise ValueError('Date cannot be more than one year in the future')
-        return value
