@@ -13,7 +13,7 @@ from starlette.responses import Response
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, Base
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
-from schemas.movies import MovieCreateSchema
+from schemas.movies import MovieCreateSchema, MovieUpdateSchema
 
 router = APIRouter()
 
@@ -182,3 +182,22 @@ async def post_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db
     except Exception as exc:
         await db.rollback()
         raise exc
+
+
+@router.patch("/movies/{movie_id}/")
+async def patch_movie(
+    movie_id: int, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    movie_to_update = result.scalar_one_or_none()
+    if not movie_to_update:
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
+
+    update_data = movie.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(movie_to_update, key, value)
+    await db.commit()
+    await db.refresh(movie_to_update)
+    return {"detail": "Movie updated successfully."}
