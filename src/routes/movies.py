@@ -178,7 +178,9 @@ async def post_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db
         return new_movie
     except IntegrityError:
         raise HTTPException(
-            status_code=409, detail="Movie with the given name and date already exists."
+            status_code=409,
+            detail=f"A movie with the name '{movie_data["name"]}' and release date "
+            f"'{movie_data["date"]}' already exists.",
         )
     except Exception as exc:
         await db.rollback()
