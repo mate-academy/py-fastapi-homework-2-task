@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from starlette.middleware import Middleware
 
-from routes import movie_router
-from routes.movies import PaginationMiddleware
+from routes.movies import PaginationMiddleware, router as movie_router
 
 middleware = [Middleware(PaginationMiddleware)]
 
