@@ -139,7 +139,7 @@ async def items_get_or_create(
     return items
 
 
-@router.post("/movies/", response_model=MovieDetailSchema)
+@router.post("/movies/", status_code=201, response_model=MovieDetailSchema)
 async def post_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
     movie_data = movie.model_dump()
     country_code = movie_data.pop("country")
