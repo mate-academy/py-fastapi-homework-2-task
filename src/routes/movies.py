@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, Select, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -149,6 +149,9 @@ async def post_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db
     country = country_query.scalar_one_or_none()
     if not country:
         country = CountryModel(code=country_code)
+        db.add(country)
+        await db.commit()
+        await db.refresh(country)
 
     genres = await items_get_or_create(movie_data.pop("genres"), GenreModel, db)
     actors = await items_get_or_create(movie_data.pop("actors"), ActorModel, db)
