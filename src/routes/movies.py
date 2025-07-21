@@ -2,7 +2,7 @@ from contextvars import ContextVar
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, Select
+from sqlalchemy import select, func, Select, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -12,7 +12,7 @@ from starlette.responses import Response
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-
+from schemas import MovieListResponseSchema, MovieListItemSchema
 
 router = APIRouter()
 
@@ -88,3 +88,14 @@ async def paginate(
     if result["total_items"] == 0 or paginator.number_of_pages < page:
         raise HTTPException(status_code=404, detail="No movies found.")
     return result
+
+
+@router.get("/movies/", response_model=MovieListResponseSchema[MovieListItemSchema])
+async def get_films(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
+    db: AsyncSession = Depends(get_db),
+):
+    return await paginate(
+        db, select(MovieModel).order_by(desc(MovieModel.id)), page, per_page
+    )
