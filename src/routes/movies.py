@@ -11,8 +11,9 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, Base
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
+from schemas.movies import MovieCreateSchema
 
 router = APIRouter()
 
@@ -119,3 +120,65 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
             status_code=404, detail="Movie with the given ID was not found."
         )
     return movie
+
+
+async def items_get_or_create(
+    item_names: list[str], model: type[Base], session: AsyncSession
+) -> list:
+    items = []
+    for name in item_names:
+        query = await session.execute(select(model).where(model.name == name))
+        item = query.scalar_one_or_none()
+        if not item:
+            item = model(name=name)
+            session.add(item)
+            await session.commit()
+            await session.refresh(item)
+        items.append(item)
+    return items
+
+
+@router.post("/movies/", response_model=MovieDetailSchema)
+async def post_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+    movie_data = movie.model_dump()
+    country_code = movie_data.pop("country")
+    country_query = await db.execute(
+        select(CountryModel).where(CountryModel.code == country_code)
+    )
+    country = country_query.scalar_one_or_none()
+    if not country:
+        country = CountryModel(code=country_code)
+
+    genres = await items_get_or_create(movie_data.pop("genres"), GenreModel, db)
+    actors = await items_get_or_create(movie_data.pop("actors"), ActorModel, db)
+    languages = await items_get_or_create(
+        movie_data.pop("languages"), LanguageModel, db
+    )
+
+    created_movie = MovieModel(
+        country=country, genres=genres, actors=actors, languages=languages, **movie_data
+    )
+    db.add(created_movie)
+
+    try:
+        await db.commit()
+        await db.refresh(created_movie)
+        result = await db.execute(
+            select(MovieModel)
+            .where(MovieModel.id == created_movie.id)
+            .options(
+                selectinload(MovieModel.country),
+                selectinload(MovieModel.genres),
+                selectinload(MovieModel.actors),
+                selectinload(MovieModel.languages),
+            )
+        )
+        new_movie = result.scalar()
+        return new_movie
+    except IntegrityError:
+        raise HTTPException(
+            status_code=409, detail="Movie with the given name and date already exists."
+        )
+    except Exception as exc:
+        await db.rollback()
+        raise exc
