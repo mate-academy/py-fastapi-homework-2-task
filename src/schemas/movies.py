@@ -87,3 +87,17 @@ class MovieCreateSchema(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+
+class MovieUpdateSchema(BaseModel):
+    name: Optional[constr(min_length=1, max_length=255)] = None
+    date: Optional[
+        Annotated[
+            datetime.date, AfterValidator(validate_date_no_more_than_one_year_from_now)
+        ]
+    ] = None
+    score: Optional[confloat(ge=0.0, le=100.0)] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[confloat(ge=0.0)] = None
+    revenue: Optional[confloat(ge=0.0)] = None
