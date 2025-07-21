@@ -5,14 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, Select, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas import MovieListResponseSchema, MovieListItemSchema
+from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
 
 router = APIRouter()
 
@@ -99,3 +99,23 @@ async def get_films(
     return await paginate(
         db, select(MovieModel).order_by(desc(MovieModel.id)), page, per_page
     )
+
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(MovieModel)
+        .where(MovieModel.id == movie_id)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages),
+        )
+    )
+    movie = result.scalar_one_or_none()
+    if not movie:
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
+    return movie
