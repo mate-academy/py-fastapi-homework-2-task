@@ -57,8 +57,8 @@ class MovieListItemSchema(BaseModel):
 
 class MovieListResponseSchema(BaseModel, Generic[M]):
     movies: List[M]
-    prev_page: Optional[AnyHttpUrl]
-    next_page: Optional[AnyHttpUrl]
+    prev_page: Optional[str]
+    next_page: Optional[str]
     total_pages: int
     total_items: int
 

@@ -41,17 +41,18 @@ class Paginator:
         self.next_page = ""
         self.previous_page = ""
 
+    def _build_url(self, page: int) -> str:
+        return f"/theater/movies/?page={page}&per_page={self.per_page}"
+
     def _get_next_page(self) -> Optional[str]:
         if self.page >= self.number_of_pages:
             return None
-        url = self.request.url.include_query_params(page=self.page + 1)
-        return str(url)
+        return self._build_url(self.page + 1)
 
     def _get_previous_page(self) -> Optional[str]:
         if self.page == 1:
             return None
-        url = self.request.url.include_query_params(page=self.page - 1)
-        return str(url)
+        return self._build_url(self.page - 1)
 
     async def get_response(self) -> dict:
         return {
