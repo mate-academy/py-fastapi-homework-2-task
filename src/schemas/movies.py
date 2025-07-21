@@ -83,7 +83,7 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: confloat(ge=0.0)
     revenue: confloat(ge=0.0)
-    country: constr(min_length=3, max_length=3, to_upper=True)
+    country: constr(min_length=2, max_length=3, to_upper=True)
     genres: list[str]
     actors: list[str]
     languages: list[str]
