@@ -1,11 +1,21 @@
 import datetime
-from typing import Generic, TypeVar, List, Optional
+from typing import Generic, TypeVar, List, Optional, Annotated
 
-from pydantic import BaseModel, ConfigDict, AnyHttpUrl
+from fastapi import HTTPException
+from pydantic import BaseModel, ConfigDict, AnyHttpUrl, constr, AfterValidator, confloat
 
 from database.models import MovieStatusEnum
 
 M = TypeVar("M")
+
+
+def validate_date_no_more_than_one_year_from_now(
+    date: datetime.date,
+) -> Optional[datetime.date]:
+    today = datetime.date.today()
+    if date > today + datetime.timedelta(days=365):
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    return date
 
 
 class IdNameBaseSchema(BaseModel):
@@ -61,3 +71,19 @@ class MovieDetailSchema(MovieListItemSchema):
     genres: list[GenreReadSchema]
     actors: list[ActorReadSchema]
     languages: list[LanguageReadSchema]
+
+
+class MovieCreateSchema(BaseModel):
+    name: constr(min_length=1, max_length=255)
+    date: Annotated[
+        datetime.date, AfterValidator(validate_date_no_more_than_one_year_from_now)
+    ]
+    score: confloat(ge=0.0, le=100.0)
+    overview: str
+    status: MovieStatusEnum
+    budget: confloat(ge=0.0)
+    revenue: confloat(ge=0.0)
+    country: constr(min_length=3, max_length=3, to_upper=True)
+    genres: list[str]
+    actors: list[str]
+    languages: list[str]
