@@ -2,6 +2,7 @@ import math
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -202,22 +203,54 @@ async def update_movie(
         movie_update_data: MovieUpdateSchema,
         db: AsyncSession = Depends(get_db)
 ):
-    movie_to_update = await db.execute(
-        select(MovieModel).where(MovieModel.id == movie_id)
+    movie_to_update_result = await db.execute(
+        select(MovieModel)
+        .options(
+            joinedload(MovieModel.country),
+            joinedload(MovieModel.genres),
+            joinedload(MovieModel.actors),
+            joinedload(MovieModel.languages)
+        )
+        .where(MovieModel.id == movie_id)
     )
-    movie = movie_to_update.scalar_one_or_none()
+    movie = movie_to_update_result.unique().scalar_one_or_none()
 
     if not movie:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
 
     update_data = movie_update_data.model_dump(exclude_unset=True)
 
-    for key, value in update_data.items():
-        setattr(movie, key, value)
-
     try:
+        if "country" in update_data:
+            country_code = update_data.pop("country")
+            movie.country = await get_or_create_country(db, country_code)
+
+        if "genres" in update_data:
+            genre_names = update_data.pop("genres")
+            movie.genres = [await get_or_create_genre(db, name) for name in genre_names]
+
+        if "actors" in update_data:
+            actor_names = update_data.pop("actors")
+            movie.actors = [await get_or_create_actor(db, name) for name in actor_names]
+
+        if "languages" in update_data:
+            language_names = update_data.pop("languages")
+            movie.languages = [await get_or_create_language(db, name) for name in language_names]
+
+        for key, value in update_data.items():
+            setattr(movie, key, value)
+
         await db.commit()
         await db.refresh(movie)
+
+    except IntegrityError as e:
+        await db.rollback()
+        if "UNIQUE constraint failed" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A movie with these details already exists."
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Database error: {e}")
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid input data: {e}")

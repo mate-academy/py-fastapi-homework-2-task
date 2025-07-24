@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import (
     BaseModel,
     constr,
@@ -127,17 +129,21 @@ class MovieDetailSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: Optional[str] = Field(None, max_length=255)
+    name: Optional[constr(max_length=255)] = None
     date: Optional[date] = None
-    score: Optional[float] = Field(None, ge=0, le=100)
+    score: Optional[confloat(ge=0, le=100)] = None
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
-    budget: Optional[float] = Field(None, ge=0)
-    revenue: Optional[float] = Field(None, ge=0)
+    budget: Optional[Decimal] = Field(None, ge=0)
+    revenue: Optional[confloat(ge=0)] = None
+    country: Optional[constr(min_length=2, max_length=3)] = None
+    genres: Optional[List[str]] = None
+    actors: Optional[List[str]] = None
+    languages: Optional[List[str]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator('date')
+    @field_validator("date")
     @classmethod
     def validate_date_not_too_future_update(cls, value: date) -> date:
         if value is not None and value > date.today() + timedelta(days=365):
