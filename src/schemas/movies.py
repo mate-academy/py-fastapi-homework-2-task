@@ -103,3 +103,7 @@ class MovieUpdateSchema(BaseModel):
     status: Optional[MovieStatusEnum] = None
     budget: Optional[confloat(ge=0)] = None
     revenue: Optional[confloat(ge=0)] = None
+    country: Optional[constr(min_length=3, max_length=3)] = None
+    genres: Optional[List[str]] = None
+    actors: Optional[List[str]] = None
+    languages: Optional[List[str]] = None

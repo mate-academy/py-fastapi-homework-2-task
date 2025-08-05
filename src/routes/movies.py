@@ -161,26 +161,47 @@ async def update_movie(
     update_data: MovieUpdateSchema,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    result = await db.execute(
+        select(MovieModel)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages),
+        )
+        .where(MovieModel.id == movie_id)
+    )
     movie = result.scalar_one_or_none()
 
     if movie is None:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    update_fields = update_data.model_dump(exclude_unset=True)
-
-    if not update_fields:
-        return JSONResponse(status_code=200, content={"detail": "Nothing to update."})
+    data = update_data.model_dump(exclude_unset=True)
 
     try:
-        await db.execute(
-            update(MovieModel)
-            .where(MovieModel.id == movie_id)
-            .values(**update_fields)
-        )
+        # Update scalar fields
+        scalar_fields = [
+            "name", "date", "score", "overview", "status", "budget", "revenue"
+        ]
+        for field in scalar_fields:
+            if field in data:
+                setattr(movie, field, data[field])
+
+        # Update related fields
+        if "country" in data:
+            movie.country = await get_or_create_entity(db, CountryModel, data["country"], field="code")
+
+        if "genres" in data:
+            movie.genres = [await get_or_create_entity(db, GenreModel, g) for g in data["genres"]]
+
+        if "actors" in data:
+            movie.actors = [await get_or_create_entity(db, ActorModel, a) for a in data["actors"]]
+
+        if "languages" in data:
+            movie.languages = [await get_or_create_entity(db, LanguageModel, l) for l in data["languages"]]
+
         await db.commit()
         return JSONResponse(status_code=200, content={"detail": "Movie updated successfully."})
 
     except Exception:
-        # Log exception if needed
         raise HTTPException(status_code=400, detail="Invalid input data.")
