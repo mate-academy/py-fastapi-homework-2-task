@@ -1,19 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.openapi.models import Response
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
-from starlette import status
-from starlette.status import HTTP_409_CONFLICT, HTTP_201_CREATED, HTTP_200_OK, HTTP_204_NO_CONTENT
+import datetime
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from starlette.status import (
+    HTTP_409_CONFLICT,
+    HTTP_201_CREATED,
+    HTTP_200_OK,
+    HTTP_204_NO_CONTENT
+)
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema, CreateMovieSchema, MovieListItemSchema
+from schemas.movies import (
+    MovieListResponseSchema,
+    MovieDetailSchema,
+    CreateMovieSchema,
+    MovieUpdateSchema
+)
 
 router = APIRouter()
-
 
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
@@ -60,9 +67,19 @@ async def list_movies(
     )
 
 
-
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=HTTP_201_CREATED)
 async def create_movie(movie: CreateMovieSchema, db: AsyncSession = Depends(get_db)):
+    if len(movie.name) > 255:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    if movie.date > datetime.date.today() + datetime.timedelta(days=365):
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    if not (0 <= movie.score <= 100):
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    if movie.budget < 0:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    if movie.revenue < 0:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     check_movie_name_and_date = await db.execute(select(MovieModel).where(
         MovieModel.name == movie.name,
         MovieModel.date == movie.date
@@ -97,7 +114,6 @@ async def create_movie(movie: CreateMovieSchema, db: AsyncSession = Depends(get_
             await db.flush()
         genres.append(genre)
 
-
     actors = []
     for a in movie.actors:
         result = await db.execute(select(ActorModel).where(ActorModel.name == a))
@@ -111,12 +127,12 @@ async def create_movie(movie: CreateMovieSchema, db: AsyncSession = Depends(get_
         actors.append(actor)
 
     languages = []
-    for l in movie.languages:
-        result = await db.execute(select(LanguageModel).where(LanguageModel.name == l))
+    for language_ in movie.languages:
+        result = await db.execute(select(LanguageModel).where(LanguageModel.name == language_))
         language = result.scalar_one_or_none()
         if not language:
             language = LanguageModel(
-                name=l
+                name=language_
             )
             db.add(language)
             await db.flush()
@@ -174,7 +190,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/movies/{movie_id}/", status_code=HTTP_204_NO_CONTENT)
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
@@ -182,11 +198,11 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await db.delete(movie)
     await db.commit()
-    return movie
+    return None
 
 
-@router.patch("/movies/{movie_id}/", status_code=status.HTTP_200_OK)
-async def update_movie(movie_id, movie: MovieListItemSchema, db: AsyncSession = Depends(get_db)):
+@router.patch("/movies/{movie_id}/", status_code=HTTP_200_OK)
+async def update_movie(movie_id, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie_update = result.scalar_one_or_none()
 

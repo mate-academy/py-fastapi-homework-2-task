@@ -50,7 +50,7 @@ class MovieListResponseSchema(BaseModel):
 class CreateMovieSchema(BaseModel):
     name: str = Field(..., max_length=255)
     date: datetime.date
-    score: float = Field(..., ge=1, le=100)
+    score: float = Field(..., ge=0, le=100)
     overview: str
     status: MovieStatusEnum
     budget: float = Field(..., ge=0)
@@ -87,7 +87,7 @@ class MovieDetailSchema(BaseModel):
         from_attributes = True
 
 
-class MovieListItemSchema(BaseModel):
+class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[datetime.date] = None
     score: Optional[float] = Field(None, ge=1, le=100)
