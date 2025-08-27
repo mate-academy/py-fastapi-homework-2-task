@@ -212,6 +212,16 @@ async def update_movie(movie_id, movie: MovieUpdateSchema, db: AsyncSession = De
     movie_data = movie.dict(exclude_unset=True)
 
     for k, v in movie_data.items():
+        if k == "score":
+            if not (0 <= v <= 100):
+                raise HTTPException(status_code=400, detail="Invalid input data.")
+        if k == "budget":
+            if 0 < v:
+                raise HTTPException(status_code=400, detail="Invalid input data.")
+        if k == "revenue":
+            if 0 < v:
+                raise HTTPException(status_code=400, detail="Invalid input data.")
+
         setattr(movie_update, k, v)
 
     await db.commit()

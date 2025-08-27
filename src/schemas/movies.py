@@ -90,7 +90,7 @@ class MovieDetailSchema(BaseModel):
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[datetime.date] = None
-    score: Optional[float] = Field(None, ge=1, le=100)
+    score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = Field(None, ge=0)
