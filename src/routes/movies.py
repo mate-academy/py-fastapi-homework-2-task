@@ -5,7 +5,8 @@ from fastapi import (
     Query,
     status
 )
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -59,8 +60,8 @@ async def get_movies(
     offset = (page - 1) * per_page
     if offset >= total_items:
         raise HTTPException(
-            status_code=404,
-            detail="Page not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No movies found."
         )
 
     base_url = "/theater/movies/"
@@ -75,7 +76,7 @@ async def get_movies(
 
     result_movies = await db.execute(
         select(MovieModel)
-        .order_by(*MovieModel.default_order_by())
+        .order_by(MovieModel.id.desc())
         .offset(offset)
         .limit(per_page)
     )
@@ -130,7 +131,7 @@ async def create_movie(
     )
     country = country_result.scalar_one_or_none()
     if not country:
-        country = CountryModel(code=movie_schema.country)
+        country = CountryModel(code=movie_schema.country.upper())
         db.add(country)
         await db.flush()
 
@@ -205,7 +206,7 @@ async def create_movie(
         )
         db.add(movie)
         await db.commit()
-    except Exception:
+    except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data."

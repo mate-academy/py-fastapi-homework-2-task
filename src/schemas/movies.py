@@ -97,10 +97,19 @@ class MovieDetailSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=255)
     date: Optional[date] = None
     score: Optional[float] = Field(default=None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = Field(default=None, ge=0)
     revenue: Optional[float] = Field(default=None, ge=0)
+
+    @field_validator("date")
+    @classmethod
+    def date_not_too_far(cls, value: date) -> date:
+        if value > date.today() + timedelta(days=365):
+            raise ValueError(
+                "Date must not be more than one year in the future"
+            )
+        return value
