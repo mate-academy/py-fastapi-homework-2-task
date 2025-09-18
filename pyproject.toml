@@ -21,6 +21,8 @@ alembic = "^1.14.0"
 aiosqlite = "^0.21.0"
 asyncpg = "^0.30.0"
 pytest-asyncio = "^0.25.3"
+fastapi-pagination = "^0.14.1"
+pydentic = "^0.0.1.dev3"
 
 
 [build-system]
