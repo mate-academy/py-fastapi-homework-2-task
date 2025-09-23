@@ -119,7 +119,9 @@ async def create_movie(
     )
     country_obj = country_result.scalars().first()
     if not country_obj:
-        raise HTTPException(status_code=404, detail="Country not found")
+        country_obj = CountryModel(code=movie_data.country)
+        db.add(country_obj)
+        # raise HTTPException(status_code=404, detail="Country not found")
     new_movie.country = country_obj
 
     # --- Genres ---
@@ -204,12 +206,12 @@ async def update_movie(
 ):
     result = await db.execute(
         select(MovieModel)
-        .options(
-            selectinload(MovieModel.genres),
-            selectinload(MovieModel.actors),
-            selectinload(MovieModel.languages),
-            selectinload(MovieModel.country),
-        )
+        # .options(
+        #     selectinload(MovieModel.genres),
+        #     selectinload(MovieModel.actors),
+        #     selectinload(MovieModel.languages),
+        #     selectinload(MovieModel.country),
+        # )
         .where(MovieModel.id == movie_id)
     )
     movie = result.scalar_one_or_none()
@@ -226,39 +228,9 @@ async def update_movie(
     for key, value in movie_dict.items():
         setattr(movie, key, value)
 
-    if movie_data.country is not None:
-        country_result = await db.execute(
-            select(CountryModel).where(CountryModel.code == movie_data.country)
-        )
-
-        country_obj = country_result.scalars().first()
-        if not country_obj:
-            raise HTTPException(status_code=404, detail="Country not found")
-        movie.country = country_obj
-
-    if movie_data.genres is not None:
-        genres_result = await db.execute(
-            select(GenreModel).where(GenreModel.name.in_(movie_data.genres))
-        )
-        movie.genres = genres_result.scalars().all()
-
-    if movie_data.actors is not None:
-        actors_result = await db.execute(
-            select(ActorModel).where(ActorModel.name.in_(movie_data.actors))
-        )
-        movie.actors = actors_result.scalars().all()
-
-    if movie_data.languages is not None:
-        languages_result = await db.execute(
-            select(LanguageModel).where(LanguageModel.name.in_(movie_data.languages))
-        )
-        movie.languages = languages_result.scalars().all()
-
     try:
         await db.commit()
-        await db.refresh(
-            movie, attribute_names=["genres", "actors", "languages", "country"]
-        )
+
     except IntegrityError:
         await db.rollback()
         raise HTTPException(

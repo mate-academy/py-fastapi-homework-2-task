@@ -45,21 +45,65 @@ class MovieCreateSchema(BaseModel):
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
 
+    @field_validator("score")
+    def validate_score(cls, v: float) -> float:
+        if not (0 <= v <= 100):
+            raise ValueError("Score must be between 0 and 100.")
+        return v
+
+    @field_validator("budget", "revenue")
+    def validate_non_negative(cls, v: float, info) -> float:
+        if v < 0:
+            raise ValueError(f"{info.field_name.capitalize()} must be non-negative.")
+        return v
+
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+        if len(v) > 255:
+            raise ValueError("Name must not exceed 255 characters.")
+        return v
+
+    @field_validator("date")
+    def validate_date(cls, v: datetime.date) -> datetime.date:
+        if v > datetime.date.today() + datetime.timedelta(days=365):
+            raise ValueError("Date must not be more than one year in the future.")
+        return v
+
 
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
     date: Optional[datetime.date] = None
     score: Optional[float] = None
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = None
     revenue: Optional[int] = None
-    country: Optional[str] = None
-    genres: Optional[list[str]] = None
-    actors: Optional[list[str]] = None
-    languages: Optional[list[str]] = None
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
+
+    @field_validator("score")
+    def validate_score(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and not (0 <= v <= 100):
+            raise ValueError("Score must be between 0 and 100.")
+        return v
+
+    @field_validator("budget", "revenue")
+    def validate_non_negative(cls, v: Optional[float], info) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError(f"{info.field_name.capitalize()} must be non-negative.")
+        return v
+
+    @field_validator("name")
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and len(v) > 255:
+            raise ValueError("Name must not exceed 255 characters.")
+        return v
+
+    @field_validator("date")
+    def validate_date(cls, v: Optional[datetime.date]) -> Optional[datetime.date]:
+        if v is not None and v > datetime.date.today() + datetime.timedelta(days=365):
+            raise ValueError("Date must not be more than one year in the future.")
+        return v
 
 
 class MovieDetailResponseSchema(BaseModel):
