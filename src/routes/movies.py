@@ -39,12 +39,6 @@ async def get_movies(
 
     result = await db.execute(
         select(MovieModel)
-        .options(
-            selectinload(MovieModel.genres),
-            selectinload(MovieModel.actors),
-            selectinload(MovieModel.languages),
-            selectinload(MovieModel.country),
-        )
         .order_by(desc(MovieModel.id))
         .offset(offset)
         .limit(per_page)
@@ -206,12 +200,6 @@ async def update_movie(
 ):
     result = await db.execute(
         select(MovieModel)
-        # .options(
-        #     selectinload(MovieModel.genres),
-        #     selectinload(MovieModel.actors),
-        #     selectinload(MovieModel.languages),
-        #     selectinload(MovieModel.country),
-        # )
         .where(MovieModel.id == movie_id)
     )
     movie = result.scalar_one_or_none()

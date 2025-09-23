@@ -77,7 +77,7 @@ class MovieUpdateSchema(BaseModel):
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = None
-    revenue: Optional[int] = None
+    revenue: Optional[float] = None
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
 
