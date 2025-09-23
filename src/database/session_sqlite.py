@@ -4,8 +4,8 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from config import get_settings
-from database import Base
+from src.config import get_settings
+from src.database import Base
 
 settings = get_settings()
 
@@ -57,5 +57,5 @@ async def reset_sqlite_database() -> None:
     :return: None
     """
     async with sqlite_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

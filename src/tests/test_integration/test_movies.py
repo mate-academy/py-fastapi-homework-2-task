@@ -4,8 +4,8 @@ import pytest
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 
-from database import MovieModel
-from database.models import (
+from src.database import MovieModel
+from src.database.models import (
     GenreModel,
     ActorModel,
     LanguageModel,
@@ -250,7 +250,7 @@ async def test_get_movie_by_id_not_found(client):
     Test that the `/movies/{movie_id}` endpoint returns a 404 error
     when a movie with the given ID does not exist.
     """
-    movie_id = 1
+    movie_id = 99999
 
     response = await client.get(f"/api/v1/theater/movies/{movie_id}/")
     assert response.status_code == 404, f"Expected status code 404, but got {response.status_code}"
