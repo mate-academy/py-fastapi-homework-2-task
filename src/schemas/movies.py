@@ -40,6 +40,7 @@ class ItemSchema(BaseModel):
     id: int
     name: str
 
+
 class MovieDetailSchema(BaseModel):
     id: int
     name: str

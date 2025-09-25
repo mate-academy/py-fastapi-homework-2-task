@@ -113,9 +113,9 @@ async def read_movie(
         budget=movie.budget,
         revenue=movie.revenue,
         country=country,
-        genres=[{"id": g.id, "name": g.name} for g in movie.genres],
-        actors=[{"id": a.id, "name": a.name} for a in movie.actors],
-        languages=[{"id": l.id, "name": l.name} for l in movie.languages],
+        genres=[{"id": genre.id, "name": genre.name} for genre in movie.genres],
+        actors=[{"id": actor.id, "name": actor.name} for actor in movie.actors],
+        languages=[{"id": language.id, "name": language.name} for language in movie.languages],
     )
 
 
@@ -173,9 +173,9 @@ async def add_movie(
         lang_result = await db.execute(
             select(LanguageModel).where(LanguageModel.name == language_name)
         )
-        lang_obj = lang_result.scalar_one_or_none() or LanguageModel(name=language_name)
-        db.add(lang_obj)
-        languages.append(lang_obj)
+        language_obj = lang_result.scalar_one_or_none() or LanguageModel(name=language_name)
+        db.add(language_obj)
+        languages.append(language_obj)
 
     new_movie = MovieModel(
         name=movie.name,
@@ -222,7 +222,7 @@ async def add_movie(
         ),
         genres=[ItemSchema(id=g.id, name=g.name) for g in new_movie.genres],
         actors=[ItemSchema(id=a.id, name=a.name) for a in new_movie.actors],
-        languages=[ItemSchema(id=l.id, name=l.name) for l in new_movie.languages],
+        languages=[ItemSchema(id=language.id, name=language.name) for language in new_movie.languages],
     )
 
 
