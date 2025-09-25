@@ -1,9 +1,15 @@
-import math
-
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Request
+)
 from sqlalchemy import select, func, and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
@@ -18,6 +24,13 @@ from schemas.movies import (
 
 
 router = APIRouter()
+
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "Invalid input data."},
+    )
 
 
 @router.get(
@@ -103,7 +116,7 @@ async def read_movie(
         date=movie.date,
         score=movie.score,
         overview=movie.overview,
-        status=movie.status,
+        status=movie.status.value,
         budget=movie.budget,
         revenue=movie.revenue,
         country=country,
@@ -269,7 +282,7 @@ async def update_movie(
     if movie_data.overview is not None:
         movie.overview = movie_data.overview
     if movie_data.status is not None:
-        movie.status = movie_data.status
+        movie.status = movie_data.status.value
     if movie_data.budget is not None:
         movie.budget = movie_data.budget
     if movie_data.revenue is not None:
