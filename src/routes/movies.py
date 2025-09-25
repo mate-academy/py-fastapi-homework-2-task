@@ -29,12 +29,13 @@ async def read_movies(
     per_page: int = Query(10, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
 ):
+    total_items = await db.scalar(select(func.count()).select_from(MovieModel))
+    total_pages = (total_items + per_page - 1) // per_page
+
+    if total_items == 0 or page > total_pages:
+        raise HTTPException(status_code=404, detail="No movies found.")
+
     offset = (page - 1) * per_page
-
-    total_items = await db.scalar(
-        select(func.count()).select_from(MovieModel)
-    )
-
     result = await db.execute(
         select(MovieModel)
         .order_by(MovieModel.id.desc())
@@ -42,13 +43,6 @@ async def read_movies(
         .limit(per_page)
     )
     movies = result.scalars().all()
-
-    if not movies:
-        raise HTTPException(status_code=404, detail="No movies found.")
-
-    total_pages = math.ceil(total_items / per_page)
-    if page > total_pages:
-        raise HTTPException(status_code=404, detail="Page out of range")
 
     base = "/theater/movies/"
     prev_page = (
@@ -142,13 +136,10 @@ async def add_movie(
             ),
         )
 
-    country_result = await db.execute(
-        select(CountryModel).where(CountryModel.name == movie.country)
-    )
-    country_obj = country_result.scalar_one_or_none() or CountryModel(
-        name=movie.country, code="US"
-    )
+    country_obj = await db.execute(select(CountryModel).where(CountryModel.code == movie.country))
+    country_obj = country_obj.scalar_one_or_none() or CountryModel(code=movie.country, name=None)
     db.add(country_obj)
+    await db.flush()
 
     genres = []
     for genre_name in movie.genres:
@@ -182,7 +173,7 @@ async def add_movie(
         date=movie.date,
         score=movie.score,
         overview=movie.overview,
-        status=movie.status,
+        status=movie.status.value,
         budget=movie.budget,
         revenue=movie.revenue,
         country=country_obj,

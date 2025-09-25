@@ -12,14 +12,13 @@ from pydantic import (
 class MovieStatusEnum(str, Enum):
     released = "Released"
     post_production = "Post Production"
-    filming = "Filming"
-    planned = "Planned"
+    in_production = "In Production"
 
 
 class CountrySchema(BaseModel):
     id: int
     name: Optional[str]
-    code: Optional[str]
+    code: str
 
 
 class MovieBase(BaseModel):
@@ -77,7 +76,7 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieCreateSchema(BaseModel):
-    name: str = Field(min_length=0, max_length=100)
+    name: str = Field(min_length=0, max_length=255)
     date: datetime.date = Field()
     score: float = Field(ge=0, le=100)
     overview: str
@@ -91,6 +90,8 @@ class MovieCreateSchema(BaseModel):
 
     @validator("date")
     def date_not_too_far(cls, v):
+        if v is None:
+            return v
         max_date = datetime.date.today() + datetime.timedelta(days=365)
         if v > max_date:
             raise ValueError('Date cannot be more than 1 year in the future')
@@ -113,7 +114,7 @@ class MovieCreateResponseSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: Optional[str] = Field(None, min_length=0, max_length=100)
+    name: Optional[str] = Field(None, min_length=0, max_length=255)
     date: Optional[datetime.date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
@@ -123,6 +124,8 @@ class MovieUpdateSchema(BaseModel):
 
     @validator("date")
     def date_not_too_far(cls, v):
+        if v is None:
+            return v
         max_date = datetime.date.today() + datetime.timedelta(days=365)
         if v > max_date:
             raise ValueError('Date cannot be more than 1 year in the future')
