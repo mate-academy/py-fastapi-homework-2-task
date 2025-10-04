@@ -1,0 +1,67 @@
+{
+  "fields": [
+    {
+      "name": "names",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "date_x",
+      "type": "date",
+      "format": "default"
+    },
+    {
+      "name": "score",
+      "type": "number",
+      "format": "default"
+    },
+    {
+      "name": "genre",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "overview",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "crew",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "orig_title",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "orig_lang",
+      "type": "string",
+      "format": "default"
+    },
+    {
+      "name": "budget_x",
+      "type": "number",
+      "format": "default"
+    },
+    {
+      "name": "revenue",
+      "type": "number",
+      "format": "default"
+    },
+    {
+      "name": "country",
+      "type": "string",
+      "format": "default"
+    }
+  ],
+  "missingValues": [
+    ""
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "columns": [
+    {
+      "minWidth": 40,
+      "download": false,
+      "formatter": "rowSelection",
+      "titleFormatter": "rowSelection",
+      "resizable": true,
+      "headerSort": false,
+      "width": 51
+    },
+    {
+      "field": "names",
+      "title": "names",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 269
+    },
+    {
+      "field": "date_x",
+      "title": "date_x",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 96
+    },
+    {
+      "field": "score",
+      "title": "score",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "number",
+      "headerSort": true,
+      "width": 89
+    },
+    {
+      "field": "genre",
+      "title": "genre",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 286
+    },
+    {
+      "field": "overview",
+      "title": "overview",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 2811
+    },
+    {
+      "field": "crew",
+      "title": "crew",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 2210
+    },
+    {
+      "field": "orig_title",
+      "title": "orig_title",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 269
+    },
+    {
+      "field": "status",
+      "title": "status",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 93
+    },
+    {
+      "field": "orig_lang",
+      "title": "orig_lang",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 113
+    },
+    {
+      "field": "budget_x",
+      "title": "budget_x",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "number",
+      "headerSort": true,
+      "width": 113
+    },
+    {
+      "field": "revenue",
+      "title": "revenue",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "number",
+      "headerSort": true,
+      "width": 106
+    },
+    {
+      "field": "country",
+      "title": "country",
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true,
+      "width": 103
+    }
+  ]
+}
