@@ -1,5 +1,6 @@
 from typing import Sequence, TypeVar
 
+from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -48,3 +49,14 @@ async def get_or_create(db_model: type[T], db: AsyncSession, **kwargs) -> T:
     await db.flush()
 
     return new_record
+
+
+async def get_movie_or_404(movie_id: int, db: AsyncSession) -> MovieModel:
+
+    if movie := await get_movie(db, id=movie_id):
+        return movie
+
+    raise HTTPException(
+        status_code=404,
+        detail="Movie with the given ID was not found."
+    )

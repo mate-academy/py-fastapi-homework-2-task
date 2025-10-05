@@ -2,9 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from database.models import (
+    ActorModel,
+    CountryModel,
+    GenreModel,
+    LanguageModel,
+)
 from repository import (
     get_movie,
+    get_movie_or_404,
     get_movies,
     get_number_of_movies,
     get_or_create,
@@ -71,7 +77,6 @@ async def create_movie(
         movie: MovieCreateRequestSchema,
         db: AsyncSession = Depends(get_db),
 ) -> MovieCreateResponseSchema:
-
     movie_exists = await get_movie(db=db, name=movie.name, date=movie.date)
 
     if movie_exists:
@@ -120,12 +125,24 @@ async def movie_detail(
         movie_id: int,
         db: AsyncSession = Depends(get_db),
 ) -> MovieCreateResponseSchema:
-
-    movie = await get_movie(db, id=movie_id)
-
-    if not movie:
-        raise HTTPException(
-            status_code=404,
-            detail="Movie with the given ID was not found."
-        )
+    movie = await get_movie_or_404(movie_id, db)
     return MovieCreateResponseSchema.model_validate(movie)
+
+
+@router.delete(
+    "/{movie_id}",
+    status_code=204,
+    responses={
+        404: {
+            "model": MovieErrorSchema,
+            "description": "Movie with the given ID was not found."
+        }
+    }
+)
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> None:
+    movie = await get_movie_or_404(movie_id, db)
+    await db.delete(movie)
+    await db.commit()
