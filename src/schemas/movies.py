@@ -33,5 +33,55 @@ class MovieListResponseSchema(BaseModel):
     total_items: int
 
 
-class MovieNotFoundSchema(BaseModel):
+class MovieErrorSchema(BaseModel):
     detail: str
+
+
+class MovieBaseCreateSchema(MovieBaseSchema):
+    status: MovieStatusEnum
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+
+
+class MovieCreateRequestSchema(MovieBaseCreateSchema):
+    country: str = Field(max_length=3)
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+
+class CountryBaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str = Field(max_length=3)
+    name: Optional[str] = None
+
+
+class GenreBaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
+class ActorBaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
+class LanguageBaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
+class MovieCreateResponseSchema(MovieBaseCreateSchema):
+    country: CountryBaseSchema
+    genres: List[GenreBaseSchema]
+    actors: List[ActorBaseSchema]
+    languages: List[LanguageBaseSchema]
+    id: int
