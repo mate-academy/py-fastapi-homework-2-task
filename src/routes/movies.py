@@ -34,7 +34,7 @@ async def list_movies(
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db)
-):
+) -> MovieListResponseSchema:
     movies = await get_movies(db, per_page, page)
 
     if not movies:
@@ -71,6 +71,7 @@ async def create_movie(
         movie: MovieCreateRequestSchema,
         db: AsyncSession = Depends(get_db),
 ) -> MovieCreateResponseSchema:
+
     movie_exists = await get_movie(db=db, name=movie.name, date=movie.date)
 
     if movie_exists:
@@ -103,3 +104,28 @@ async def create_movie(
     new_movie = await get_movie(db, id=new_movie.id)
 
     return MovieCreateResponseSchema.model_validate(new_movie)
+
+
+@router.get(
+    "/{movie_id}",
+    response_model=MovieCreateResponseSchema,
+    responses={
+        404: {
+            "model": MovieErrorSchema,
+            "description": "Movie with the given ID was not found."
+        }
+    }
+)
+async def movie_detail(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> MovieCreateResponseSchema:
+
+    movie = await get_movie(db, id=movie_id)
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+    return MovieCreateResponseSchema.model_validate(movie)
