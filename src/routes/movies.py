@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db, MovieModel
@@ -38,20 +38,19 @@ router = APIRouter(prefix="/movies")
     }
 )
 async def list_movies(
-        request: Request,
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db)
 ) -> MovieListResponseSchema:
-    movies = await get_movies(db, per_page, page)
+    movies = await get_movies(per_page, page, db)
 
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
 
     total_items = await get_number_of_movies(db)
     total_pages = (total_items - 1) // per_page + 1
-    prev_page = str(request.url.replace_query_params(page=page - 1, per_page=per_page)) if page > 1 else None
-    next_page = str(request.url.replace_query_params(page=page + 1, per_page=per_page)) if page < total_pages else None
+    prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
+    next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
     return MovieListResponseSchema.model_validate(
         {
@@ -84,8 +83,8 @@ async def create_movie(
     if movie_exists:
         raise HTTPException(
             status_code=409,
-            detail=f"Movie with the name '{movie.name}' "
-                   f"and release date '{movie.date}' already exists"
+            detail=f"A movie with the name '{movie.name}' "
+                   f"and release date '{movie.date}' already exists."
         )
 
     country = await get_or_create(CountryModel, db, code=movie.country)
@@ -114,7 +113,7 @@ async def create_movie(
 
 
 @router.get(
-    "/{movie_id}",
+    "/{movie_id}/",
     response_model=MovieCreateResponseSchema,
     responses={
         404: {
@@ -132,7 +131,7 @@ async def movie_detail(
 
 
 @router.delete(
-    "/{movie_id}",
+    "/{movie_id}/",
     status_code=204,
     responses={
         404: {
@@ -151,7 +150,7 @@ async def delete_movie(
 
 
 @router.patch(
-    "/{movie_id}",
+    "/{movie_id}/",
     response_model=MovieUpdateResponseShema,
     responses={
         400: {
