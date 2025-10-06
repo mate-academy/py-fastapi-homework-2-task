@@ -174,11 +174,16 @@ async def update_movie(
     movie = await get_movie_or_404(movie_id, db)
     data_dict = movie_data.model_dump(exclude_unset=True)
 
+    movie_date = data_dict.get("date")
+    score = data_dict.get("score")
+    budget = data_dict.get("budget")
+    revenue = data_dict.get("revenue")
+
     if (
-        (movie.date is not None and movie.date > date.today() + timedelta(days=365))
-        or (movie.score is not None and (movie.score < 0 or movie.score > 100))
-        or (movie.budget is not None and movie.budget < 0)
-        or (movie.revenue is not None and movie.revenue < 0)
+        (movie_date is not None and movie_date > date.today() + timedelta(days=365))
+        or (score is not None and (score < 0 or score > 100))
+        or (budget is not None and budget < 0)
+        or (revenue is not None and revenue < 0)
     ):
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
