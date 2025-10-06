@@ -18,8 +18,10 @@ from repository import (
 from schemas import (
     MovieCreateRequestSchema,
     MovieCreateResponseSchema,
-    MovieListResponseSchema,
     MovieErrorSchema,
+    MovieListResponseSchema,
+    MovieUpdateRequestSchema,
+    MovieUpdateResponseShema,
 )
 
 router = APIRouter(prefix="/movies")
@@ -146,3 +148,38 @@ async def delete_movie(
     movie = await get_movie_or_404(movie_id, db)
     await db.delete(movie)
     await db.commit()
+
+
+@router.patch(
+    "/{movie_id}",
+    response_model=MovieUpdateResponseShema,
+    responses={
+        400: {
+            "model": MovieErrorSchema,
+            "description": "Invalid input data."
+        },
+        404: {
+            "model": MovieErrorSchema,
+            "description": "Movie with the given ID was not found."
+        }
+    }
+)
+async def update_movie(
+        movie_id: int,
+        movie_data: MovieUpdateRequestSchema,
+        db: AsyncSession = Depends(get_db),
+) -> MovieUpdateResponseShema:
+
+    movie = await get_movie_or_404(movie_id, db)
+    data_dict = movie_data.model_dump(exclude_unset=True)
+
+    try:
+        for field, value in data_dict.items():
+            setattr(movie, field, value)
+        await db.commit()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
+    return MovieUpdateResponseShema.model_validate(
+        {"detail": "Movie updated successfully."}
+    )

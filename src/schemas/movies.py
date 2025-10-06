@@ -85,3 +85,35 @@ class MovieCreateResponseSchema(MovieBaseCreateSchema):
     actors: List[ActorBaseSchema]
     languages: List[LanguageBaseSchema]
     id: int
+
+
+class MovieUpdateRequestSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
+
+    @field_validator("date")
+    def validate_date(cls, value: Optional[date]) -> date:
+        if value is not None and value > date.today() + timedelta(days=365):
+            raise ValueError("Invalid input data.")
+        return value
+
+    @field_validator("score")
+    def validate_score(cls, value: Optional[float]) -> date:
+        if value is not None and (value < 0 or value > 100):
+            raise ValueError("Invalid input data.")
+        return value
+
+    @field_validator("budget", "revenue")
+    def validate_budget(cls, value: Optional[float]) -> date:
+        if value is not None and value < 0:
+            raise ValueError("Invalid input data.")
+        return value
+
+
+class MovieUpdateResponseShema(BaseModel):
+    detail: str
