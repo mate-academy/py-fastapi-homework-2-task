@@ -96,24 +96,6 @@ class MovieUpdateRequestSchema(BaseModel):
     budget: Optional[float] = None
     revenue: Optional[float] = None
 
-    @field_validator("date")
-    def validate_date(cls, value: Optional[date]) -> date:
-        if value is not None and value > date.today() + timedelta(days=365):
-            raise ValueError("Invalid input data.")
-        return value
 
-    @field_validator("score")
-    def validate_score(cls, value: Optional[float]) -> date:
-        if value is not None and (value < 0 or value > 100):
-            raise ValueError("Invalid input data.")
-        return value
-
-    @field_validator("budget", "revenue")
-    def validate_budget(cls, value: Optional[float]) -> date:
-        if value is not None and value < 0:
-            raise ValueError("Invalid input data.")
-        return value
-
-
-class MovieUpdateResponseShema(BaseModel):
+class MovieUpdateResponseSchema(BaseModel):
     detail: str

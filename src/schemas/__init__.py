@@ -4,5 +4,5 @@ from schemas.movies import (
     MovieErrorSchema,
     MovieListResponseSchema,
     MovieUpdateRequestSchema,
-    MovieUpdateResponseShema,
+    MovieUpdateResponseSchema,
 )

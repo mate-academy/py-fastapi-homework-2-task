@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +23,7 @@ from schemas import (
     MovieErrorSchema,
     MovieListResponseSchema,
     MovieUpdateRequestSchema,
-    MovieUpdateResponseShema,
+    MovieUpdateResponseSchema,
 )
 
 router = APIRouter(prefix="/movies")
@@ -151,7 +153,7 @@ async def delete_movie(
 
 @router.patch(
     "/{movie_id}/",
-    response_model=MovieUpdateResponseShema,
+    response_model=MovieUpdateResponseSchema,
     responses={
         400: {
             "model": MovieErrorSchema,
@@ -167,10 +169,18 @@ async def update_movie(
         movie_id: int,
         movie_data: MovieUpdateRequestSchema,
         db: AsyncSession = Depends(get_db),
-) -> MovieUpdateResponseShema:
+) -> MovieUpdateResponseSchema:
 
     movie = await get_movie_or_404(movie_id, db)
     data_dict = movie_data.model_dump(exclude_unset=True)
+
+    if (
+        (movie.date is not None and movie.date > date.today() + timedelta(days=365))
+        or (movie.score is not None and (movie.score < 0 or movie.score > 100))
+        or (movie.budget is not None and movie.budget < 0)
+        or (movie.revenue is not None and movie.revenue < 0)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
     try:
         for field, value in data_dict.items():
@@ -179,6 +189,6 @@ async def update_movie(
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
-    return MovieUpdateResponseShema.model_validate(
+    return MovieUpdateResponseSchema.model_validate(
         {"detail": "Movie updated successfully."}
     )

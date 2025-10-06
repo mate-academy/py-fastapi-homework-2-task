@@ -13,9 +13,9 @@ T = TypeVar("T", bound=Base)
 async def get_movies(per_page: int, page: int, db: AsyncSession) -> Sequence[MovieModel]:
     movies = await db.execute(
         select(MovieModel)
+        .order_by(MovieModel.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
-        .order_by(MovieModel.id.desc())
     )
     return movies.scalars().all()
 
