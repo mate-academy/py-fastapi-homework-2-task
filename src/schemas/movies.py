@@ -125,7 +125,7 @@ class MovieDetailResponseSchema(BaseModel):
 class MovieUpdateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    name: str | None = None
+    name: str | None = Field(..., max_length=255)
     date: datetime.date | None = None
     score: float | None = Field(default=None, ge=0, le=100)
     overview: str | None = None
