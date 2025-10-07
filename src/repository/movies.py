@@ -26,9 +26,9 @@ async def get_movie(db: AsyncSession, movie_id: int):
 async def get_movies(page: int, per_page: int, db: AsyncSession):
     result = await db.execute(
         select(MovieModel)
+        .order_by(MovieModel.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
-        .order_by(MovieModel.id.desc())
     )
     movies = result.scalars().all()
     return movies

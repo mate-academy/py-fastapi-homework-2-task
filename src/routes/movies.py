@@ -84,7 +84,7 @@ async def get_movies_list(
         },
     },
 )
-async def movies_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def movie_detail(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await get_movie(db, movie_id)
 
     if not movie:
@@ -242,7 +242,7 @@ async def movie_create(
     },
     status_code=200,
 )
-async def movies_patch(
+async def movie_patch(
     movie_data: MovieUpdateSchema, movie_id: int, db: AsyncSession = Depends(get_db)
 ):
     movie = await get_movie(db, movie_id)

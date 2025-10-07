@@ -97,10 +97,15 @@ class MovieUpdateSchema(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date(cls, value: datetime.date):
+        if value is None:
+            return value
+
         today = datetime.date.today()
         one_year_later = today + datetime.timedelta(days=365)
+
         if value > one_year_later:
             raise ValueError("The date must not be more than one year in the future.")
+
         return value
 
 
