@@ -4,8 +4,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from database import MovieModel, get_db
-from database.models import ActorModel, CountryModel, GenreModel, LanguageModel
+from database import get_db
+from database.models import ActorModel, CountryModel, GenreModel, LanguageModel, MovieModel
 from schemas.movies import (MovieCreateItemSchema, MovieCreateResponseSchema,
                             MovieDetailResponseSchema, MovieListResponseSchema,
                             MovieUpdateSchema)
@@ -13,16 +13,25 @@ from schemas.movies import (MovieCreateItemSchema, MovieCreateResponseSchema,
 router = APIRouter()
 
 
-async def get_or_create_entity(db: AsyncSession, model, name: str):
-    result = await db.execute(select(model).where(model.name == name))
-    entity = result.scalar_one_or_none()
+async def get_or_create_entity(db: AsyncSession, model, identifier: str):
+    if hasattr(model, "code"):
+        result = await db.execute(select(model).where(model.code == identifier))
+        entity = result.scalar_one_or_none()
 
-    if entity:
-        return entity
+        if entity:
+            return entity
 
-    code = name[:3].upper() if hasattr(model, "code") else None
+        new_entity = model(code=identifier, name=None)
 
-    new_entity = model(name=name, code=code) if code else model(name=name)
+    else:
+        result = await db.execute(select(model).where(model.name == identifier))
+        entity = result.scalar_one_or_none()
+
+        if entity:
+            return entity
+
+        new_entity = model(name=identifier)
+
     db.add(new_entity)
     await db.commit()
     await db.refresh(new_entity)
@@ -124,7 +133,7 @@ async def create_movie(
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
-            status_code=400, detail="Failed to create movie due to integrity error."
+            status_code=400, detail="Invalid input data."
         )
 
     result = await db.execute(

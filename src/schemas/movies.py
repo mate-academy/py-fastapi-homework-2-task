@@ -2,6 +2,8 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from database.models import MovieStatusEnum
+
 
 class MovieListItemSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -30,7 +32,7 @@ class MovieCreateItemSchema(BaseModel):
     date: datetime.date
     score: float = Field(..., ge=0, le=100)
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country: str
@@ -38,8 +40,8 @@ class MovieCreateItemSchema(BaseModel):
     actors: list[str]
     languages: list[str]
 
-    @classmethod
     @field_validator("date")
+    @classmethod
     def date_not_too_far_future(cls, value):
         max_date = datetime.date.today() + datetime.timedelta(days=365)
         if value > max_date:
@@ -84,7 +86,7 @@ class MovieCreateResponseSchema(BaseModel):
     date: datetime.date
     score: float = Field(..., ge=0, le=100)
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country: CountrySchema
@@ -92,8 +94,8 @@ class MovieCreateResponseSchema(BaseModel):
     actors: list[ActorsSchema]
     languages: list[LanguagesSchema]
 
-    @classmethod
     @field_validator("date")
+    @classmethod
     def date_not_too_far_future(cls, value):
         max_date = datetime.date.today() + datetime.timedelta(days=365)
 
@@ -111,7 +113,7 @@ class MovieDetailResponseSchema(BaseModel):
     date: datetime.date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema
@@ -127,6 +129,16 @@ class MovieUpdateSchema(BaseModel):
     date: datetime.date | None = None
     score: float | None = Field(default=None, ge=0, le=100)
     overview: str | None = None
-    status: str | None = None
+    status: MovieStatusEnum | None = None
     budget: float | None = Field(default=None, ge=0)
     revenue: float | None = Field(default=None, ge=0)
+
+    @field_validator("date")
+    @classmethod
+    def date_not_too_far_future(cls, value):
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+
+        if value > max_date:
+            raise ValueError("The date must not be more than one year in the future.")
+
+        return value
