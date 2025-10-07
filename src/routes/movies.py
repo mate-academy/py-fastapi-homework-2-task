@@ -40,7 +40,7 @@ async def get_movies(
     if params.page > total_pages:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Page not found.",
+            detail="No movies found.",
         )
     return await paginate(
         db,
@@ -151,7 +151,7 @@ async def create_movie(
     except IntegrityError:
         await db.rollback()
 
-        raise HTTPException(status_code=400, detail="Invalid input data")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)

@@ -101,10 +101,6 @@ class MovieUpdateSchema(BaseModel):
     status: Optional[str] = None
     budget: Optional[float] = None
     revenue: Optional[float] = None
-    country: Optional[str] = None
-    genres: Optional[List[str]] = None
-    actors: Optional[List[str]] = None
-    languages: Optional[List[str]] = None
 
 
 class MovieReadSchema(MovieDetailSchema):
