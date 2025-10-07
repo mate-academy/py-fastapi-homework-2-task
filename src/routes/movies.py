@@ -84,7 +84,7 @@ async def get_movie_by_id(
     return MovieDetailSchema.model_validate(movie)
 
 
-@router.post("/movies/", status_code=201)
+@router.post("/movies/", status_code=201, response_model=MovieDetailSchema)
 async def create_movie(
         movie_data: MovieCreateSchema, db: AsyncSession = Depends(get_db)
 ) -> MovieDetailSchema:
@@ -147,7 +147,7 @@ async def create_movie(
         db.add(new_movie)
         await db.commit()
 
-        return new_movie
+        return MovieDetailSchema.model_validate(new_movie)
     except IntegrityError:
         await db.rollback()
 
@@ -164,12 +164,15 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return None
 
 
-@router.patch("/movies/{movie_id}/", status_code=200)
+@router.patch("/movies/{movie_id}/", status_code=200, )
 async def update_movie(movie_id: int, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)):
     result = await db.scalar(select(MovieModel).where(MovieModel.id == movie_id))
     if not result:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    update_data = movie.model_dump(exclude_unset=True)
+    try:
+        update_data = movie.model_dump(exclude_unset=True)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     for key, value in update_data.items():
         setattr(result, key, value)
 
