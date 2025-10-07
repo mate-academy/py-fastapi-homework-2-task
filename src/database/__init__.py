@@ -1,20 +1,41 @@
-import os
-
-from database.models import (
+from .models import (
     Base,
-    MovieModel
+    MovieModel,
+    GenreModel,
+    ActorModel,
+    CountryModel,
+    LanguageModel,
 )
-from database.session_sqlite import reset_sqlite_database as reset_database
 
-environment = os.getenv("ENVIRONMENT", "developing")
+from .session_sqlite import (
+    init_db,
+    close_db,
+    get_db,
+    get_sqlite_db_contextmanager as get_db_contextmanager,
+    reset_sqlite_database,
+    reset_database,
+)
 
-if environment == "testing":
-    from database.session_sqlite import (
-        get_sqlite_db_contextmanager as get_db_contextmanager,
-        get_sqlite_db as get_db,
-    )
-else:
-    from database.session_postgresql import (
-        get_postgresql_db_contextmanager as get_db_contextmanager,
-        get_postgresql_db as get_db,
-    )
+try:
+    from .populate import CSVDatabaseSeeder  # noqa: F401
+except Exception:
+    CSVDatabaseSeeder = None  # optional
+
+__all__ = [
+    # models
+    "Base",
+    "MovieModel",
+    "GenreModel",
+    "ActorModel",
+    "CountryModel",
+    "LanguageModel",
+    # session / init
+    "init_db",
+    "close_db",
+    "get_db",
+    "get_db_contextmanager",
+    "reset_sqlite_database",
+    "reset_database",
+    # optional seeder
+    "CSVDatabaseSeeder",
+]
