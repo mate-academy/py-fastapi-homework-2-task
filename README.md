@@ -749,6 +749,7 @@ The endpoint should return the details of the movie in the following format:
     }
   ]
 }
+
 ```
 
 
@@ -1033,7 +1034,6 @@ The endpoint returns a response indicating the result of the update operation:
      "detail": "Invalid input data."
    }
    ```
-
 ---
 
 ### Tips and Guidance
