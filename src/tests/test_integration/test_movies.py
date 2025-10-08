@@ -369,7 +369,7 @@ async def test_create_movie_and_related_models(client, db_session):
         "status": "Released",
         "budget": 1000000.00,
         "revenue": 5000000.00,
-        "country": "US",
+        "country": "USA",
         "genres": ["Action", "Adventure"],
         "actors": ["John Doe", "Jane Doe"],
         "languages": ["English", "French"]
