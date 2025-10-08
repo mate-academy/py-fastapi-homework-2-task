@@ -12,7 +12,6 @@ from schemas import (
     MovieListItemSchema,
     MovieListResponseSchema,
     MovieUpdateSchema,
-
 )
 
 router = APIRouter()
@@ -33,9 +32,9 @@ router = APIRouter()
     },
 )
 async def get_movies(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
-    movie_repo: MovieRepository = Depends(get_movie_repository),
+    movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    per_page: Annotated[int, Query(ge=1, le=20)] = 10,
 ) -> MovieListResponseSchema:
     total_items = await movie_repo.get_total()
     total_pages = math.ceil(total_items / per_page)
@@ -45,7 +44,7 @@ async def get_movies(
             detail="No movies found.",
         )
 
-    movies = await movie_repo.get_movies_or_404(
+    movies = await movie_repo.get_objects_or_404(
         offset=(page - 1) * per_page,
         limit=per_page,
         ordering=MovieModel.id.desc(),
@@ -85,10 +84,9 @@ async def get_movies(
 )
 async def get_movie_by_id(
     movie_id: int,
-    movie_repo: MovieRepository = Depends(get_movie_repository),
+    movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
 ) -> MovieDetailSchema:
-    movie = await movie_repo.get_movie_or_404(movie_id)
-    print(movie)
+    movie = await movie_repo.get_object_or_404(MovieModel.id == movie_id)
     return MovieDetailSchema.model_validate(movie)
 
 
@@ -109,13 +107,13 @@ async def create_movie(
     movie_data: MovieCreateSchema,
     movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
 ) -> MovieDetailSchema:
-    if await movie_repo.is_existing(movie_data.name, movie_data.date):
+    if await movie_repo.is_exist(MovieModel.name == movie_data.name, MovieModel.date == movie_data.date):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
         )
-    movie = await movie_repo.create_movie(movie_data)
-    movie = await movie_repo.get_movie(movie.id)
+    movie = await movie_repo.create_object(movie_data)
+    movie = await movie_repo.get_object(MovieModel.id == movie.id)
     return MovieDetailSchema.model_validate(movie)
 
 
@@ -137,12 +135,7 @@ async def delete_movie(
     movie_id: int,
     movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
 ) -> None:
-    deleted = await movie_repo.delete_movie(movie_id)
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie with the given ID was not found.",
-        )
+    await movie_repo.delete_object(MovieModel.id == movie_id, raise_exception=True)
     return None
 
 
@@ -179,19 +172,10 @@ async def update_movie(
     payload: MovieUpdateSchema,
     movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
 ):
-    movie = await movie_repo.get_movie(movie_id)
-    if not movie:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie with the given ID was not found.",
-        )
-
-    updated = await movie_repo.update_movie(
-        movie_id, payload.model_dump(exclude_unset=True)
+    await movie_repo.update_object(
+        MovieModel.id == movie_id,
+        data=payload.model_dump(exclude_unset=True),
+        raise_exception=True,
     )
-    if not updated:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input data."
-        )
 
     return {"detail": "Movie updated successfully."}

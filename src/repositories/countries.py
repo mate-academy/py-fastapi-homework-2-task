@@ -8,7 +8,7 @@ class CountryRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def get_or_create(self, code: str) -> CountryModel:
+    async def get_or_create(self, code: str, *, commit: bool = True) -> CountryModel:
         country = await self.db.scalar(
             select(CountryModel).where(CountryModel.code == code)
         )
@@ -16,6 +16,7 @@ class CountryRepository:
             return country
         country = CountryModel(code=code)
         self.db.add(country)
-        await self.db.commit()
-        await self.db.refresh(country)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(country)
         return country

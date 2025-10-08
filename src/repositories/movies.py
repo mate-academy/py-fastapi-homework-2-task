@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.elements import UnaryExpression
 
 from database import MovieModel, get_db
@@ -15,37 +15,34 @@ from repositories.genres import GenreRepository
 from repositories.languages import LanguageRepository
 from schemas.movies import MovieCreateSchema
 
+from .interfaces import IAsyncRepository
 
-class MovieRepository:
+
+class MovieRepository(IAsyncRepository):
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
+
+    async def is_exist(self, *args) -> bool:
+        object = await self.get_object(*args)
+        return bool(object)
 
     async def get_total(self) -> int:
         return await self.db.scalar(select(func.count()).select_from(MovieModel))
 
-    async def get_movie(self, movie_id: int) -> MovieModel | None:
+    async def get_object(self, *args) -> MovieModel | None:
         return await self.db.scalar(
             select(MovieModel)
-            .where(MovieModel.id == movie_id)
+            .where(*args)
             .options(
-                selectinload(MovieModel.country),
-                selectinload(MovieModel.genres),
-                selectinload(MovieModel.actors),
-                selectinload(MovieModel.languages),
+                joinedload(MovieModel.country),
+                joinedload(MovieModel.genres),
+                joinedload(MovieModel.actors),
+                joinedload(MovieModel.languages),
             )
         )
 
-    async def is_existing(self, name: str, date: datetime.date) -> bool:
-        movie = await self.db.scalar(
-            select(MovieModel).where(
-                MovieModel.name == name,
-                MovieModel.date == date,
-            )
-        )
-        return bool(movie)
-
-    async def get_movie_or_404(self, movie_id: int) -> MovieModel:
-        movie = await self.get_movie(movie_id)
+    async def get_object_or_404(self, *args) -> MovieModel:
+        movie = await self.get_object(*args)
         if movie is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -53,24 +50,29 @@ class MovieRepository:
             )
         return movie
 
-    async def get_movies(
+    async def get_objects(
         self,
+        *args,
         offset: int = 0,
         limit: int = 10,
         ordering: UnaryExpression | None = None,
     ) -> list[MovieModel]:
-        print(ordering, "   ", type(ordering))
         return await self.db.scalars(
-            select(MovieModel).order_by(ordering).offset(offset).limit(limit)
+            select(MovieModel)
+            .where(*args)
+            .order_by(ordering)
+            .offset(offset)
+            .limit(limit)
         )
 
-    async def get_movies_or_404(
+    async def get_objects_or_404(
         self,
+        *args,
         offset: int = 0,
         limit: int = 10,
         ordering: UnaryExpression | None = None,
     ) -> list[MovieModel]:
-        movies = await self.get_movies(offset, limit, ordering)
+        movies = await self.get_objects(*args, offset=offset, limit=limit, ordering=ordering)
         if not movies:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -78,70 +80,57 @@ class MovieRepository:
             )
         return movies
 
-    async def create_movie(self, movie_data: MovieCreateSchema) -> MovieModel:
+    async def create_object(self, data: MovieCreateSchema) -> MovieModel:
         country_repo = CountryRepository(self.db)
         genre_repo = GenreRepository(self.db)
         actor_repo = ActorRepository(self.db)
         language_repo = LanguageRepository(self.db)
 
-        country = await country_repo.get_or_create(movie_data.country)
+        async with self.db.begin_nested():
+            country = await country_repo.get_or_create(data.country, commit=False)
 
-        genres = []
-        for name in movie_data.genres:
-            genre = await genre_repo.get_or_create(name)
-            genres.append(genre)
+            genres = [await genre_repo.get_or_create(name, commit=False) for name in data.genres]
+            actors = [await actor_repo.get_or_create(name, commit=False) for name in data.actors]
+            languages = [await language_repo.get_or_create(name, commit=False) for name in data.languages]
 
-        actors = []
-        for name in movie_data.actors:
-            actor = await actor_repo.get_or_create(name)
-            actors.append(actor)
-
-        languages = []
-        for name in movie_data.languages:
-            language = await language_repo.get_or_create(name)
-            languages.append(language)
-
-        movie = MovieModel(
-            name=movie_data.name,
-            date=movie_data.date,
-            score=movie_data.score,
-            overview=movie_data.overview,
-            status=movie_data.status,
-            budget=movie_data.budget,
-            revenue=movie_data.revenue,
-            country=country,
-            genres=genres,
-            actors=actors,
-            languages=languages,
-        )
-
-        self.db.add(movie)
-
-        try:
-            await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="A movie with the same name and date already exists.",
+            movie = MovieModel(
+                name=data.name,
+                date=data.date,
+                score=data.score,
+                overview=data.overview,
+                status=data.status,
+                budget=data.budget,
+                revenue=data.revenue,
+                country=country,
+                genres=genres,
+                actors=actors,
+                languages=languages,
             )
+
+            self.db.add(movie)
 
         await self.db.refresh(movie)
         return movie
 
-    async def delete_movie(self, movie_id: int) -> bool:
-        movie = await self.db.get(MovieModel, movie_id)
-        if not movie:
-            return False
+    async def delete_object(self, *args, raise_exception: bool = False) -> bool:
+        if raise_exception:
+            movie = await self.get_object_or_404(*args)
+        else:
+            movie = await self.get_object(*args)
+            if not movie:
+                return False
 
         await self.db.delete(movie)
         await self.db.commit()
         return True
 
-    async def update_movie(self, movie_id: int, data: dict) -> bool:
-        movie = await self.db.get(MovieModel, movie_id)
-        if not movie:
-            return False
+    async def update_object(self, *args: int, data: dict = {}, raise_exception: bool = False) -> bool:
+        if raise_exception:
+            movie = await self.get_object_or_404(*args)
+        else:
+            movie = await self.get_object(*args)
+            if not movie:
+                return False
 
         for key, value in data.items():
             if hasattr(movie, key):
