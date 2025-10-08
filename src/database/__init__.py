@@ -1,10 +1,16 @@
+import sys
 import os
 
-from database.models import (
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.database.models import (
     Base,
     MovieModel
 )
 from database.session_sqlite import reset_sqlite_database as reset_database
+
+
+target_metadata = Base.metadata
 
 environment = os.getenv("ENVIRONMENT", "developing")
 

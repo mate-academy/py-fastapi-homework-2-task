@@ -529,6 +529,9 @@ async def test_update_movie_not_found(client):
     }
 
     response = await client.patch(f"/api/v1/theater/movies/{non_existent_id}/", json=update_data)
+    print("STATUS", response.status_code)
+    print("BODY", await response.aread())
+
     assert response.status_code == 404, f"Expected status code 404, but got {response.status_code}"
 
     response_data = response.json()
