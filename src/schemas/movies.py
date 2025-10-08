@@ -8,7 +8,7 @@ from database.models import MovieStatusEnum
 
 class GenreSchema(BaseModel):
     id: int
-    name:str
+    name: str
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -46,7 +46,6 @@ class MovieResponseSchema(BaseModel):
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
     model_config = ConfigDict(from_attributes=True)
-
 
 
 class MovieErrorSchema(BaseModel):
@@ -105,8 +104,7 @@ class MovieCreateSchema(BaseModel):
     @field_validator("date")
     def validate_date(cls, value: date) -> date:
         if value > date.today() + timedelta(days=365):
-            raise ValueError(
-                "The date must not be more than one year in the future.")
+            raise ValueError("The date must not be more than one year in the future.")
         return value
 
 

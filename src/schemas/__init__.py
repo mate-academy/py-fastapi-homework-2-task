@@ -1,5 +1,1 @@
-from schemas.movies import (
-    MovieDetailSchema,
-    MovieListSchema,
-    MovieDetailSchema
-)
+from schemas.movies import MovieListSchema, MovieDetailSchema
