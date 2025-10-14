@@ -15,7 +15,7 @@ from database.models import (
     ActorModel,
     LanguageModel,
 )
-from database.session_postgresql import get_postgresql_db
+from database import get_db
 from schemas.movies import (
     MovieCreate,
     MovieOut,
@@ -30,11 +30,12 @@ router = APIRouter()
 
 # Helper: strip api prefix so links look like README example (/theater/...)
 def _make_base_path(request: Request) -> str:
-    path = request.url.path
+    #path = request.url.path
     # remove api version prefix if present (e.g. /api/v1)
-    if path.startswith("/api/v1"):
-        path = path[len("/api/v1") :]
-    return path
+    #if path.startswith("/api/v1"):
+    #    path = path[len("/api/v1") :]
+    #return path
+    return request.url.path.removeprefix("/api/v1")
 
 
 @router.get("/movies/", response_model=MoviesListResponse)
@@ -42,7 +43,7 @@ async def list_movies(
     request: Request,
     page: conint(ge=1) = 1,
     per_page: conint(ge=1, le=20) = 10,
-    db: AsyncSession = Depends(get_postgresql_db),
+    db: AsyncSession = Depends(get_db),
 ):
     # validate params
     if page < 1:
@@ -122,7 +123,7 @@ async def list_movies(
 
 @router.post("/movies/", status_code=status.HTTP_201_CREATED, response_model=MovieOut)
 async def create_movie(
-    payload: MovieCreate, db: AsyncSession = Depends(get_postgresql_db)
+    payload: MovieCreate, db: AsyncSession = Depends(get_db)
 ):
     # duplicate check
     dup_stmt = select(MovieModel).filter(
@@ -225,7 +226,7 @@ async def create_movie(
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieOut)
-async def get_movie(movie_id: int, db: AsyncSession = Depends(get_postgresql_db)):
+async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     stmt = (
         select(MovieModel)
         .options(
@@ -247,7 +248,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_postgresql_db)
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_postgresql_db)):
+async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.get(MovieModel, movie_id)
     if not movie:
         raise HTTPException(
@@ -261,7 +262,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_postgresql_
 
 @router.patch("/movies/{movie_id}/")
 async def update_movie(
-    movie_id: int, payload: MovieUpdate, db: AsyncSession = Depends(get_postgresql_db)
+    movie_id: int, payload: MovieUpdate, db: AsyncSession = Depends(get_db)
 ):
     movie = await db.get(MovieModel, movie_id)
     if not movie:

@@ -71,23 +71,6 @@ class MovieUpdate(BaseModel):
         return v
 
 
-# class MovieOut(BaseModel):
-#   name: str
-#  date: date
-# score: float
-# overview: str
-# status: Optional[str] = None
-# budget: Optional[float] = None
-# revenue: Optional[float] = None
-# country: Optional[CountryOut]
-# genres: Optional[List[SimpleIdName]]
-# actors: Optional[List[SimpleIdName]]
-# languages: Optional[List[SimpleIdName]]
-
-# class Config:
-#   from_attributes = True
-
-
 class MoviesListResponse(BaseModel):
     movies: List[MovieShortOut]
     prev_page: Optional[str]
@@ -117,10 +100,8 @@ class MovieOut(BaseModel):
         populate_by_name=True,
         exclude_none=True,  # ← ключевой параметр
     )
-    # class Config:
-    #   from_attributes = True
-
-
+  
+  
 class MovieShortOut(BaseModel):
     id: int
     name: str
