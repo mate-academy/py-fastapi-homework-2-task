@@ -11,16 +11,14 @@ class CountryOut(BaseModel):
     code: str
     name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SimpleIdName(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieCreate(BaseModel):
@@ -29,8 +27,8 @@ class MovieCreate(BaseModel):
     score: float = Field(...)
     overview: str = Field(..., min_length=1)
     status: str = Field(...)
-    budget: float = Field(..., ge=0)
-    revenue: float = Field(..., ge=0)
+    budget: int = Field(..., ge=0)
+    revenue: int = Field(..., ge=0)
     country: str = Field(..., min_length=1, max_length=3)
     genres: List[str] = Field(default_factory=list)
     actors: List[str] = Field(default_factory=list)
@@ -55,8 +53,8 @@ class MovieUpdate(BaseModel):
     score: Optional[float] = None
     overview: Optional[str] = None
     status: Optional[str] = None
-    budget: Optional[float] = Field(None, ge=0)
-    revenue: Optional[float] = Field(None, ge=0)
+    budget: Optional[int] = Field(None, ge=0)
+    revenue: Optional[int] = Field(None, ge=0)
 
     @validator("date")
     def date_not_too_far(cls, v: date) -> date:
@@ -71,12 +69,14 @@ class MovieUpdate(BaseModel):
         return v
 
 
-class MoviesListResponse(BaseModel):
-    movies: List[MovieShortOut]
-    prev_page: Optional[str]
-    next_page: Optional[str]
-    total_pages: int
-    total_items: int
+class MovieShortOut(BaseModel):
+    id: int
+    name: str
+    date: date
+    overview: str
+    score: float
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieOut(BaseModel):
@@ -86,31 +86,30 @@ class MovieOut(BaseModel):
     score: float
     overview: str
     status: Optional[str] = None
-    budget: Optional[float] = None
-    revenue: Optional[float] = None
+    budget: Optional[int] = None
+    revenue: Optional[int] = None
     country: Optional[CountryOut]
     genres: Optional[List[SimpleIdName]]
     actors: Optional[List[SimpleIdName]]
     languages: Optional[List[SimpleIdName]]
 
-    # model_config = ConfigDict(from_attributes=True, extra="ignore", populate_by_name=True, exclude_none=True)
     model_config = ConfigDict(
         from_attributes=True,
         extra="ignore",
         populate_by_name=True,
-        exclude_none=True,  # ← ключевой параметр
+        exclude_none=True
     )
-  
-  
-class MovieShortOut(BaseModel):
-    id: int
-    name: str
-    date: date
-    overview: str
-    score: float
 
-    class Config:
-        from_attributes = True
+
+
+class MoviesListResponse(BaseModel):
+    movies: List[MovieShortOut]
+    prev_page: Optional[str]
+    next_page: Optional[str]
+    total_pages: int
+    total_items: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Aliases for test compatibility ---

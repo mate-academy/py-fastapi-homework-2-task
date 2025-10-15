@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import List
 from decimal import Decimal
 from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
@@ -19,54 +20,31 @@ from database import get_db
 from schemas.movies import (
     MovieCreate,
     MovieOut,
-    MoviesListResponse,
     MovieUpdate,
-    SimpleIdName,
-    CountryOut,
+    MovieShortOut,
+    MovieListResponseSchema,
 )
 
 router = APIRouter()
 
 
-# Helper: strip api prefix so links look like README example (/theater/...)
-def _make_base_path(request: Request) -> str:
-    #path = request.url.path
-    # remove api version prefix if present (e.g. /api/v1)
-    #if path.startswith("/api/v1"):
-    #    path = path[len("/api/v1") :]
-    #return path
-    return request.url.path.removeprefix("/api/v1")
-
-
-@router.get("/movies/", response_model=MoviesListResponse)
+@router.get("/movies/", response_model=MovieListResponseSchema)
 async def list_movies(
     request: Request,
     page: conint(ge=1) = 1,
     per_page: conint(ge=1, le=20) = 10,
     db: AsyncSession = Depends(get_db),
 ):
-    # validate params
-    if page < 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="page must be >= 1"
-        )
-    if not (1 <= per_page <= 20):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="per_page must be between 1 and 20",
-        )
-
-    # total items
     total_stmt = select(func.count()).select_from(MovieModel)
     total_res = await db.execute(total_stmt)
     total_items = int(total_res.scalar_one() or 0)
+
     if total_items == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No movies found."
         )
 
     total_pages = (total_items + per_page - 1) // per_page
-
     if page > total_pages:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No movies found."
@@ -88,31 +66,22 @@ async def list_movies(
     res = await db.execute(stmt)
     movies: List[MovieModel] = res.scalars().all()
 
-    if not movies:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No movies found."
-        )
-
-    # build prev/next links. Use path without /api/v1 prefix for compatibility with README
-    base_path = _make_base_path(request)
-    # ensure trailing slash on base path
-    if not base_path.endswith("/"):
-        base_path = base_path + "/"
+    base_path = "/theater/movies/"
 
     def make_link(p: int, pp: int) -> str:
         return f"{base_path}?page={p}&per_page={pp}"
 
-    prev_page: Optional[str] = None
-    next_page: Optional[str] = None
-    if page > 1:
-        prev_page = make_link(page - 1, per_page)
-    if page < total_pages:
-        next_page = make_link(page + 1, per_page)
+    # prev_idx = max(1, page - 1)
+    # next_idx = min(total_pages, page + 1)
 
-    # convert to MovieOut via Pydantic (orm_mode)
-    movies_out = [MovieOut.from_orm(m) for m in movies]
+    # prev_page = make_link(prev_idx, per_page)
+    # next_page = make_link(next_idx, per_page)
+    prev_page = None if page == 1 else make_link(page - 1, per_page)
+    next_page = None if page == total_pages else make_link(page + 1, per_page)
 
-    return MoviesListResponse(
+    movies_out = [MovieShortOut.from_orm(m) for m in movies]
+
+    return MovieListResponseSchema(
         movies=movies_out,
         prev_page=prev_page,
         next_page=next_page,
@@ -122,10 +91,7 @@ async def list_movies(
 
 
 @router.post("/movies/", status_code=status.HTTP_201_CREATED, response_model=MovieOut)
-async def create_movie(
-    payload: MovieCreate, db: AsyncSession = Depends(get_db)
-):
-    # duplicate check
+async def create_movie(payload: MovieCreate, db: AsyncSession = Depends(get_db)):
     dup_stmt = select(MovieModel).filter(
         MovieModel.name == payload.name, MovieModel.date == payload.date
     )
@@ -136,15 +102,13 @@ async def create_movie(
             detail=f"A movie with the name '{payload.name}' and release date '{payload.date}' already exists.",
         )
 
-    # Country: try to get by code (case-sensitive in model: code stored as provided)
     country_stmt = select(CountryModel).filter(CountryModel.code == payload.country)
     country = (await db.execute(country_stmt)).scalars().first()
     if not country:
         country = CountryModel(code=payload.country, name=None)
         db.add(country)
-        await db.flush()  # to get country.id
+        await db.flush()
 
-    # Create or get genres
     genres_models = []
     for g_name in payload.genres:
         g_stmt = select(GenreModel).filter(GenreModel.name == g_name)
@@ -155,7 +119,6 @@ async def create_movie(
             await db.flush()
         genres_models.append(g)
 
-    # actors
     actors_models = []
     for a_name in payload.actors:
         a_stmt = select(ActorModel).filter(ActorModel.name == a_name)
@@ -166,7 +129,6 @@ async def create_movie(
             await db.flush()
         actors_models.append(a)
 
-    # languages
     languages_models = []
     for l_name in payload.languages:
         l_stmt = select(LanguageModel).filter(LanguageModel.name == l_name)
@@ -177,7 +139,6 @@ async def create_movie(
             await db.flush()
         languages_models.append(l)
 
-    # create movie
     try:
         movie = MovieModel(
             name=payload.name,
@@ -185,8 +146,8 @@ async def create_movie(
             score=float(payload.score),
             overview=payload.overview,
             status=payload.status,
-            budget=Decimal(str(payload.budget)),
-            revenue=float(payload.revenue),
+            budget=int(payload.budget),
+            revenue=int(payload.revenue),
             country=country,
             genres=genres_models,
             actors=actors_models,
@@ -206,9 +167,6 @@ async def create_movie(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input data."
         )
 
-    # build response country object
-    # return MovieOut.from_orm(movie)
-    # reload movie with relationships for response
     stmt = (
         select(MovieModel)
         .filter(MovieModel.id == movie.id)
@@ -257,7 +215,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
         )
     await db.delete(movie)
     await db.commit()
-    return None  # 204 No Content
+    return None
 
 
 @router.patch("/movies/{movie_id}/")
@@ -271,14 +229,10 @@ async def update_movie(
             detail="Movie with the given ID was not found.",
         )
 
-    # validate via pydantic has already been performed on payload
     data = payload.dict(exclude_unset=True)
-
-    # prevent duplicate name+date if both provided or one provided and clashes with existing other movie
     new_name = data.get("name", movie.name)
     new_date = data.get("date", movie.date)
 
-    # check duplicate with other movie
     dup_stmt = select(MovieModel).filter(
         MovieModel.name == new_name,
         MovieModel.date == new_date,
@@ -291,10 +245,8 @@ async def update_movie(
             detail=f"A movie with the name '{new_name}' and release date '{new_date}' already exists.",
         )
 
-    # apply updates
     for field, value in data.items():
-        if field in ("budget",):
-            # convert to Decimal to match DECIMAL db type
+        if field == "budget":
             setattr(movie, field, Decimal(str(value)))
         else:
             setattr(movie, field, value)
