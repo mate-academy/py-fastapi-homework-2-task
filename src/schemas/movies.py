@@ -3,7 +3,6 @@ from enum import Enum
 from pydantic import BaseModel, ConfigDict, field_validator, confloat, constr
 from typing import List, Optional
 
-# --- Enums ---
 
 class MovieStatusEnum(str, Enum):
     """Enumeration for movie production statuses."""
@@ -11,8 +10,6 @@ class MovieStatusEnum(str, Enum):
     POST_PRODUCTION = "Post Production"
     IN_PRODUCTION = "In Production"
 
-
-# --- Task 1: Movies List Schemas ---
 
 class MovieShortResponse(BaseModel):
     """Schema for a movie item in a paginated list."""
@@ -34,9 +31,6 @@ class MoviesListResponse(BaseModel):
     total_items: int
 
 
-# --- Task 2 & 3: Movie Detail / Create Schemas ---
-
-# Helper schemas for related entities
 class CountrySchema(BaseModel):
     id: int
     code: str
@@ -66,7 +60,6 @@ class LanguageSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Schema for Task 2 (POST /movies/) request body
 class MovieCreateRequest(BaseModel):
     name: constr(max_length=255)
     date: datetime.date
@@ -89,7 +82,6 @@ class MovieCreateRequest(BaseModel):
         return v
 
 
-# Schema for Task 2 & 3 (POST /movies/ & GET /movies/{id}/) response body
 class MovieDetailResponse(BaseModel):
     id: int
     name: str
@@ -107,9 +99,6 @@ class MovieDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- Task 5: Movie Update Schemas ---
-
-# Schema for Task 5 (PATCH /movies/{id}/) request body
 class MovieUpdateRequest(BaseModel):
     name: Optional[constr(max_length=255)] = None
     date: Optional[datetime.date] = None
@@ -120,7 +109,5 @@ class MovieUpdateRequest(BaseModel):
     revenue: Optional[confloat(ge=0)] = None
 
 
-# Schema for Task 5 (PATCH /movies/{id}/) response body
 class MovieUpdateResponse(BaseModel):
     detail: str = "Movie updated successfully."
-

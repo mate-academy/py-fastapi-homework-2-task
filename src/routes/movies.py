@@ -302,4 +302,3 @@ async def update_movie(
     await db.commit()
 
     return MovieUpdateResponse(detail="Movie updated successfully.")
-
