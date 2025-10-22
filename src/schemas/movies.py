@@ -123,3 +123,4 @@ class MovieUpdateRequest(BaseModel):
 # Schema for Task 5 (PATCH /movies/{id}/) response body
 class MovieUpdateResponse(BaseModel):
     detail: str = "Movie updated successfully."
+
