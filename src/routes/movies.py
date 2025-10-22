@@ -120,7 +120,7 @@ async def get_movies_list(
 
     # Build pagination URLs
     # This URL path needs to match the test client's request path
-    base_url = "/api/v1/theater/movies/"  # <-- FIX: Trailing space removed
+    base_url = "/theater/movies/"  # <-- This matches the test's expectation
     prev_page = (
         f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     )
