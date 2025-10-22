@@ -21,7 +21,7 @@ from database.models import (
     CountryModel,
     LanguageModel,
 )
-from database.session_postgresql import get_db
+from database import get_db
 from schemas.movies import (
     MoviesListResponse,
     MovieCreateRequest,
