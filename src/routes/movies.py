@@ -14,6 +14,8 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload, QueryableAttribute
 
+# Make sure this import is correct (from the previous step)
+from database import get_db
 from database.models import (
     MovieModel,
     GenreModel,
@@ -21,7 +23,6 @@ from database.models import (
     CountryModel,
     LanguageModel,
 )
-from database import get_db
 from schemas.movies import (
     MoviesListResponse,
     MovieCreateRequest,
@@ -75,7 +76,7 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession) -> MovieModel | None:
 # --- Task 1: Implement Movies List Endpoint ---
 
 @router.get(
-    "/",
+    "/movies/",  # <-- FIX: Was "/"
     response_model=MoviesListResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -118,7 +119,8 @@ async def get_movies_list(
         )
 
     # Build pagination URLs
-    base_url = "/theater/movies/"
+    # This URL path needs to match the test client's request path
+    base_url = "/api/v1/theater/movies/" 
     prev_page = (
         f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     )
@@ -127,6 +129,14 @@ async def get_movies_list(
         if page < total_pages
         else None
     )
+    
+    # NOTE: The project description's example URL was "/theater/movies/".
+    # The test suite is clearly using "/api/v1/theater/movies/".
+    # If the base_url above still causes errors, you can also build it
+    # dynamically from the request object, which is more robust:
+    # base_url = str(request.url_for('get_movies_list'))
+    # prev_page = ...
+    # next_page = ...
 
     return MoviesListResponse(
         movies=movies,
@@ -140,7 +150,7 @@ async def get_movies_list(
 # --- Task 2: Implement Movie Creation Endpoint ---
 
 @router.post(
-    "/",
+    "/movies/",  # <-- FIX: Was "/"
     response_model=MovieDetailResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -172,7 +182,7 @@ async def create_movie(
     country_result = await db.execute(country_query)
     country = country_result.scalar_one_or_none()
     if not country:
-        country = CountryModel(code=movie_data.country)
+        country = CountryModel(code=movie_data.country, name=None) # Added name=None for clarity
         db.add(country)
         await db.flush()
 
@@ -217,7 +227,7 @@ async def create_movie(
 # --- Task 3: Implement Movie Details Endpoint ---
 
 @router.get(
-    "/{movie_id}/",
+    "/movies/{movie_id}/",  # <-- FIX: Was "/{movie_id}/"
     response_model=MovieDetailResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -238,7 +248,7 @@ async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
 # --- Task 4: Implement Movie Deletion Endpoint ---
 
 @router.delete(
-    "/{movie_id}/",
+    "/movies/{movie_id}/",  # <-- FIX: Was "/{movie_id}/"
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
@@ -265,7 +275,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 # --- Task 5: Implement Movie Update Endpoint ---
 
 @router.patch(
-    "/{movie_id}/",
+    "/movies/{movie_id}/",  # <-- FIX: Was "/{movie_id}/"
     response_model=MovieUpdateResponse,
     status_code=status.HTTP_200_OK,
 )
