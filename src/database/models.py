@@ -58,7 +58,8 @@ class GenreModel(Base):
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel",
         secondary=MoviesGenresModel,
-        back_populates="genres"
+        back_populates="genres",
+        lazy="selectin"
     )
 
     def __repr__(self):
@@ -74,7 +75,8 @@ class ActorModel(Base):
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel",
         secondary=ActorsMoviesModel,
-        back_populates="actors"
+        back_populates="actors",
+        lazy="selectin"
     )
 
     def __repr__(self):
@@ -88,7 +90,7 @@ class CountryModel(Base):
     code: Mapped[str] = mapped_column(String(3), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    movies: Mapped[list["MovieModel"]] = relationship("MovieModel", back_populates="country")
+    movies: Mapped[list["MovieModel"]] = relationship("MovieModel", back_populates="country", lazy="selectin")
 
     def __repr__(self):
         return f"<Country(code='{self.code}', name='{self.name}')>"
@@ -103,7 +105,8 @@ class LanguageModel(Base):
     movies: Mapped[list["MovieModel"]] = relationship(
         "MovieModel",
         secondary=MoviesLanguagesModel,
-        back_populates="languages"
+        back_populates="languages",
+        lazy="selectin"
     )
 
     def __repr__(self):
