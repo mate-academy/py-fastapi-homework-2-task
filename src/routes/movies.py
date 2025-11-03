@@ -224,5 +224,3 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     await db.delete(movie_db)
     await db.commit()
-
-    return {"detail": "Movie deleted successfully."}
