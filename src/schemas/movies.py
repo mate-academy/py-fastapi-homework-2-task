@@ -1,15 +1,14 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import List, Optional
-from pydantic import BaseModel
-from schemas.countries import CountrySchema
+from pydantic import BaseModel, Field, field_validator
 
 
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
-    date: date
-    score: float
-    overview: Optional[str] = None
+    date: Optional[date]
+    score: Optional[float]
+    overview: Optional[str]
 
     class Config:
         from_attributes = True
@@ -23,30 +22,6 @@ class MovieListResponseSchema(BaseModel):
     total_items: int
 
 
-class GenreSchema(BaseModel):
-    id: int
-    name: str
-
-    class Config:
-        from_attributes = True
-
-
-class ActorSchema(BaseModel):
-    id: int
-    name: str
-
-    class Config:
-        from_attributes = True
-
-
-class LanguageSchema(BaseModel):
-    id: int
-    name: str
-
-    class Config:
-        from_attributes = True
-
-
 class MovieDetailSchema(BaseModel):
     id: int
     name: str
@@ -55,35 +30,46 @@ class MovieDetailSchema(BaseModel):
     overview: Optional[str]
     status: str
     budget: float
-    revenue: Optional[float]
-    country: Optional[CountrySchema]
-    genres: List[GenreSchema]
-    actors: List[ActorSchema]
-    languages: List[LanguageSchema]
-
-    class Config:
-        from_attributes = True
+    revenue: float
+    country: Optional[dict]
+    genres: List[dict]
+    actors: List[dict]
+    languages: List[dict]
 
 
 class MovieCreateSchema(BaseModel):
-    name: str
+    name: str = Field(..., max_length=255)
     date: date
-    score: float
-    overview: Optional[str]
+    score: float = Field(..., ge=0, le=100)
+    overview: Optional[str] = None
     status: str
-    budget: float
-    revenue: Optional[float]
+    budget: float = Field(..., ge=0)
+    revenue: Optional[float] = Field(0, ge=0)
     country: str
     genres: List[str]
     actors: List[str]
     languages: List[str]
 
+    @field_validator("date")
+    def validate_date(cls, v: date):
+        if v > date.today() + timedelta(days=365):
+            raise ValueError(
+                "Date cannot be more than one year in the future.")
+        return v
+
 
 class MovieUpdateSchema(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, max_length=255)
     date: Optional[date] = None
-    score: Optional[float] = None
+    score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
     status: Optional[str] = None
-    budget: Optional[float] = None
-    revenue: Optional[float] = None
+    budget: Optional[float] = Field(None, ge=0)
+    revenue: Optional[float] = Field(None, ge=0)
+
+    @field_validator("date")
+    def validate_date(cls, value: Optional[date]):
+        if value and value > date.today() + timedelta(days=365):
+            raise ValueError(
+                "Date cannot be more than one year in the future.")
+        return value
