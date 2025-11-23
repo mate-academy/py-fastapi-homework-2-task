@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from tqdm import tqdm
 
-from config import get_settings
-from database.models import (
+from src.config.settings import get_settings
+from src.database.models import (
     CountryModel,
     GenreModel,
     ActorModel,
@@ -19,7 +19,7 @@ from database.models import (
     MoviesLanguagesModel,
     MovieModel
 )
-from database import get_db_contextmanager
+from src.database.session_sqlite import get_sqlite_db_contextmanager
 
 CHUNK_SIZE = 1000
 
@@ -314,7 +314,7 @@ async def main() -> None:
     Checks if the database is already populated, and if not, performs the seeding process.
     """
     settings = get_settings()
-    async with get_db_contextmanager() as db_session:
+    async with get_sqlite_db_contextmanager() as db_session:
         seeder = CSVDatabaseSeeder(settings.PATH_TO_MOVIES_CSV, db_session)
 
         if not await seeder.is_db_populated():

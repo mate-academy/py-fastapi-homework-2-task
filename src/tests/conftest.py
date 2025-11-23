@@ -1,13 +1,13 @@
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from config import get_settings
-from database import (
-    reset_database,
-    get_db_contextmanager
+from src.config.settings import get_settings
+from src.database.session_sqlite import (
+    reset_sqlite_database,
+    get_sqlite_db_contextmanager
 )
-from database.populate import CSVDatabaseSeeder
-from main import app
+from src.database.populate import CSVDatabaseSeeder
+from src.main import app
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -18,7 +18,7 @@ async def reset_db():
     This fixture ensures that the database is cleared and recreated for every test function.
     It helps maintain test isolation by preventing data leakage between tests.
     """
-    await reset_database()
+    await reset_sqlite_database()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -36,7 +36,7 @@ async def db_session():
     This fixture yields an async session using `get_db_contextmanager`, ensuring that the session
     is properly closed after each test.
     """
-    async with get_db_contextmanager() as session:
+    async with get_sqlite_db_contextmanager() as session:
         yield session
 
 
