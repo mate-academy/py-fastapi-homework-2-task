@@ -1,14 +1,21 @@
+import datetime
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
+from schemas import MovieListItemSchema, MovieDetailSchema
+from schemas.movies import MovieUpdateSchema, MovieCreateSchema
+
 
 router = APIRouter()
+
 
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
