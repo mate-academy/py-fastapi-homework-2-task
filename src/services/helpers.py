@@ -8,7 +8,7 @@ async def get_or_create_list(names: list[str], model, db):
         obj = await db.scalar(obj)
         if obj is None:
             obj = model(name=name)
-            db.add(model)
+            db.add(obj)
         items.append(obj)
 
     return items

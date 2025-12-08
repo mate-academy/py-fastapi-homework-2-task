@@ -3,6 +3,8 @@ from typing import List
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 
+from src.database.models import MovieStatusEnum
+
 
 class MovieForList(BaseModel):
     id: int
@@ -15,10 +17,11 @@ class MovieForList(BaseModel):
 
 class MovieList(BaseModel):
     movies: List[MovieForList]
-    prev_page: str
-    next_page: str
+    prev_page: str | None
+    next_page: str | None
     total_pages: int
     total_items: int
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountryRead(BaseModel):
@@ -39,7 +42,7 @@ class MovieCreate(BaseModel):
     date: date
     score: float = Field(..., ge=0, le=100)
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country: str = Field(..., min_length=3, max_length=3)
@@ -49,6 +52,7 @@ class MovieCreate(BaseModel):
 
 
 class MovieDetail(BaseModel):
+    id : int
     name: str
     date: date
     score: float
@@ -66,8 +70,8 @@ class MovieDetail(BaseModel):
 class MovieUpdate(BaseModel):
     name: str | None = None
     date: date | None = None
-    score: float | None = None
+    score: float | None = Field(None, ge=0, le=100)
     overview: str | None = None
     status: str | None = None
-    budget: float | None = None
-    revenue: float | None = None
+    budget: float | None = Field(None, ge=0)
+    revenue: float | None = Field(None, ge=0)
