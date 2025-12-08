@@ -1,5 +1,4 @@
 import math
-from typing import List
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -81,7 +80,7 @@ async def create_movie(
         )
 
     country = select(CountryModel).where(
-        CountryModel.code == movie.code.upper()
+        CountryModel.code == movie.country.upper()
     )
     country = await db.scalar(country)
     if country is None:
@@ -111,7 +110,7 @@ async def create_movie(
     return created_movie
 
 
-@router.get("/movies/{movie_id}", response_model=MovieDetail)
+@router.get("/movies/{movie_id}/", response_model=MovieDetail)
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.scalar(select(MovieModel)
                             .where(MovieModel.id == movie_id))
@@ -123,7 +122,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.delete("/movies/{movie_id}")
+@router.delete("/movies/{movie_id}/")
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.scalar(select(MovieModel)
                             .where(MovieModel.id == movie_id))
@@ -136,7 +135,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
 
-@router.patch("/movies/{movie_id}")
+@router.patch("/movies/{movie_id}/")
 async def patch_movie(
         movie_id: int,
         data: MovieUpdate,
@@ -150,7 +149,7 @@ async def patch_movie(
             detail="Movie with the given ID was not found."
         )
     try:
-        for field, value in data.items():
+        for field, value in data.model_dump(exclude_unset=True).items():
             setattr(movie, field, value)
     except Exception:
         raise HTTPException(
