@@ -1,5 +1,7 @@
-from schemas.movies import (
+from schemas.movies import (  # noqa: F401
     MovieDetailSchema,
-    MovieListResponseSchema,
-    MovieListItemSchema
+    MovieListResponse,
+    MovieListItemSchema,
+    MovieCreateSchema,
+    MovieUpdateSchema,
 )
