@@ -197,7 +197,7 @@ async def create_movie(
         ),
         genres=[{"id": g.id, "name": g.name} for g in (movie.genres or [])],
         actors=[{"id": a.id, "name": a.name} for a in (movie.actors or [])],
-        languages=[{"id": l.id, "name": l.name} for l in (movie.languages or [])],
+        languages=[{"id": lang.id, "name": lang.name} for lang in (movie.languages or [])],
     )
 
 
@@ -249,7 +249,7 @@ async def get_movie_details(
         ),
         genres=[{"id": g.id, "name": g.name} for g in (movie.genres or [])],
         actors=[{"id": a.id, "name": a.name} for a in (movie.actors or [])],
-        languages=[{"id": l.id, "name": l.name} for l in (movie.languages or [])],
+        languages=[{"id": lang.id, "name": lang.name} for lang in (movie.languages or [])],
     )
 
 
