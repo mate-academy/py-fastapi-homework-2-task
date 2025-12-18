@@ -81,7 +81,6 @@ class MovieCreateSchema(BaseModel):
         return v
 
 
-
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[date] = None
