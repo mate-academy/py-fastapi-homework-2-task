@@ -57,6 +57,14 @@ class MovieCreateSchema(BaseModel):
     actors: List[str]
     languages: List[str]
 
+    @field_validator("date")
+    @classmethod
+    def date_validation(cls, date: datetime.date | None):
+        if date is not None:
+            if date > datetime.date.today() + datetime.timedelta(days=365):
+                raise RequestValidationError
+            return date
+
 
 class MovieDetailSchema(BaseModel):
     id: int
@@ -89,6 +97,14 @@ class MovieUpdateSchema(BaseModel):
             if len(name) > 255:
                 raise RequestValidationError
             return name
+
+    @field_validator("date")
+    @classmethod
+    def date_validation(cls, date: datetime.date | None):
+        if date is not None:
+            if date > datetime.date.today() + datetime.timedelta(days=365):
+                raise RequestValidationError
+            return date
 
     @field_validator("score")
     @classmethod
