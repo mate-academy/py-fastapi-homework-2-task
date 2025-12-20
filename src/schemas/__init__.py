@@ -3,5 +3,4 @@ from schemas.movies import (
     MovieListResponseSchema,
     MovieListItemSchema,
     MovieCreateSchema,
-    MovieCreateResponseSchema
 )

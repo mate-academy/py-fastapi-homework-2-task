@@ -1,7 +1,8 @@
 import datetime
-from typing import List
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, field_validator
 
 from database.models import MovieStatusEnum
 
@@ -57,7 +58,7 @@ class MovieCreateSchema(BaseModel):
     languages: List[str]
 
 
-class MovieCreateResponseSchema(BaseModel):
+class MovieDetailSchema(BaseModel):
     id: int
     name: str
     date: datetime.date
@@ -72,6 +73,43 @@ class MovieCreateResponseSchema(BaseModel):
     languages: List[LanguageResponseSchema]
 
 
-class MovieDetailSchema(BaseModel):
-    pass
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    date: Optional[datetime.date] = None
+    score: Optional[float] = None
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = None
+    revenue: Optional[float] = None
 
+    @field_validator("name")
+    @classmethod
+    def name_validation(cls, name: str | None):
+        if name is not None:
+            if len(name) > 255:
+                raise RequestValidationError
+            return name
+
+    @field_validator("score")
+    @classmethod
+    def score_validation(cls, score: float | None):
+        if score is not None:
+            if not (score >= 0 and score <= 100):
+                raise RequestValidationError
+            return score
+
+    @field_validator("budget")
+    @classmethod
+    def budget_validation(cls, budget: float | None):
+        if budget is not None:
+            if not budget >= 0:
+                raise RequestValidationError
+            return budget
+
+    @field_validator("revenue")
+    @classmethod
+    def revenue_validation(cls, revenue: float | None):
+        if revenue is not None:
+            if not revenue >= 0:
+                raise RequestValidationError
+            return revenue
