@@ -26,10 +26,10 @@ async def get_or_create(session, model, field, value):
 
 @router.get("/", response_model=MovieListResponseSchema)
 async def list_movies(
-        request: Request,
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1, le=20),
-        db: AsyncSession = Depends(get_db)
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
+    db: AsyncSession = Depends(get_db)
 ):
     count_stmt = select(func.count(MovieModel.id))
     total_items = (await db.execute(count_stmt)).scalar()
@@ -51,10 +51,13 @@ async def list_movies(
     movies = (await db.execute(stmt)).scalars().all()
 
     base_url = str(request.url).split('?')[0]
+    prev = f"{base_url}?page={page-1}&per_page={per_page}" if page > 1 else None
+    nxt = f"{base_url}?page={page+1}&per_page={per_page}" if page < total_pages else None
+
     return {
         "movies": movies,
-        "prev_page": f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None,
-        "next_page": f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None,
+        "prev_page": prev,
+        "next_page": nxt,
         "total_pages": total_pages,
         "total_items": total_items
     }
@@ -63,23 +66,28 @@ async def list_movies(
 @router.post("/", response_model=MovieDetailResponseSchema, status_code=201)
 async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(
-        select(MovieModel).where(MovieModel.name == movie_data.name, MovieModel.date == movie_data.date)
+        select(MovieModel).where(
+            MovieModel.name == movie_data.name,
+            MovieModel.date == movie_data.date
+        )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409,
-                            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
+        )
 
     country = await get_or_create(db, CountryModel, "code", movie_data.country)
     genres = [await get_or_create(db, GenreModel, "name", g) for g in movie_data.genres]
     actors = [await get_or_create(db, ActorModel, "name", a) for a in movie_data.actors]
-    languages = [await get_or_create(db, LanguageModel, "name", l) for l in movie_data.languages]
+    langs = [await get_or_create(db, LanguageModel, "name", lang) for lang in movie_data.languages]
 
     new_movie = MovieModel(
         **movie_data.model_dump(exclude={"country", "genres", "actors", "languages"}),
         country=country,
         genres=genres,
         actors=actors,
-        languages=languages
+        languages=langs
     )
     db.add(new_movie)
     await db.commit()

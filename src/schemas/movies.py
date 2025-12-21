@@ -2,16 +2,23 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import date
 from typing import List, Optional
 
+
 class ItemSchema(BaseModel):
     id: int
     name: str
-    class Config: from_attributes = True
+
+    class Config:
+        from_attributes = True
+
 
 class CountrySchema(BaseModel):
     id: int
     code: str
     name: Optional[str] = None
-    class Config: from_attributes = True
+
+    class Config:
+        from_attributes = True
+
 
 class MovieCreateSchema(BaseModel):
     name: str = Field(..., max_length=255)
@@ -35,6 +42,7 @@ class MovieCreateSchema(BaseModel):
             raise ValueError("Date must not be more than one year in the future")
         return v
 
+
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[date] = None
@@ -43,6 +51,7 @@ class MovieUpdateSchema(BaseModel):
     status: Optional[str] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
+
 
 class MovieDetailResponseSchema(BaseModel):
     id: int
@@ -58,7 +67,9 @@ class MovieDetailResponseSchema(BaseModel):
     actors: List[ItemSchema]
     languages: List[ItemSchema]
 
-    class Config: from_attributes = True
+    class Config:
+        from_attributes = True
+
 
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieDetailResponseSchema]
@@ -66,3 +77,6 @@ class MovieListResponseSchema(BaseModel):
     next_page: Optional[str]
     total_pages: int
     total_items: int
+
+    class Config:
+        from_attributes = True
