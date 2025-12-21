@@ -82,6 +82,9 @@ class MovieDetailResponseSchema(BaseModel):
         from_attributes = True
 
 
+MovieDetailSchema = MovieDetailResponseSchema
+
+
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieListItemSchema]
     prev_page: Optional[str]
