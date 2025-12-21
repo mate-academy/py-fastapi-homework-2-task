@@ -21,6 +21,7 @@ async def get_or_create(session, model, field, value):
     if not instance:
         instance = model(**{field: value})
         session.add(instance)
+        await session.flush()
     return instance
 
 
@@ -61,7 +62,10 @@ async def list_movies(
 
 
 @router.post("/", response_model=MovieDetailResponseSchema, status_code=201)
-async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+async def create_movie(
+    movie_data: MovieCreateSchema,
+    db: AsyncSession = Depends(get_db)
+):
     existing = await db.execute(
         select(MovieModel).where(
             MovieModel.name == movie_data.name,
@@ -71,13 +75,17 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
+            detail=f"A movie with the name '{movie_data.name}' and release "
+                   f"date '{movie_data.date}' already exists."
         )
 
     country = await get_or_create(db, CountryModel, "code", movie_data.country)
-    genres = [await get_or_create(db, GenreModel, "name", g) for g in movie_data.genres]
-    actors = [await get_or_create(db, ActorModel, "name", a) for a in movie_data.actors]
-    langs = [await get_or_create(db, LanguageModel, "name", ln) for ln in movie_data.languages]
+    genres = [await get_or_create(db, GenreModel, "name", g)
+              for g in movie_data.genres]
+    actors = [await get_or_create(db, ActorModel, "name", a)
+              for a in movie_data.actors]
+    langs = [await get_or_create(db, LanguageModel, "name", ln)
+             for ln in movie_data.languages]
 
     new_movie = MovieModel(
         **movie_data.model_dump(exclude={"country", "genres", "actors", "languages"}),
@@ -88,8 +96,16 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
     )
     db.add(new_movie)
     await db.commit()
-    await db.refresh(new_movie)
-    return new_movie
+
+    # ВАЖЛИВО: Завантажуємо зв'язки після коміту для коректної відповіді
+    stmt = select(MovieModel).where(MovieModel.id == new_movie.id).options(
+        selectinload(MovieModel.country),
+        selectinload(MovieModel.genres),
+        selectinload(MovieModel.actors),
+        selectinload(MovieModel.languages)
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one()
 
 
 @router.get("/{movie_id}/", response_model=MovieDetailResponseSchema)
@@ -100,16 +116,26 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     )
     movie = (await db.execute(stmt)).scalar_one_or_none()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
     return movie
 
 
 @router.patch("/{movie_id}/")
-async def update_movie(movie_id: int, update_data: MovieUpdateSchema, db: AsyncSession = Depends(get_db)):
+async def update_movie(
+    movie_id: int,
+    update_data: MovieUpdateSchema,
+    db: AsyncSession = Depends(get_db)
+):
     stmt = select(MovieModel).where(MovieModel.id == movie_id)
     movie = (await db.execute(stmt)).scalar_one_or_none()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
 
     data = update_data.model_dump(exclude_unset=True)
     if not data:
@@ -127,7 +153,10 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     stmt = select(MovieModel).where(MovieModel.id == movie_id)
     movie = (await db.execute(stmt)).scalar_one_or_none()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
 
     await db.delete(movie)
     await db.commit()
