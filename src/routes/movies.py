@@ -41,18 +41,15 @@ async def list_movies(
     if page > total_pages:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    stmt = select(MovieModel).options(
-        selectinload(MovieModel.country),
-        selectinload(MovieModel.genres),
-        selectinload(MovieModel.actors),
-        selectinload(MovieModel.languages)
-    ).order_by(MovieModel.id.desc()).offset((page - 1) * per_page).limit(per_page)
+    stmt = select(MovieModel).order_by(
+        MovieModel.id.desc()
+    ).offset((page - 1) * per_page).limit(per_page)
 
     movies = (await db.execute(stmt)).scalars().all()
 
-    base_url = str(request.url).split('?')[0]
-    prev = f"{base_url}?page={page-1}&per_page={per_page}" if page > 1 else None
-    nxt = f"{base_url}?page={page+1}&per_page={per_page}" if page < total_pages else None
+    path = "/theater/movies/"
+    prev = f"{path}?page={page-1}&per_page={per_page}" if page > 1 else None
+    nxt = f"{path}?page={page+1}&per_page={per_page}" if page < total_pages else None
 
     return {
         "movies": movies,
@@ -80,7 +77,7 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
     country = await get_or_create(db, CountryModel, "code", movie_data.country)
     genres = [await get_or_create(db, GenreModel, "name", g) for g in movie_data.genres]
     actors = [await get_or_create(db, ActorModel, "name", a) for a in movie_data.actors]
-    langs = [await get_or_create(db, LanguageModel, "name", lang) for lang in movie_data.languages]
+    langs = [await get_or_create(db, LanguageModel, "name", ln) for ln in movie_data.languages]
 
     new_movie = MovieModel(
         **movie_data.model_dump(exclude={"country", "genres", "actors", "languages"}),

@@ -20,6 +20,17 @@ class CountrySchema(BaseModel):
         from_attributes = True
 
 
+class MovieListItemSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+
+    class Config:
+        from_attributes = True
+
+
 class MovieCreateSchema(BaseModel):
     name: str = Field(..., max_length=255)
     date: date
@@ -72,7 +83,7 @@ class MovieDetailResponseSchema(BaseModel):
 
 
 class MovieListResponseSchema(BaseModel):
-    movies: List[MovieDetailResponseSchema]
+    movies: List[MovieListItemSchema]
     prev_page: Optional[str]
     next_page: Optional[str]
     total_pages: int
