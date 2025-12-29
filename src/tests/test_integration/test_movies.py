@@ -374,7 +374,6 @@ async def test_create_movie_and_related_models(client, db_session):
         "actors": ["John Doe", "Jane Doe"],
         "languages": ["English", "French"]
     }
-
     response = await client.post("/api/v1/theater/movies/", json=movie_data)
     assert response.status_code == 201, f"Expected status code 201, but got {response.status_code}"
 
