@@ -125,24 +125,27 @@ class MovieModel(Base):
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
-    country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
+    country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies", lazy="selectin")
 
     genres: Mapped[list["GenreModel"]] = relationship(
         "GenreModel",
         secondary=MoviesGenresModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy="selectin"
     )
 
     actors: Mapped[list["ActorModel"]] = relationship(
         "ActorModel",
         secondary=ActorsMoviesModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy="selectin"
     )
 
     languages: Mapped[list["LanguageModel"]] = relationship(
         "LanguageModel",
         secondary=MoviesLanguagesModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy="selectin"
     )
 
     __table_args__ = (

@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-
 from routes import movie_router
 
 
