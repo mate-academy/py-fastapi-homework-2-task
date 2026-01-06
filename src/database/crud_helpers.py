@@ -24,42 +24,45 @@ async def get_or_create_country(db, code: str) -> models.CountryModel:
     if country:
         return country
 
-    country = models.CountryModel(code=code, name=None)
-    db.add(country)
-
     try:
-        await db.flush()
+        async with db.begin_nested():
+            country = models.CountryModel(code=code, name=None)
+            db.add(country)
+            await db.flush()
+            return country
     except IntegrityError:
-        await db.rollback()
         country = await db.scalar(stmt)
         if not country:
             raise
-    return country
+        return country
 
 
 async def get_or_create_by_name(db, Model, names: list[str]):
     if not names:
         return []
 
+    names = unique_clean(names)
+
+    # load existing first (1 query)
     stmt = select(Model).where(Model.name.in_(names))
     existing = (await db.scalars(stmt)).all()
-    existing_by_name = {x.name: x for x in existing}
+    by_name = {obj.name: obj for obj in existing}
 
-    created = []
+    # create missing one-by-one safely
     for name in names:
-        if name in existing_by_name:
+        if name in by_name:
             continue
-        obj = Model(name=name)
-        db.add(obj)
-        created.append(obj)
 
-    if created:
         try:
-            await db.flush()
+            async with db.begin_nested():
+                obj = Model(name=name)
+                db.add(obj)
+                await db.flush()
+                by_name[name] = obj
         except IntegrityError:
-            await db.rollback()
-            existing = (await db.scalars(stmt)).all()
-            existing_by_name = {x.name: x for x in existing}
-            created = [existing_by_name[n] for n in names if n in existing_by_name]
+            obj = await db.scalar(select(Model).where(Model.name == name))
+            if obj is None:
+                raise
+            by_name[name] = obj
 
-    return [existing_by_name.get(n) or next(x for x in created if x.name == n) for n in names]
+    return [by_name[n] for n in names]

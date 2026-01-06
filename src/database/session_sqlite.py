@@ -30,11 +30,10 @@ async def get_sqlite_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSQLiteSessionLocal() as session:
         try:
             yield session
+            await session.commit()
         except Exception:
             await session.rollback()
             raise
-        else:
-            await session.commit()
 
 
 @asynccontextmanager
@@ -42,11 +41,10 @@ async def get_sqlite_db_contextmanager() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSQLiteSessionLocal() as session:
         try:
             yield session
+            await session.commit()
         except Exception:
             await session.rollback()
             raise
-        else:
-            await session.commit()
 
 
 async def reset_sqlite_database() -> None:
