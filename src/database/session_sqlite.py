@@ -4,8 +4,8 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from config import get_settings
-from database import Base
+from src.config import get_settings
+from src.database import Base
 
 settings = get_settings()
 
@@ -28,21 +28,24 @@ async def get_sqlite_db() -> AsyncGenerator[AsyncSession, None]:
     :return: An asynchronous generator yielding an AsyncSession instance.
     """
     async with AsyncSQLiteSessionLocal() as session:
-        yield session
-
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        else:
+            await session.commit()
 
 @asynccontextmanager
 async def get_sqlite_db_contextmanager() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Provide an asynchronous database session using a context manager.
-
-    This function allows for managing the database session within a `with` statement.
-    It ensures that the session is properly initialized and closed after execution.
-
-    :return: An asynchronous generator yielding an AsyncSession instance.
-    """
     async with AsyncSQLiteSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        else:
+            await session.commit()
 
 
 async def reset_sqlite_database() -> None:
