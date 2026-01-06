@@ -69,7 +69,8 @@ async def create_movie(db, payload: MovieCreationRequestSchema) -> MovieDetailSc
     if existing_id is not None:
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{payload.name}' and release date '{payload.date.isoformat()}' already exists."
+            detail=f"A movie with the name '{payload.name}' "
+                   f"and release date '{payload.date.isoformat()}' already exists."
         )
 
     country = await get_or_create_country(db, payload.country)

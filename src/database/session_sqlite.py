@@ -36,6 +36,7 @@ async def get_sqlite_db() -> AsyncGenerator[AsyncSession, None]:
         else:
             await session.commit()
 
+
 @asynccontextmanager
 async def get_sqlite_db_contextmanager() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSQLiteSessionLocal() as session:

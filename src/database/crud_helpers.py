@@ -7,7 +7,6 @@ from src.schemas.movies import MovieCreationRequestSchema
 
 
 def unique_clean(items: list[str]) -> list[str]:
-
     seen = set()
     out: list[str] = []
     for x in items:
@@ -64,4 +63,3 @@ async def get_or_create_by_name(db, Model, names: list[str]):
             created = [existing_by_name[n] for n in names if n in existing_by_name]
 
     return [existing_by_name.get(n) or next(x for x in created if x.name == n) for n in names]
-
