@@ -60,7 +60,7 @@ async def get_movies_list(
     )
 
 
-async def create_movie(db, payload: MovieCreationRequestSchema) -> MovieDetailSchema:
+async def create_movie(db: AsyncSQLiteSessionLocal, payload: MovieCreationRequestSchema) -> MovieDetailSchema:
     stmt = select(models.MovieModel.id).where(
         models.MovieModel.name == payload.name,
         models.MovieModel.date == payload.date,
