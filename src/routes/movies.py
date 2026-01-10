@@ -11,12 +11,12 @@ from starlette import status
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas.movies import MovieUpdate, \
-    MovieCreate, MovieDetailRead, MovieListItem
+    MovieCreate, MovieDetailRead, MovieListItem, MovieListResponse
 
 router = APIRouter(prefix="/movies", tags=["movies"])
 
 
-@router.get("/", response_model=MovieListItem)
+@router.get("/", response_model=MovieListResponse)
 async def get_movies(page: int = Query(1, ge=1, description="Page number (starting from 1)"),
                      per_page: int = Query(10, ge=1, le=20, description="Items per page"),
                      db: AsyncSession = Depends(get_db)
@@ -47,7 +47,7 @@ async def get_movies(page: int = Query(1, ge=1, description="Page number (starti
     prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
-    return MovieListItem(
+    return MovieListResponse(
         movies=movies,
         prev_page=prev_page,
         next_page=next_page,
@@ -110,7 +110,7 @@ async def get_or_create_language(db: AsyncSession, name: str):
     return language
 
 
-@router.post("/", response_model=MovieListItem, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=MovieDetailRead, status_code=status.HTTP_201_CREATED)
 async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)):
     query = select(MovieModel).where(
         MovieModel.name == movie_in.name,
@@ -121,8 +121,7 @@ async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Invalid input data.")
-    movie = MovieModel(**movie_in.model_dump())
+            detail=f"A movie with the name '{movie_in.name}' and release date '{movie_in.date}' already exists.")
 
     country = await get_or_create_country(db, movie_in.country)
 
@@ -165,7 +164,7 @@ async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)
     return movie
 
 
-@router.patch("/{movie_id}", response_model=MovieListItem, status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{movie_id}",  status_code=status.HTTP_200_OK)
 async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = Depends(get_db)):
     movie = select(MovieModel).where(MovieModel.id == movie_id)
     result = await db.execute(movie)
@@ -183,14 +182,14 @@ async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = 
     return {"detail": "Movie updated successfully."}
 
 
-@router.delete("/{movie_id}", response_model=status.HTTP_204_NO_CONTENT)
+@router.delete("/{movie_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = select(MovieModel).where(MovieModel.id == movie_id)
     result = await db.execute(movie)
     db_movie = result.scalar_one_or_none()
 
     if db_movie is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
 
     await db.delete(db_movie)
     await db.commit()

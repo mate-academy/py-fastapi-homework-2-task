@@ -14,7 +14,7 @@ class MovieStatus(StrEnum):
 class CountryRead(BaseModel):
     id: int
     code: str
-    name: str
+    name: Optional[str]
 
 
 class GenreRead(BaseModel):
@@ -32,13 +32,6 @@ class LanguageRead(BaseModel):
     name: str
 
 
-class MovieBase(BaseModel):
-    name: str
-    date: datetime.datetime
-    score: float
-    overview: str
-
-
 class MovieCreate(BaseModel):
     name: str = Field(..., max_length=255, min_length=2)
     date: datetime.date = Field(..., alias="date")
@@ -53,17 +46,16 @@ class MovieCreate(BaseModel):
     languages: List[str] = Field(..., min_length=1, max_length=20)
 
 
-class MovieUpdate(MovieBase):
+class MovieUpdate(BaseModel):
     name: Optional[str] = None
-    date: Optional[datetime.datetime] = None
+    date: Optional[datetime.date] = None
     score: Optional[float] = None
     overview: Optional[str] = None
-    status: MovieStatus = None
+    status: Optional[MovieStatus] = None
     budget: Optional[float] = None
     revenue: Optional[float] = None
 
     class Config:
-        from_attributes = True
         extra = "forbid"
         validate_assignment = True
 
@@ -71,27 +63,34 @@ class MovieUpdate(MovieBase):
 class MovieListItem(BaseModel):  # для списку
     id: int
     name: str
-    date: datetime.datetime
+    date: datetime.date
     score: float
     overview: str
 
     class Config:
-
         from_attributes = True
 
-class MovieDetailRead(MovieBase):
-    id: int
-    status: str
-    budget: float
-    revenue: float
-    country: str
-    genres: List[str]
-    actors: List[str]
-    languages: List[str]
+class MovieListResponse(BaseModel):
+    movies: list[MovieListItem]
+    prev_page: str | None
+    next_page: str | None
+    total_pages: int
+    total_items: int
 
     class Config:
         from_attributes = True
 
 
-class MovieDeleteResponse(MovieBase):
-    pass
+class MovieDetailRead(BaseModel):
+    id: int
+    name: str
+    date: datetime.date
+    score: float
+    overview: str
+    status: MovieStatus
+    budget: float
+    revenue: float
+    country: CountryRead
+    genres: list[GenreRead]
+    actors: list[ActorRead]
+    languages: list[LanguageRead]
