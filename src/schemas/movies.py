@@ -1,6 +1,6 @@
 import datetime
 from enum import StrEnum
-from typing import List, Optional, Literal
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, constr
 
@@ -68,33 +68,30 @@ class MovieUpdate(MovieBase):
         validate_assignment = True
 
 
-class MovieRead(MovieBase):
+class MovieListItem(BaseModel):  # для списку
     id: int
     name: str
     date: datetime.datetime
     score: float
     overview: str
+
+    class Config:
+
+        from_attributes = True
+
+class MovieDetailRead(MovieBase):
+    id: int
     status: str
     budget: float
     revenue: float
-    country: CountryRead
-    genres: list[GenreRead]
-    actors: list[ActorRead]
-    languages: list[LanguageRead]
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
 
     class Config:
         from_attributes = True
 
-
-class MovieListResponse(BaseModel):
-    movies: List[MovieRead]
-    prev_page: Optional[str] = None
-    next_page: Optional[str] = None
-    total_pages: Optional[str] = None
-    total_items: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class MovieDeleteResponse(MovieBase):
     pass

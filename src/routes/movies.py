@@ -10,13 +10,13 @@ from starlette import status
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieListResponse, MovieUpdate, MovieRead, \
-    MovieCreate
+from schemas.movies import MovieUpdate, \
+    MovieCreate, MovieDetailRead, MovieListItem
 
 router = APIRouter(prefix="/movies", tags=["movies"])
 
 
-@router.get("/", response_model=MovieListResponse)
+@router.get("/", response_model=MovieListItem)
 async def get_movies(page: int = Query(1, ge=1, description="Page number (starting from 1)"),
                      per_page: int = Query(10, ge=1, le=20, description="Items per page"),
                      db: AsyncSession = Depends(get_db)
@@ -38,7 +38,7 @@ async def get_movies(page: int = Query(1, ge=1, description="Page number (starti
 
     offset = (page - 1) * per_page
 
-    query = select(MovieModel).order_by(MovieModel.id).offset(offset).limit(per_page)
+    query = select(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(per_page)
     results = await db.execute(query)
     movies = results.scalars().all()
 
@@ -47,7 +47,7 @@ async def get_movies(page: int = Query(1, ge=1, description="Page number (starti
     prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
-    return MovieListResponse(
+    return MovieListItem(
         movies=movies,
         prev_page=prev_page,
         next_page=next_page,
@@ -56,11 +56,11 @@ async def get_movies(page: int = Query(1, ge=1, description="Page number (starti
     )
 
 
-@router.get("/{movie_id}", response_model=MovieRead)
+@router.get("/{movie_id}", response_model=MovieDetailRead)
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = select(MovieModel).where(MovieModel.id == movie_id)
     result = await db.execute(movie)
-    db_movie = result.scalar_one()
+    db_movie = result.scalar_one_or_none()
     if not db_movie:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
     return db_movie
@@ -106,11 +106,11 @@ async def get_or_create_language(db: AsyncSession, name: str):
     if language is None:
         language = LanguageModel(name=name)
         db.add(language)
-        await db.flush()  # зберігаємо, але не комітимо ще
+        await db.flush()
     return language
 
 
-@router.post("/", response_model=MovieRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=MovieListItem, status_code=status.HTTP_201_CREATED)
 async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)):
     query = select(MovieModel).where(
         MovieModel.name == movie_in.name,
@@ -165,7 +165,7 @@ async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)
     return movie
 
 
-@router.put("/{movie_id}", response_model=MovieRead, status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{movie_id}", response_model=MovieListItem, status_code=status.HTTP_202_ACCEPTED)
 async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = Depends(get_db)):
     movie = select(MovieModel).where(MovieModel.id == movie_id)
     result = await db.execute(movie)
@@ -180,7 +180,7 @@ async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = 
 
     await db.commit()
     await db.refresh(db_movie)
-    return db_movie
+    return {"detail": "Movie updated successfully."}
 
 
 @router.delete("/{movie_id}", response_model=status.HTTP_204_NO_CONTENT)
