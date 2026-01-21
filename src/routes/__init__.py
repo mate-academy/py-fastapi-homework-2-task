@@ -1,1 +1,1 @@
-from routes.movies import router as movie_router
+from src.routes import movies as movie_router
