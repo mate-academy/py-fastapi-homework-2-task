@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from httpx import Request
+from starlette.responses import JSONResponse
 
 from routes import movie_router
 
