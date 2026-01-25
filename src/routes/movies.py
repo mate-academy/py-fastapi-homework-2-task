@@ -6,7 +6,7 @@ from typing import List
 from database import MovieModel
 from database.models import GenreModel, ActorModel, LanguageModel
 from schemas.movies import MovieRead, MovieCreate, MovieUpdate
-
+from src.database import get_db
 router = APIRouter(prefix="/movies", tags=["Movies"])
 
 
@@ -25,7 +25,6 @@ def create_movie(movie_data: MovieCreate, db: Session = Depends(get_db)):
         **movie_data.model_dump(exclude={"genre_ids", "actor_ids", "language_ids"})
     )
 
-    # Додаємо зв'язки (завантажуємо об'єкти з БД по ID)
     if movie_data.genre_ids:
         genres = db.execute(select(GenreModel).where(GenreModel.id.in_(movie_data.genre_ids))).scalars().all()
         new_movie.genres = list(genres)
@@ -73,7 +72,6 @@ def update_movie(movie_id: int, movie_update: MovieUpdate, db: Session = Depends
 
     update_dict = movie_update.model_dump(exclude_unset=True)
 
-    # Окремо обробляємо M2M поля
     m2m_fields = {
         "genre_ids": (GenreModel, "genres"),
         "actor_ids": (ActorModel, "actors"),
@@ -86,7 +84,6 @@ def update_movie(movie_id: int, movie_update: MovieUpdate, db: Session = Depends
             related_items = db.execute(select(model).where(model.id.in_(ids))).scalars().all()
             setattr(movie_db, attr, list(related_items))
 
-    # Оновлюємо звичайні поля
     for key, value in update_dict.items():
         setattr(movie_db, key, value)
 
