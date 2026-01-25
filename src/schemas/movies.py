@@ -2,8 +2,6 @@ from pydantic import BaseModel, ConfigDict
 from datetime import date
 from typing import List, Optional
 from decimal import Decimal
-from enum import Enum
-
 from src.database.models import MovieStatusEnum
 
 
@@ -32,7 +30,32 @@ class LanguageRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieBase(BaseModel):
+class MovieListItemSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    status: MovieStatusEnum
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovieListResponseSchema(BaseModel):
+    items: List[MovieListItemSchema]
+    total: int
+
+
+class MovieDetailSchema(MovieListItemSchema):
+    overview: str
+    budget: Decimal
+    revenue: float
+    country: CountryRead
+    genres: List[GenreRead]
+    actors: List[ActorRead]
+    languages: List[LanguageRead]
+
+
+class MovieCreateSchema(BaseModel):
     name: str
     date: date
     score: float
@@ -40,16 +63,13 @@ class MovieBase(BaseModel):
     status: MovieStatusEnum
     budget: Decimal
     revenue: float
-
-
-class MovieCreate(MovieBase):
     country_id: int
     genre_ids: List[int] = []
     actor_ids: List[int] = []
     language_ids: List[int] = []
 
 
-class MovieUpdate(BaseModel):
+class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
     date: Optional[date] = None
     score: Optional[float] = None
@@ -61,13 +81,3 @@ class MovieUpdate(BaseModel):
     genre_ids: Optional[List[int]] = None
     actor_ids: Optional[List[int]] = None
     language_ids: Optional[List[int]] = None
-
-
-class MovieRead(MovieBase):
-    id: int
-    country: CountryRead
-    genres: List[GenreRead]
-    actors: List[ActorRead]
-    languages: List[LanguageRead]
-
-    model_config = ConfigDict(from_attributes=True)
