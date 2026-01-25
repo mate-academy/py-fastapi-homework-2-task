@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import date, timedelta
 from typing import List, Optional
 from decimal import Decimal
@@ -63,8 +63,7 @@ class MovieCreateSchema(BaseModel):
     @field_validator('date')
     @classmethod
     def validate_date(cls, v):
-        max_date = date.today() + timedelta(days=365)
-        if v > max_date:
+        if v > date.today() + timedelta(days=365):
             raise ValueError("Date cannot be more than one year in the future.")
         return v
 
@@ -75,7 +74,7 @@ class MovieDetailSchema(BaseModel):
     date: date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema
@@ -93,10 +92,3 @@ class MovieUpdateSchema(BaseModel):
     status: Optional[MovieStatusEnum] = None
     budget: Optional[Decimal] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
-
-    @field_validator('date')
-    @classmethod
-    def validate_date(cls, v):
-        if v and v > date.today() + timedelta(days=365):
-            raise ValueError("Invalid input data.")
-        return v
