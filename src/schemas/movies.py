@@ -47,7 +47,6 @@ class MovieListResponseSchema(BaseModel):
     total_items: int
 
 
-
 class MovieCreateSchema(BaseModel):
     name: str = Field(..., max_length=255)
     date: date
@@ -56,7 +55,7 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: Decimal = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
-    country: str = Field(..., min_length=3, max_length=3) # ISO code
+    country: str = Field(..., min_length=3, max_length=3)
     genres: List[str] = []
     actors: List[str] = []
     languages: List[str] = []
