@@ -44,7 +44,11 @@ async def list_movies(
     result = await db.execute(movies_query)
     movies = result.scalars().all()
 
-    base_url = str(request.url).split('?')[0]
+    # base_url = str(request.url).split('?')[0]
+    # prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
+    # next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
+
+    base_url = "/theater/movies/"
     prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
