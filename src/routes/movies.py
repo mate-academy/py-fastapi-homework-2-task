@@ -40,7 +40,6 @@ def create_movie(movie_data: MovieCreateSchema, db: Session = Depends(get_db)):
         genres = db.execute(select(GenreModel).where(GenreModel.id.in_(movie_data.genre_ids))).scalars().all()
         new_movie.genres = list(genres)
 
-
     db.add(new_movie)
     db.commit()
     db.refresh(new_movie)
