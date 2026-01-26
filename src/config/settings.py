@@ -20,7 +20,6 @@ class Settings(BaseAppSettings):
 
 
 class TestingSettings(BaseAppSettings):
-
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
         object.__setattr__(self, 'PATH_TO_DB', ":memory:")
         object.__setattr__(
