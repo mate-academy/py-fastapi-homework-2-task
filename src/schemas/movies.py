@@ -1,4 +1,5 @@
 import datetime
+from dateutil.relativedelta import relativedelta
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_extra_types.country import CountryAlpha3
 
@@ -6,8 +7,8 @@ from database.models import MovieStatusEnum
 
 
 class MovieBaseSchema(BaseModel):
-    name: str
-    date: datetime.date
+    name: str = Field(255)
+    date: datetime.date = Field(le=datetime.date.today() + relativedelta(years=1))
     score: float = Field(le=100, ge=0)
     overview: str
 

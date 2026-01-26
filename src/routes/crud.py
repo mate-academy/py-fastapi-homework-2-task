@@ -185,9 +185,8 @@ async def update_movie(movie_update_fields: MovieUpdateSchema, movie_id: int, db
     movie = result.scalar()
     if not movie:
         return JSONResponse(status_code=404, content={"detail": "Movie with the given ID was not found."})
-    fields = movie_update_fields.model_dump()
+    fields = movie_update_fields.model_dump(exclude_unset=True)
     for field, value in fields.items():
-        if value:
-            setattr(movie, field, value)
+        setattr(movie, field, value)
     await db.commit()
     return {"detail": "Movie updated successfully."}
