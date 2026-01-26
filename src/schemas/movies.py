@@ -7,7 +7,7 @@ from database.models import MovieStatusEnum
 
 
 class MovieBaseSchema(BaseModel):
-    name: str = Field(255)
+    name: str = Field(max_length=255)
     date: datetime.date = Field(le=datetime.date.today() + relativedelta(years=1))
     score: float = Field(le=100, ge=0)
     overview: str
