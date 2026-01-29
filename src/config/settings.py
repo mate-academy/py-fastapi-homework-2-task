@@ -9,6 +9,7 @@ class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
     PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+    ENVIRONMENT: str = "developing"
 
 
 class Settings(BaseAppSettings):
@@ -20,17 +21,18 @@ class Settings(BaseAppSettings):
 
 
 class TestingSettings(BaseAppSettings):
+    ENVIRONMENT: str = "testing"
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
-        object.__setattr__(self, 'PATH_TO_DB', ":memory:")
+        object.__setattr__(self, "PATH_TO_DB", ":memory:")
         object.__setattr__(
             self,
-            'PATH_TO_MOVIES_CSV',
+            "PATH_TO_MOVIES_CSV",
             str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv")
         )
 
 
-def get_settings() -> BaseSettings:
+def get_settings() -> BaseAppSettings:
     environment = os.getenv("ENVIRONMENT", "developing")
     if environment == "testing":
         return TestingSettings()
