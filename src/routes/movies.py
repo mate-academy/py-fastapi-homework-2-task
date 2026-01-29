@@ -1,7 +1,6 @@
-import math
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Request, Depends, HTTPException, status
+from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +10,6 @@ from database import get_db, MovieModel, Base
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import (
     MovieListResponseSchema,
-    MovieListItemSchema,
     MovieDetailSchema,
     MovieCreateSchema,
     MovieUpdateSchema,
@@ -223,6 +221,7 @@ async def delete_movie(
 
 @router.patch(
     "/movies/{movie_id}/",
+    response_model=MessageResponse
 )
 async def update_movie(
         movie_id: int,
