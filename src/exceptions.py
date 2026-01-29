@@ -1,0 +1,2 @@
+class DateToFarException(Exception):
+    pass
