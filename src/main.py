@@ -1,13 +1,19 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from routes.movies import router as movie_router
+from database import reset_database
 
-from routes import movie_router
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await reset_database()
+    yield
 
 
-app = FastAPI(
-    title="Movies homework",
-    description="Description of project"
+app = FastAPI(title="Movies homework", lifespan=lifespan)
+
+app.include_router(
+    movie_router,
+    prefix="/api/v1/theater/movies",
+    tags=["theater"]
 )
-
-api_version_prefix = "/api/v1"
-
-app.include_router(movie_router, prefix=f"{api_version_prefix}/theater", tags=["theater"])
