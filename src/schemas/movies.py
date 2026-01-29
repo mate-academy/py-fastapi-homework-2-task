@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, PositiveFloat, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from database.models import MovieStatusEnum
 from schemas.actors import ActorBaseSchema
@@ -13,7 +13,7 @@ from schemas.languages import LanguageBaseSchema
 class MovieBase(BaseModel):
     name: str = Field(max_length=255)
     date: datetime.date = Field()
-    score: float = Field(gt=0, le=100)
+    score: float = Field(ge=0, le=100)
     overview: str
 
     @field_validator("date")
@@ -45,8 +45,8 @@ class MovieListResponseSchema(BaseModel):
 
 class MovieCreateRequestSchema(MovieBase):
     status: MovieStatusEnum
-    budget: PositiveFloat
-    revenue: PositiveFloat
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
     country: str
     genres: list[str]
     actors: list[str]
