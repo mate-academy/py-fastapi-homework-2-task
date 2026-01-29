@@ -87,7 +87,7 @@ async def create_movie(
         country = await get_or_create(db, CountryModel, "code", movie_data.country)
         genres = [await get_or_create(db, GenreModel, "name", g) for g in movie_data.genres]
         actors = [await get_or_create(db, ActorModel, "name", a) for a in movie_data.actors]
-        langs = [await get_or_create(db, LanguageModel, "name", l) for l in movie_data.languages]
+        langs = [await get_or_create(db, LanguageModel, "name", lang) for lang in movie_data.languages]
 
         new_movie = MovieModel(
             name=movie_data.name,
