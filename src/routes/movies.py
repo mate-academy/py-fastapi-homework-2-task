@@ -14,6 +14,7 @@ router = APIRouter(
     tags=["movies"]
 )
 
+
 @router.get("/", response_model=MovieListResponseSchema, status_code=status.HTTP_200_OK)
 async def list_movies(
         request: Request,

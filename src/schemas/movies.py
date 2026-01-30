@@ -17,13 +17,16 @@ class CountryRead(BaseModel):
     )
     name: Optional[str] = None
 
+
 class GenreRead(BaseModel):
     id: int
     name: str
 
+
 class ActorRead(BaseModel):
     id: int
     name: str
+
 
 class LanguageRead(BaseModel):
     id: int
@@ -75,7 +78,7 @@ class MovieCreateSchema(BaseModel):
         examples=[2500000.0],
         decimal_places=2
     )
-    country_name: str
+    country: str
     genres: List[str]
     actors: List[str]
     languages: List[str]
