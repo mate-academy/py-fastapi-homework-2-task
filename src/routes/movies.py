@@ -1,14 +1,11 @@
 from typing import Annotated
 
+from database import MovieModel, get_db
+from database.models import ActorModel, CountryModel, GenreModel, LanguageModel
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import ValidationError
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-
-from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
 from src.schemas.movies import (
     MessageResponseSchema, MovieCreateRequestSchema, MovieDetailResponseSchema,
@@ -29,7 +26,7 @@ async def _get_movie(
             selectinload(MovieModel.genres),
             selectinload(MovieModel.actors),
             selectinload(MovieModel.languages),
-            selectinload(MovieModel.country)
+            joinedload(MovieModel.country)
         )
     )
 
@@ -225,6 +222,8 @@ async def update_movie(
         return {"detail": "Movie updated successfully."}
 
     for key, value in update_data.items():
+        if key == 'id':
+            continue
         setattr(movie, key, value)
 
     try:

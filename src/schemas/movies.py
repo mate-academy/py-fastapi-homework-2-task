@@ -1,7 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.database.models import MovieStatusEnum
 
@@ -38,6 +38,16 @@ class MovieBaseSchema(BaseModel):
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
 
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, v: date | datetime) -> date | datetime:
+        check_date = v.date() if isinstance(v, datetime) else v
+
+        if check_date > date.today() + timedelta(days=365):
+            raise ValueError(
+                "The date must not be more than one year in the future.")
+        return v
+
 
 class MovieDetailResponseSchema(MovieBaseSchema):
     model_config = ConfigDict(from_attributes=True)
@@ -73,7 +83,6 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieUpdateRequestSchema(BaseModel):
-    id: int
     name: str | None = Field(default=None, max_length=255)
     date: date | datetime | None = None
     score: float | None = Field(default=None, ge=0, le=100)
