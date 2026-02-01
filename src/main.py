@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from routes import movie_router
+from config.settings import API_V1_PREFIX
 
 
 app = FastAPI(
@@ -8,6 +9,8 @@ app = FastAPI(
     description="Description of project"
 )
 
-api_version_prefix = "/api/v1"
-
-app.include_router(movie_router, prefix=f"{api_version_prefix}/theater", tags=["theater"])
+app.include_router(
+    movie_router,
+    prefix=f"{API_V1_PREFIX}/theater/movies",
+    tags=["movies"]
+)
