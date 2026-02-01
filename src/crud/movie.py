@@ -59,19 +59,11 @@ async def _get_or_create_country_by_code(
     if country is None:
         country = CountryModel(code=country_code)
         db.add(country)
-        await db.commit()
     return country
 
 
 async def create_movie(db: AsyncSession, movie_data: MovieCreateSchema) -> MovieModel:
     """Create movie"""
-    if (
-        not movie_data.name
-        or not movie_data.date
-        or not movie_data.score
-        or not movie_data.budget
-    ):
-        raise InvalidDataError
     genres_db = await _get_or_create_items_by_names(db, GenreModel, movie_data.genres)
     actors_db = await _get_or_create_items_by_names(db, ActorModel, movie_data.actors)
     languages_db = await _get_or_create_items_by_names(

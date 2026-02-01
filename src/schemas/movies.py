@@ -1,7 +1,7 @@
 import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from pydantic_extra_types.country import CountryAlpha2
+from pydantic_extra_types.country import CountryAlpha3
 from schemas.actors import ActorListItemSchema
 from schemas.countries import CountryListItemSchema
 from schemas.genres import GenreListItemSchema
@@ -42,7 +42,7 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country: CountryAlpha2
+    country: CountryAlpha3
     genres: list[str] = Field(default_factory=list)
     actors: list[str] = Field(default_factory=list)
     languages: list[str] = Field(default_factory=list)
