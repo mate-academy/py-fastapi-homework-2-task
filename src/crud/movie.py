@@ -66,10 +66,10 @@ async def _get_or_create_country_by_code(
 async def create_movie(db: AsyncSession, movie_data: MovieCreateSchema) -> MovieModel:
     """Create movie"""
     if (
-        not movie_data.genres
-        or not movie_data.languages
-        or not movie_data.actors
-        or not movie_data.country
+        not movie_data.name
+        or not movie_data.date
+        or not movie_data.score
+        or not movie_data.budget
     ):
         raise InvalidDataError
     genres_db = await _get_or_create_items_by_names(db, GenreModel, movie_data.genres)
@@ -103,7 +103,7 @@ async def create_movie(db: AsyncSession, movie_data: MovieCreateSchema) -> Movie
     return new_movie
 
 
-async def get_movies(db: AsyncSession, page: int, per_page: int) -> list[MovieModel]:
+async def get_movies(db: AsyncSession, page: int, per_page: int) -> MovieListResponseSchema:
     total_movie_items = await db.scalar(select(func.count("*")).select_from(MovieModel))
     if not total_movie_items:
         raise ItemDoesNotExist("No movies found")

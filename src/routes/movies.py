@@ -1,11 +1,7 @@
-import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 from fastapi.responses import JSONResponse
 
 from crud.exceptions import ItemDoesNotExist, ItemAlreadyExist, InvalidDataError
@@ -47,7 +43,7 @@ async def read_movies(
     db: Annotated[AsyncSession, Depends(get_db)],
     page: int = Query(1, ge=1, description="Page number (minimum: 1)"),
     per_page: int = Query(10, ge=1, le=20, description="Items per page (1-20)"),
-) -> list[MovieModel]:
+) -> MovieListResponseSchema:
     try:
         return await get_movies(db=db, page=page, per_page=per_page)
     except ItemDoesNotExist:

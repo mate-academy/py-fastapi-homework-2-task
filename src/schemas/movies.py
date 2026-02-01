@@ -10,7 +10,7 @@ from schemas.languages import LanguageListItemSchema
 
 class MovieStatusEnum(str, Enum):
     RELEASED = "Released"
-    POST_PRODUCTION = "Post Production "
+    POST_PRODUCTION = "Post Production"
     IN_PRODUCTION = "In Production"
 
 
