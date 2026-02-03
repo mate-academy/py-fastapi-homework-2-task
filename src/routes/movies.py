@@ -181,15 +181,6 @@ async def update_movie(
             detail="Movie with the given ID was not found."
         )
 
-    # 2️⃣ Validate fields
-    if data.score is not None and not (0 <= data.score <= 100):
-        raise HTTPException(status_code=400, detail="Score must be between 0 and 100.")
-    if data.budget is not None and data.budget < 0:
-        raise HTTPException(status_code=400, detail="Budget must be non-negative.")
-    if data.revenue is not None and data.revenue < 0:
-        raise HTTPException(status_code=400, detail="Revenue must be non-negative.")
-
-    # 3️⃣ Update only provided fields
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(movie, field, value)
 
