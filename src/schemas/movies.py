@@ -83,7 +83,11 @@ class MovieCreateSchema(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date(cls, release_date: date) -> date:
-        max_date = date.today().replace(year=date.today().year + 1)
+        today = date.today()
+        try:
+            max_date = today.replace(year=today.year + 1)
+        except ValueError:
+            max_date = today.replace(year=today.year + 1, day=28)
         if release_date > max_date:
             raise ValueError("The date must not be more than one year in the future.")
         return release_date
@@ -103,7 +107,11 @@ class MovieUpdateSchema(BaseModel):
     def validate_date(cls, release_date: Optional[date]) -> Optional[date]:
         if release_date is None:
             return release_date
-        max_date = date.today().replace(year=date.today().year + 1)
+        today = date.today()
+        try:
+            max_date = today.replace(year=today.year + 1)
+        except ValueError:
+            max_date = today.replace(year=today.year + 1, day=28)
         if release_date > max_date:
             raise ValueError("The date must not be more than one year in the future.")
         return release_date
