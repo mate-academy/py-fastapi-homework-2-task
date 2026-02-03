@@ -96,3 +96,10 @@ class MovieUpdateSchema(BaseModel):
     revenue: Optional[float] = Field(None, ge=0)
     overview: Optional[str] = None
     status: Optional[str] = None
+
+    @field_validator("status")
+    def validate_status(cls, value):
+        allowed = {"Released", "Post Production", "In Production"}
+        if value not in allowed:
+            raise ValueError(f"Status must be one of {allowed}")
+        return value
