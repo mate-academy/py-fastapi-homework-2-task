@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, timedelta
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -83,12 +83,7 @@ class MovieCreateSchema(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date(cls, release_date: date) -> date:
-        today = date.today()
-        try:
-            max_date = today.replace(year=today.year + 1)
-        except ValueError:
-            max_date = today.replace(year=today.year + 1, day=28)
-        if release_date > max_date:
+        if release_date > date.today() + timedelta(days=365):
             raise ValueError("The date must not be more than one year in the future.")
         return release_date
 
@@ -107,11 +102,6 @@ class MovieUpdateSchema(BaseModel):
     def validate_date(cls, release_date: Optional[date]) -> Optional[date]:
         if release_date is None:
             return release_date
-        today = date.today()
-        try:
-            max_date = today.replace(year=today.year + 1)
-        except ValueError:
-            max_date = today.replace(year=today.year + 1, day=28)
-        if release_date > max_date:
+        if release_date > date.today() + timedelta(days=365):
             raise ValueError("The date must not be more than one year in the future.")
         return release_date
