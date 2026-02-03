@@ -2,8 +2,9 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column
+from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column, select
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 
@@ -125,24 +126,31 @@ class MovieModel(Base):
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
-    country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
+    country: Mapped["CountryModel"] = relationship(
+        "CountryModel",
+        back_populates="movies",
+        lazy="raise"
+    )
 
     genres: Mapped[list["GenreModel"]] = relationship(
         "GenreModel",
         secondary=MoviesGenresModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy = "raise"
     )
 
     actors: Mapped[list["ActorModel"]] = relationship(
         "ActorModel",
         secondary=ActorsMoviesModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy="raise"
     )
 
     languages: Mapped[list["LanguageModel"]] = relationship(
         "LanguageModel",
         secondary=MoviesLanguagesModel,
-        back_populates="movies"
+        back_populates="movies",
+        lazy="raise"
     )
 
     __table_args__ = (
@@ -155,3 +163,15 @@ class MovieModel(Base):
 
     def __repr__(self):
         return f"<Movie(name='{self.name}', release_date='{self.date}', score={self.score})>"
+
+
+async def get_or_create(db: AsyncSession, model, **kwargs):
+    result = await db.execute(select(model).filter_by(**kwargs))
+    instance = result.scalar_one_or_none()
+    if instance:
+        return instance
+
+    instance = model(**kwargs)
+    db.add(instance)
+    await db.flush()  # id стає доступним
+    return instance
