@@ -8,13 +8,13 @@ from math import ceil
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, get_or_create
-from schemas.movies import MovieUpdateSchema, MovieCreatedResponse, MovieCreate
+from schemas.movies import MovieUpdateSchema, MovieCreatedResponse, MovieCreate, MovieListResponseSchema
 
 
 router = APIRouter()
 
 
-@router.get("/movies/")#, response_model=MovieListItemSchema)
+@router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movies(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
@@ -53,7 +53,7 @@ async def get_movies(
     }
 
 
-@router.post("/movies/", response_model=MovieCreatedResponse)
+@router.post("/movies/", response_model=MovieCreatedResponse, status_code=status.HTTP_201_CREATED)
 async def create_movie(data: MovieCreate, db: AsyncSession = Depends(get_db)):
     async with db.begin():  # автоматичний commit/rollback
         # Перевірка дублікату
