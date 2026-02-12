@@ -9,6 +9,7 @@ from fastapi import (
     Query,
     status
 )
+from pydantic import ValidationError
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -33,7 +34,6 @@ from schemas.movies import (
 router = APIRouter()
 
 
-# Write your code here
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movies(
         request: Request,
@@ -41,7 +41,9 @@ async def get_movies(
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db)
 ):
-    total_items = await db.scalar(select(func.count()).select_from(MovieModel))
+    total_items = int(
+        await db.scalar(select(func.count()).select_from(MovieModel))
+    )
     total_pages = ceil(total_items / per_page)
     if total_items == 0 or page > total_pages:
         raise HTTPException(
@@ -89,15 +91,17 @@ async def create_movie(
     if db_movie:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+            detail=f"A movie with the name '{movie.name}' and release date "
+                   f"'{movie.date}' already exists."
         )
 
+    country_code = movie.country.upper()
     country = await db.scalar(
         select(CountryModel).where(
-            func.upper(CountryModel.code) == movie.country.upper())
+            func.upper(CountryModel.code) == country_code)
     )
     if not country:
-        country = CountryModel(code=movie.country, name=movie.country)
+        country = CountryModel(code=movie.country.upper(), name=movie.country)
         db.add(country)
         await db.flush()
 
@@ -165,7 +169,7 @@ async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     if not movie:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
 
@@ -189,7 +193,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 @router.patch("/movies/{movie_id}/")
 async def movie_update(
         movie_id: int,
-        update_data: MovieUpdateSchema,
+        request_body: dict,
         db: AsyncSession = Depends(get_db),
 ):
     db_movie = await db.scalar(
@@ -200,6 +204,14 @@ async def movie_update(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
+        )
+
+    try:
+        update_data = MovieUpdateSchema(**request_body)
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
         )
 
     update_movie = update_data.model_dump(exclude_unset=True)

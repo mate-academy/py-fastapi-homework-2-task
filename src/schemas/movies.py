@@ -70,25 +70,14 @@ class MovieDetailSchema(MovieListItemSchema):
     languages: List[LanguageListSchema]
 
 
-class MovieCreateSchema(MovieSchema):
-    budget: float
-    revenue: float
-
-
-class MovieCreateRequestSchema(MovieCreateSchema):
-    status: MovieStatusEnum
-    country: str
-    genres: List[str]
-    actors: List[str]
-    languages: List[str]
-
-    @field_validator("name")
+class MovieValidationMixin(BaseModel):
+    @field_validator("name", check_fields=False)
     def validate_name(cls, value):
         if len(value) > 255:
             raise ValueError(f"Movie name is too long: {value}")
         return value
 
-    @field_validator("date")
+    @field_validator("date", check_fields=False)
     def validate_date(cls, value):
         if value > datetime.date.today() + datetime.timedelta(days=365):
             raise ValueError(
@@ -96,17 +85,30 @@ class MovieCreateRequestSchema(MovieCreateSchema):
             )
         return value
 
-    @field_validator("score")
+    @field_validator("score", check_fields=False)
     def validate_score(cls, value):
         if not (0 <= value <= 100):
             raise ValueError(f"Score must be between 0 and 100: {value}")
         return value
 
-    @field_validator("budget", "revenue")
+    @field_validator("budget", "revenue", check_fields=False)
     def validate_budget_and_revenue(cls, value):
         if value < 0:
             raise ValueError(f"Budget and revenue must be positive: {value}")
         return value
+
+
+class MovieCreateSchema(MovieSchema):
+    budget: float
+    revenue: float
+
+
+class MovieCreateRequestSchema(MovieCreateSchema, MovieValidationMixin):
+    status: MovieStatusEnum
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
 
 
 class MovieCreateResponseSchema(MovieCreateSchema):
@@ -128,7 +130,7 @@ class MovieListResponseSchema(BaseModel):
     total_items: int
 
 
-class MovieUpdateSchema(BaseModel):
+class MovieUpdateSchema(MovieValidationMixin):
     name: Optional[str] = None
     date: Optional[datetime.date] = None
     score: Optional[float] = None
