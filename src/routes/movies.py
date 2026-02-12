@@ -138,18 +138,11 @@ async def create_movie(
     )
     db.add(new_movie)
     await db.commit()
-    query = (
-        select(MovieModel)
-        .where(MovieModel.id == new_movie.id)
-        .options(
-            joinedload(MovieModel.country),
-            selectinload(MovieModel.genres),
-            selectinload(MovieModel.actors),
-            selectinload(MovieModel.languages)
-        )
+    await db.refresh(
+        new_movie,
+        ["country", "genres", "actors", "languages"]
     )
-    result = await db.execute(query)
-    return result.scalar_one()
+    return new_movie
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
@@ -205,18 +198,33 @@ async def movie_update(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
+    if "score" in request_body:
+        score = request_body["score"]
+        if not isinstance(score, (int, float)) or not (0 <= score <= 100):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid input data."
+            )
+
+    for field in ["budget", "revenue"]:
+        if field in request_body:
+            val = request_body[field]
+            if not isinstance(val, (int, float)) or val < 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid input data."
+                )
 
     try:
         update_data = MovieUpdateSchema(**request_body)
-    except ValidationError:
+    except (ValidationError, ValueError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid input data."
         )
 
-    update_movie = update_data.model_dump(exclude_unset=True)
-
-    for key, value in update_movie.items():
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
         setattr(db_movie, key, value)
 
     await db.commit()
