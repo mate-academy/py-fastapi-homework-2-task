@@ -181,7 +181,7 @@ support the development, testing, and deployment of the Movie Theater API:
 
 #### **1. Database Service (`db`)**
 
-- **Image**: `postgres:latest`
+- **Image**: `postgres:17`
 - **Purpose**: Acts as the primary database for the project, running a PostgreSQL instance.
 - **Configuration**:
     - Loads initial SQL setup from `init.sql`.

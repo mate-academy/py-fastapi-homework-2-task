@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from config import get_settings
 from database import Base
@@ -10,7 +11,14 @@ from database import Base
 settings = get_settings()
 
 SQLITE_DATABASE_URL = f"sqlite+aiosqlite:///{settings.PATH_TO_DB}"
-sqlite_engine = create_async_engine(SQLITE_DATABASE_URL, echo=False)
+if settings.PATH_TO_DB == ":memory:":
+    sqlite_engine = create_async_engine(
+        SQLITE_DATABASE_URL,
+        echo=False,
+        poolclass=StaticPool,
+    )
+else:
+    sqlite_engine = create_async_engine(SQLITE_DATABASE_URL, echo=False)
 AsyncSQLiteSessionLocal = sessionmaker(  # type: ignore
     bind=sqlite_engine,
     class_=AsyncSession,
