@@ -26,13 +26,11 @@ router = APIRouter(prefix="/movies", tags=["movies"])
 
 @router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
-    request: Request,
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
 ):
     offset = (page - 1) * per_page
-
     count_res = await db.execute(select(func.count(MovieModel.id)))
     total_items = count_res.scalar()
 
@@ -49,16 +47,15 @@ async def get_movies(
         raise HTTPException(status_code=404, detail="No movies found.")
 
     total_pages = (total_items + per_page - 1) // per_page
-
-    base_url = request.url.path
+    base_url = "/theater/movies/"
 
     return {
         "movies": movies_list,
         "prev_page": (
-            f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
+            f"{base_url}?page={page-1}&per_page={per_page}" if page > 1 else None
         ),
         "next_page": (
-            f"{base_url}?page={page + 1}&per_page={per_page}"
+            f"{base_url}?page={page+1}&per_page={per_page}"
             if page < total_pages
             else None
         ),
@@ -94,7 +91,6 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
         revenue=data.revenue,
         country=country,
     )
-    db.add(new_movie)
 
     async def get_or_create_objs(model, names):
         if not names:
@@ -102,7 +98,6 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
         res = await db.execute(select(model).filter(model.name.in_(names)))
         existing_objs = res.scalars().all()
         existing_names = {obj.name: obj for obj in existing_objs}
-
         objs = []
         for name in names:
             if name in existing_names:
@@ -117,6 +112,7 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
     new_movie.actors = await get_or_create_objs(ActorModel, data.actors)
     new_movie.languages = await get_or_create_objs(LanguageModel, data.languages)
 
+    db.add(new_movie)
     await db.commit()
 
     final_stmt = (
