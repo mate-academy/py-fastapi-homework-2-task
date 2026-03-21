@@ -39,14 +39,11 @@ async def get_movies(
     if total_items == 0:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-
     stmt = (
         select(MovieModel).order_by(desc(MovieModel.id)).offset(offset).limit(per_page)
     )
     result = await db.execute(stmt)
-    movies_list = (
-        result.scalars().all()
-    )
+    movies_list = result.scalars().all()
 
     if not movies_list:
         raise HTTPException(status_code=404, detail="No movies found.")
@@ -168,7 +165,6 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(movie)
     await db.commit()
     return None
-
 
 
 @router.patch("/{movie_id}/")
