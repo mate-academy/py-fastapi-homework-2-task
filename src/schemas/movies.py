@@ -93,11 +93,21 @@ class MovieDetailSchema(BaseModel):
 
 MovieDetailResponse = MovieDetailSchema
 MovieDetailResponseSchema = MovieDetailSchema
-MovieListItemSchema = MovieDetailSchema  # ТЕ, ЩО ШУКАЮТЬ ТЕСТИ ЗАРАЗ
+
+
+class MovieListItemSchema(BaseModel):
+    id: int
+    name: str
+    date: date
+    score: float
+    overview: str
+
+    class Config:
+        from_attributes = True
 
 
 class MovieListResponseSchema(BaseModel):
-    movies: List[MovieDetailSchema]
+    movies: List[MovieListItemSchema]
     prev_page: Optional[str] = None
     next_page: Optional[str] = None
     total_pages: int

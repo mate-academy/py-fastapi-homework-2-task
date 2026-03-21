@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
+from pydantic import ValidationError
 
 from database import get_db
 from database.models import (
@@ -37,34 +39,29 @@ async def get_movies(
     if total_items == 0:
         raise HTTPException(status_code=404, detail="No movies found.")
 
+
     stmt = (
-        select(MovieModel)
-        .options(
-            joinedload(MovieModel.country),
-            joinedload(MovieModel.genres),
-            joinedload(MovieModel.actors),
-            joinedload(MovieModel.languages),
-        )
-        .order_by(desc(MovieModel.id))
-        .offset(offset)
-        .limit(per_page)
+        select(MovieModel).order_by(desc(MovieModel.id)).offset(offset).limit(per_page)
     )
     result = await db.execute(stmt)
-    movies_list = result.unique().scalars().all()
+    movies_list = (
+        result.scalars().all()
+    )
 
     if not movies_list:
         raise HTTPException(status_code=404, detail="No movies found.")
 
     total_pages = (total_items + per_page - 1) // per_page
-    base_url = str(request.url).split("?")[0]
+
+    base_url = request.url.path
 
     return {
         "movies": movies_list,
         "prev_page": (
-            f"{base_url}?page={page-1}&per_page={per_page}" if page > 1 else None
+            f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
         ),
         "next_page": (
-            f"{base_url}?page={page+1}&per_page={per_page}"
+            f"{base_url}?page={page + 1}&per_page={per_page}"
             if page < total_pages
             else None
         ),
@@ -100,23 +97,29 @@ async def create_movie(data: MovieCreateSchema, db: AsyncSession = Depends(get_d
         revenue=data.revenue,
         country=country,
     )
+    db.add(new_movie)
 
     async def get_or_create_objs(model, names):
+        if not names:
+            return []
+        res = await db.execute(select(model).filter(model.name.in_(names)))
+        existing_objs = res.scalars().all()
+        existing_names = {obj.name: obj for obj in existing_objs}
+
         objs = []
         for name in names:
-            res = await db.execute(select(model).filter_by(name=name))
-            obj = res.scalar_one_or_none()
-            if not obj:
-                obj = model(name=name)
-                db.add(obj)
-            objs.append(obj)
+            if name in existing_names:
+                objs.append(existing_names[name])
+            else:
+                new_obj = model(name=name)
+                db.add(new_obj)
+                objs.append(new_obj)
         return objs
 
     new_movie.genres = await get_or_create_objs(GenreModel, data.genres)
     new_movie.actors = await get_or_create_objs(ActorModel, data.actors)
     new_movie.languages = await get_or_create_objs(LanguageModel, data.languages)
 
-    db.add(new_movie)
     await db.commit()
 
     final_stmt = (
@@ -167,9 +170,10 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return None
 
 
+
 @router.patch("/{movie_id}/")
 async def update_movie(
-    movie_id: int, payload: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
+    movie_id: int, request: Request, db: AsyncSession = Depends(get_db)
 ):
     movie = await db.get(MovieModel, movie_id)
     if not movie:
@@ -177,13 +181,25 @@ async def update_movie(
             status_code=404, detail="Movie with the given ID was not found."
         )
 
+    try:
+        payload_data = await request.json()
+        payload = MovieUpdateSchema(**payload_data)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     data = payload.model_dump(exclude_unset=True)
     for key, value in data.items():
         setattr(movie, key, value)
 
     try:
         await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     except Exception:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     return {"detail": "Movie updated successfully."}
