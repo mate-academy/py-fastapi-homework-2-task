@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from database.models import MovieStatusEnum
 
@@ -88,3 +88,10 @@ class MovieCreateSchema(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+    @field_validator("date")
+    @classmethod
+    def date_must_not_be_in_more_than_one_year_in_the_future(cls, v: date) -> date:
+        if v > (date.today() + timedelta(days=365)):
+            raise ValueError("Date cannot be more than one year in the future")
+        return v
