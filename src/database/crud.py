@@ -58,6 +58,7 @@ async def get_list_movies_with_pagination_and_count(
     return (result, result[0][-1]) if result else (None, None)
 
 
+@commit_decorator
 async def get_or_create_default_objects(
     db: AsyncSession, model: BaseModel, field_to_search: str, filter_in: Iterable[str]
 ) -> Iterable[BaseModel]:
@@ -93,11 +94,11 @@ async def get_or_create_default_objects(
         except IntegrityError:
             ...
         else:
-            await db.commit()
             return *objects, *result
     return objects
 
 
+@commit_decorator
 async def get_or_create_country(db: AsyncSession, country_code: str) -> CountryModel:
     object_ = await db.scalar(
         select(CountryModel).where(CountryModel.code == country_code)
@@ -114,7 +115,6 @@ async def get_or_create_country(db: AsyncSession, country_code: str) -> CountryM
         except IntegrityError:
             ...
         else:
-            await db.commit()
             return new_object
     return object_
 
