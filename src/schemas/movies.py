@@ -1,19 +1,17 @@
 from datetime import date, timedelta
 from typing import Optional, Literal, List
-
-from fastapi.openapi.models import Schema
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-
-class GenreSchema(BaseModel):
-    id: int
-    name: str
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 
 class CountrySchema(BaseModel):
     id: int
     code: str
     name: str | None
+
+
+class GenreSchema(BaseModel):
+    id: int
+    name: str
 
 
 class ActorSchema(BaseModel):
@@ -32,7 +30,6 @@ class MovieBase(BaseModel):
     date: date
     score: float
     overview: str
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -46,7 +43,6 @@ class MovieListResponseSchema(BaseModel):
     next_page: Optional[str] = None
     total_pages: int
     total_items: int
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -54,11 +50,10 @@ class MovieDetailSchema(MovieBase):
     status: str
     budget: float
     revenue: float
-    country: str
+    country: CountrySchema
     genres: list[GenreSchema]
     actors: list[ActorSchema]
-    language: list[LanguageSchema]
-
+    languages: list[LanguageSchema]
     model_config = ConfigDict(from_attributes=True)
 
 
