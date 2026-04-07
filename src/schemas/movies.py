@@ -72,18 +72,18 @@ class MovieCreateSchema(BaseModel):
 
     @field_validator("date", mode="before")
     @classmethod
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            return date.fromisoformat(v)
-        return v
+    def parse_date(cls, value):
+        if isinstance(value, str):
+            return date.fromisoformat(value)
+        return value
 
     @field_validator("date")
     @classmethod
-    def validate_date(cls, v: date) -> date:
+    def validate_date(cls, value: date) -> date:
         one_year_from_now = date.today() + timedelta(days=365)
-        if v > one_year_from_now:
+        if value > one_year_from_now:
             raise ValueError("Date cannot be more than one year in the future")
-        return v
+        return value
 
 
 class MovieUpdateSchema(BaseModel):
