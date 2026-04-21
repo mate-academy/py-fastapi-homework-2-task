@@ -26,7 +26,7 @@ async def get_movies(
     offset = (page - 1) * per_page
     limit = per_page
     result = await db.execute(
-        select(MovieModel).order_by(-MovieModel.id).offset(offset).limit(limit)
+        select(MovieModel).order_by(MovieModel.id.desc()).offset(offset).limit(limit)
     )
     movies = result.scalars().all()
 
@@ -56,7 +56,9 @@ async def get_movies(
 
 
 async def get_or_create(model, db: AsyncSession, **kwargs):
-    result = await db.execute(select(model).filter_by(**kwargs))
+    result = await db.execute(
+        select(model).where(*(getattr(model, k) == v for k, v in kwargs.items()))
+    )
     obj = result.scalar_one_or_none()
     if not obj:
         obj = model(**kwargs)
@@ -131,8 +133,6 @@ async def create_movie(
         .where(MovieModel.id == movie.id)
     )
     movie = result.scalar_one()
-
-    return movie
 
     return movie
 

@@ -92,6 +92,8 @@ class MovieUpdate(BaseModel):
 
 
 class MovieListItemSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str = Field(max_length=255)
     date: datetime.date
