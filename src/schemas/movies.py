@@ -57,7 +57,7 @@ class MovieCreate(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country: str
+    country: str = Field(min_length=3, max_length=3)
     genres: list[str]
     actors: list[str]
     languages: list[str]

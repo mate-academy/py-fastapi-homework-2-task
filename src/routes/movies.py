@@ -2,6 +2,7 @@ import math
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -56,10 +57,13 @@ async def get_movies(
 
 
 async def get_or_create(model, db: AsyncSession, **kwargs):
-    result = await db.execute(
-        select(model).where(*(getattr(model, k) == v for k, v in kwargs.items()))
-    )
+    if not kwargs:
+        raise ValueError("get_or_create requires lookup fields")
+
+    conditions = [getattr(model, k) == v for k, v in kwargs.items()]
+    result = await db.execute(select(model).where(*conditions))
     obj = result.scalar_one_or_none()
+
     if not obj:
         obj = model(**kwargs)
         db.add(obj)
@@ -121,7 +125,19 @@ async def create_movie(
     )
 
     db.add(movie)
-    await db.commit()
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"A movie with the name '{movie.name}' "
+                f"and release date '{movie.date}' already exists."
+            ),
+        )
+
     result = await db.execute(
         select(MovieModel)
         .options(
