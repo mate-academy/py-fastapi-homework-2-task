@@ -155,7 +155,7 @@ async def create_movie(params: MovieDataDbParams) -> MovieModel:
         raise HTTPException(
             detail=(
                 f"A movie with the name '{movie.name}'"
-                f" and release date '{movie.date.strftime("%Y-%m-%d")}' "
+                f" and release date '{movie.date.strftime('%Y-%m-%d')}' "
                 "already exists."
             ),
             status_code=409,
