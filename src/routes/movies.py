@@ -26,6 +26,7 @@ from schemas.movies import (
     MovieUpdateSchema
 )
 
+
 def movie_id_db_params(
     movie_id: int,
     db: AsyncSession = Depends(get_db)
