@@ -8,7 +8,6 @@ from iso3166 import countries_by_alpha3
 
 from database import get_db, MovieModel
 from database.models import (
-    DeclarativeBase,
     CountryModel,
     GenreModel,
     ActorModel,
