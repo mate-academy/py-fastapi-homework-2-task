@@ -121,8 +121,9 @@ async def create_movie(
             if item not in item_list:
                 item_list.append(item)
                 db.add(item)
+        else:
+            await db.commit()
 
-        await db.commit()
         return item_list
 
     query = select(MovieModel).options(
