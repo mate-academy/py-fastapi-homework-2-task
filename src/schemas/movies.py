@@ -58,7 +58,7 @@ class MovieListItemSchema(BaseModel):
     total_items: int
 
 
-class MovieCreateSchema(BaseModel):
+class MovieDataBaseSchema(BaseModel):
     name: str
     date: datetime.date
     score: float
@@ -66,10 +66,6 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: float
     revenue: float
-    country: str
-    genres: list[str]
-    actors: list[str]
-    languages: list[str]
 
     @field_validator("name", mode="after")
     @classmethod
@@ -107,6 +103,13 @@ class MovieCreateSchema(BaseModel):
 
         return value
 
+
+class MovieCreateSchema(MovieDataBaseSchema):
+    country: str
+    genres: list[str]
+    actors: list[str]
+    languages: list[str]
+
     @field_validator("country", mode="after")
     @classmethod
     def validate_country(cls, value: str) -> str:
@@ -116,7 +119,7 @@ class MovieCreateSchema(BaseModel):
         return value
 
 
-class MovieUpdateSchema(BaseModel):
+class MovieUpdateSchema(MovieDataBaseSchema):
     name: str | None = None
     date: datetime.date | None = None
     score: float | None = None
@@ -124,21 +127,3 @@ class MovieUpdateSchema(BaseModel):
     status: MovieStatusEnum | None = None
     budget: float | None = None
     revenue: float | None = None
-
-    @field_validator("score", mode="after")
-    @classmethod
-    def validate_score(cls, value: float) -> float:
-        if value not in range(0, 101):
-            raise ValueError("Field score must be between 0 and 100")
-
-        return value
-
-    @field_validator("budget", "revenue", mode="after")
-    @classmethod
-    def validate_budget_and_revenue(cls, value: float) -> float:
-        if value < 0:
-            raise ValueError(
-                "Fields budget and revenue must be non-negative"
-            )
-
-        return value

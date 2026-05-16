@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,24 +22,6 @@ from schemas.movies import (
     MovieCreateSchema,
     MovieUpdateSchema
 )
-
-
-def movie_id_db_params(
-    movie_id: int,
-    db: AsyncSession = Depends(get_db)
-) -> dict:
-    return {"movie_id": movie_id, "db": db}
-
-
-def movie_data_db_params(
-    movie_data: MovieCreateSchema | MovieUpdateSchema,
-    db: AsyncSession = Depends(get_db)
-) -> dict:
-    return {"movie_data": movie_data, "db": db}
-
-
-MovieIdDbParams = Annotated[dict, Depends(movie_id_db_params)]
-MovieDataDbParams = Annotated[dict, Depends(movie_data_db_params)]
 
 
 async def get_movie_or_404(db: AsyncSession, movie_id: int) -> MovieModel:
@@ -122,20 +102,27 @@ async def get_movies(
     response_model=MovieDetailSchema,
     status_code=201
 )
-async def create_movie(params: MovieDataDbParams) -> MovieModel:
+async def create_movie(
+    movie_data: MovieCreateSchema,
+    db: AsyncSession = Depends(get_db)
+) -> MovieModel:
     async def _get_or_create_items(
-        model_type: type,
-        field_name: str
+        model_type: type[GenreModel | ActorModel | LanguageModel],
+        field_values: list[str],
     ) -> list:
-        result = await params["db"].execute(select(model_type))
+        result = await db.execute(
+            select(model_type).where(model_type.name.in_(field_values))
+        )
         item_list = list(result.scalars().all())
 
-        if not len(item_list):
-            item_list = [
-                model_type(name=item_name)
-                for item_name in getattr(params["movie_data"], field_name)
-            ]
+        for value in field_values:
+            item = model_type(name=value)
 
+            if item not in item_list:
+                item_list.append(item)
+                db.add(item)
+
+        await db.commit()
         return item_list
 
     query = select(MovieModel).options(
@@ -144,11 +131,11 @@ async def create_movie(params: MovieDataDbParams) -> MovieModel:
         joinedload(MovieModel.actors),
         joinedload(MovieModel.country),
     ).where(
-        MovieModel.name == params["movie_data"].name,
-        MovieModel.date == params["movie_data"].date
+        MovieModel.name == movie_data.name,
+        MovieModel.date == movie_data.date
     )
-    result = await params["db"].execute(query)
-    movie: MovieModel = result.unique().scalar_one_or_none()
+    result = await db.execute(query)
+    movie = result.unique().scalar_one_or_none()
 
     if movie:
         raise HTTPException(
@@ -161,15 +148,18 @@ async def create_movie(params: MovieDataDbParams) -> MovieModel:
         )
 
     country = CountryModel(
-        code=params["movie_data"].country,
-        name=countries_by_alpha3.get(params["movie_data"].country)
+        code=movie_data.country,
+        name=countries_by_alpha3.get(movie_data.country)
     )
-    genres = await _get_or_create_items(GenreModel, "genres")
-    actors = await _get_or_create_items(ActorModel, "actors")
-    languages = await _get_or_create_items(LanguageModel, "languages")
+    genres = await _get_or_create_items(GenreModel, movie_data.genres)
+    actors = await _get_or_create_items(ActorModel, movie_data.actors)
+    languages = await _get_or_create_items(
+        LanguageModel,
+        movie_data.languages
+    )
     movie_dict_data = {
         key: value
-        for key, value in params["movie_data"].model_dump().items()
+        for key, value in movie_data.model_dump().items()
         if key not in ("country", "genres", "actors", "languages")
     }
     movie = MovieModel(
@@ -179,11 +169,11 @@ async def create_movie(params: MovieDataDbParams) -> MovieModel:
         actors=actors,
         languages=languages,
     )
-    params["db"].add(country)
-    params["db"].add_all(genres)
-    params["db"].add_all(actors)
-    params["db"].add_all(languages)
-    await params["db"].commit()
+    db.add(country)
+    db.add_all(genres)
+    db.add_all(actors)
+    db.add_all(languages)
+    await db.commit()
     return MovieDetailSchema(
         id=movie.id,
         name=movie.name,
@@ -226,8 +216,11 @@ async def create_movie(params: MovieDataDbParams) -> MovieModel:
     "/movies/{movie_id}/",
     response_model=MovieDetailSchema,
 )
-async def get_movie(params: MovieIdDbParams) -> MovieModel:
-    movie = await get_movie_or_404(params["db"], params["movie_id"])
+async def get_movie(
+    movie_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> MovieModel:
+    movie = await get_movie_or_404(db, movie_id)
     return MovieDetailSchema(
         id=movie.id,
         name=movie.name,
@@ -267,26 +260,30 @@ async def get_movie(params: MovieIdDbParams) -> MovieModel:
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
-async def delete_movie(params: MovieIdDbParams) -> None:
-    movie = await get_movie_or_404(params["db"], params["movie_id"])
-    await params["db"].delete(movie)
-    await params["db"].commit()
+async def delete_movie(
+    movie_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> None:
+    movie = await get_movie_or_404(db, movie_id)
+    await db.delete(movie)
+    await db.commit()
 
 
 @router.patch("/movies/{movie_id}/")
 async def partial_update_movie(
     movie_id: int,
-    params: MovieDataDbParams
+    movie_data: MovieUpdateSchema,
+    db: AsyncSession = Depends(get_db)
 ) -> dict:
-    await get_movie_or_404(params["db"], movie_id)
-    await params["db"].execute(
+    await get_movie_or_404(db, movie_id)
+    await db.execute(
         update(MovieModel).where(MovieModel.id == movie_id).values(
             {
                 key: value
-                for key, value in params["movie_data"].model_dump().items()
+                for key, value in movie_data.model_dump().items()
                 if value is not None
             }
         )
     )
-    await params["db"].commit()
+    await db.commit()
     return {"detail": "Movie updated successfully."}
