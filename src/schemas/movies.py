@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, List
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from database.models import MovieStatusEnum
 
 
 class LanguageSchema(BaseModel):
@@ -69,24 +69,32 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieCreateSchema(BaseModel):
-    name: str
+    name: str = Field(max_length=255)
     date: datetime.date
-    score: float
+    score: float = Field(ge=0, le=100)
     overview: str
-    status: str
-    budget: float
-    revenue: float
-    country: str
+    status: MovieStatusEnum
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+    country: str = Field(max_length=3)
     genres: List[str]
     actors: List[str]
     languages: List[str]
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value) -> datetime.date:
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+        if value > max_date:
+            raise ValueError("Date must not be more than one year in the future.")
+        return value
 
 
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = None
     date: Optional[datetime.date] = None
-    score: Optional[float] = None
+    score: Optional[float] = Field(default=None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[str] = None
-    budget: Optional[float] = None
-    revenue: Optional[float] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(default=None, ge=0)
+    revenue: Optional[float] = Field(default=None, ge=0)

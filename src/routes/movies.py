@@ -2,7 +2,6 @@ import math
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import Response
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from database import get_db, MovieModel
@@ -169,23 +168,27 @@ async def update_movie(movie_id: int, movie: MovieUpdateSchema, db: AsyncSession
     if not updated_movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    if movie.name is not None:
-        updated_movie.name = movie.name
-    if movie.date is not None:
-        updated_movie.date = movie.date
-    if movie.score is not None:
-        updated_movie.score = movie.score
-    if movie.overview is not None:
-        updated_movie.overview = movie.overview
-    if movie.status is not None:
-        updated_movie.status = movie.status
-    if movie.budget is not None:
-        updated_movie.budget = movie.budget
-    if movie.revenue is not None:
-        updated_movie.revenue = movie.revenue
+    try:
 
-    await db.commit()
-    return {"detail": "Movie updated successfully."}
+        if movie.name is not None:
+            updated_movie.name = movie.name
+        if movie.date is not None:
+            updated_movie.date = movie.date
+        if movie.score is not None:
+            updated_movie.score = movie.score
+        if movie.overview is not None:
+            updated_movie.overview = movie.overview
+        if movie.status is not None:
+            updated_movie.status = movie.status
+        if movie.budget is not None:
+            updated_movie.budget = movie.budget
+        if movie.revenue is not None:
+            updated_movie.revenue = movie.revenue
+
+        await db.commit()
+        return {"detail": "Movie updated successfully."}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
