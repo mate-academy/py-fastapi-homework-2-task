@@ -73,7 +73,7 @@ class MovieCreateSchema(BaseModel):
     budget: float = Field(ge=0.0)
     revenue: float = Field(ge=0.0)
     country: str = Field(
-        ..., pattern="^[A-Z]{2}$", description="ISO 3166-1 alpha-3 code"
+        ..., pattern="^[A-Z]{3}$", description="ISO 3166-1 alpha-3 code"
     )
     genres: list[str]
     actors: list[str]
