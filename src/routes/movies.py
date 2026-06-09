@@ -183,7 +183,7 @@ async def movie_detail(
     )
     if not movie:
         raise HTTPException(
-            status_code=404, detail=f"Movie with the given ID was not found."
+            status_code=404, detail="Movie with the given ID was not found."
         )
     return movie
 
@@ -198,7 +198,7 @@ async def delete_movie(
     )
     if not movie:
         raise HTTPException(
-            status_code=404, detail=f"Movie with the given ID was not found."
+            status_code=404, detail="Movie with the given ID was not found."
         )
     await db.delete(movie)
     await db.commit()
@@ -217,7 +217,7 @@ async def update_movie(
 
     if not movie:
         raise HTTPException(
-            status_code=404, detail=f"Movie with the given ID was not found."
+            status_code=404, detail="Movie with the given ID was not found."
         )
     update_data = movie_data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
