@@ -49,6 +49,7 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieDetailSchema(BaseModel):
+    id: int
     name: str = Field(max_length=255)
     date: date
     score: float = Field(ge=0, le=100)
