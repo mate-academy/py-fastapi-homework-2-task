@@ -121,6 +121,7 @@ async def create_movie(
     db: Annotated[AsyncSession, Depends(get_db)],
     movie_data: schemas.MovieCreateSchema,
 ):
+
     genre_objects = await get_or_create_genres(db, movie_data.genres)
     actor_objects = await get_or_create_actors(db, movie_data.actors)
     language_objects = await get_or_create_languages(db, movie_data.languages)
@@ -139,6 +140,8 @@ async def create_movie(
             status_code=409,
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
         )
+    if len(movie_data.country) > 3 or not movie_data.country.isupper():
+        raise HTTPException(status_code=409, detail="Invalid input data.")
     db_movie = models.MovieModel(
         name=movie_data.name,
         date=movie_data.date,
