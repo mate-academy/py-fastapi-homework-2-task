@@ -64,9 +64,16 @@ class MovieDetailSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieCreateSchema(MovieDetailSchema):
+class MovieCreateSchema(BaseModel):
+    name: str = Field(max_length=255)
+    date: date
+    score: float = Field(ge=0, le=100)
+    overview: str
+    status: MovieStatusEnum
+    budget: float = Field(ge=0.0)
+    revenue: float = Field(ge=0.0)
     country: str = Field(
-        ..., pattern="^[A-Z]{3}$", description="ISO 3166-1 alpha-3 code"
+        ..., pattern="^[A-Z]{2}$", description="ISO 3166-1 alpha-3 code"
     )
     genres: list[str]
     actors: list[str]

@@ -3,7 +3,8 @@ from typing import Annotated
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
-from sqlalchemy import select, func
+from fastapi.responses import JSONResponse
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import schemas
@@ -124,7 +125,20 @@ async def create_movie(
     actor_objects = await get_or_create_actors(db, movie_data.actors)
     language_objects = await get_or_create_languages(db, movie_data.languages)
     country = await get_country_by_name(db, movie_data.country)
+    movie_exist = await db.scalar(
+        select(MovieModel).where(
+            and_(
+                MovieModel.name == movie_data.name,
+                MovieModel.date == movie_data.date,
+            )
+        )
+    )
 
+    if movie_exist:
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
+        )
     db_movie = models.MovieModel(
         name=movie_data.name,
         date=movie_data.date,
@@ -146,10 +160,7 @@ async def create_movie(
         await db.refresh(db_movie)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
-        )
+
     stmt = (
         select(models.MovieModel)
         .options(
@@ -224,8 +235,13 @@ async def update_movie(
         setattr(movie, key, value)
 
     try:
+        await db.flush()
         await db.commit()
+        await db.refresh(movie)
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
-    await db.refresh(movie)
+
+    return JSONResponse(
+        status_code=200, content={"detail": "Movie updated successfully."}
+    )
