@@ -6,43 +6,30 @@ from sqlalchemy import select
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-import datetime
+
 import schemas
 from database import get_db, models, MovieModel
-from database.models import MovieStatusEnum, GenreModel, ActorModel, LanguageModel, CountryModel
+from database.models import GenreModel, ActorModel, LanguageModel, CountryModel
 
 router = APIRouter()
 
 
-# @router.get(
-#     "/movies/{movie_id}/", response_model=schemas.MovieDetailResponseSchema
-# )
-# async def read_detail_movie(
-#     movie_id: int, db: Annotated[AsyncSession, Depends(get_db)]
-# ):
-#     db_movie = await db.scalar(
-#         select(models.MovieModel).where(models.MovieModel.id == movie_id)
-#     )
-#
-#     if not db_movie:
-#         raise HTTPException(
-#             status_code=404, detail="Movie with the given ID was not found."
-#         )
-#
-#     return db_movie
-
-
 @router.get("/movies/", response_model=schemas.MovieListResponseSchema)
 async def get_movies(
-        db: Annotated[AsyncSession, Depends(get_db)],
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1, le=20),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
 ):
     total_count = await db.scalar(select(func.count(models.MovieModel.id)))
     total_pages = ceil(total_count / per_page)
 
     offset = (page - 1) * per_page
-    query = select(models.MovieModel).order_by(models.MovieModel.id.desc()).offset(offset).limit(per_page)
+    query = (
+        select(models.MovieModel)
+        .order_by(models.MovieModel.id.desc())
+        .offset(offset)
+        .limit(per_page)
+    )
     result = await db.execute(query)
     movies = result.scalars().all()
 
@@ -70,12 +57,14 @@ async def get_movies(
     }
 
 
-async def get_or_create_genres(db: Annotated[AsyncSession, Depends(get_db)], genres_names: list[str]):
+async def get_or_create_genres(
+    db: Annotated[AsyncSession, Depends(get_db)], genres_names: list[str]
+):
     genres = []
     for name in genres_names:
-        genre = await db.scalar(select(GenreModel).where(
-            GenreModel.name == name
-        ))
+        genre = await db.scalar(
+            select(GenreModel).where(GenreModel.name == name)
+        )
         if not genre:
             genre = GenreModel(name=name)
             db.add(genre)
@@ -83,12 +72,14 @@ async def get_or_create_genres(db: Annotated[AsyncSession, Depends(get_db)], gen
     return genres
 
 
-async def get_or_create_actors(db: Annotated[AsyncSession, Depends(get_db)], actor_names: list[str]):
+async def get_or_create_actors(
+    db: Annotated[AsyncSession, Depends(get_db)], actor_names: list[str]
+):
     actors = []
     for name in actor_names:
-        actor = await db.scalar(select(ActorModel).where(
-            ActorModel.name == name
-        ))
+        actor = await db.scalar(
+            select(ActorModel).where(ActorModel.name == name)
+        )
         if not actor:
             actor = ActorModel(name=name)
             db.add(actor)
@@ -96,35 +87,39 @@ async def get_or_create_actors(db: Annotated[AsyncSession, Depends(get_db)], act
     return actors
 
 
-async def get_or_create_languages(db: Annotated[AsyncSession, Depends(get_db)], language_names: list[str]):
+async def get_or_create_languages(
+    db: Annotated[AsyncSession, Depends(get_db)], language_names: list[str]
+):
     languages = []
     for name in language_names:
-        language = await db.scalar(select(LanguageModel).where(
-           LanguageModel.name == name
-        ))
+        language = await db.scalar(
+            select(LanguageModel).where(LanguageModel.name == name)
+        )
         if not language:
             language = LanguageModel(name=name)
             db.add(language)
         languages.append(language)
     return languages
 
-async def get_country_by_name(db: Annotated[AsyncSession, Depends(get_db)], country_code: str):
-    country = await db.scalar(select(CountryModel).where(
-        CountryModel.code == country_code
-    ))
+
+async def get_country_by_name(
+    db: Annotated[AsyncSession, Depends(get_db)], country_code: str
+):
+    country = await db.scalar(
+        select(CountryModel).where(CountryModel.code == country_code)
+    )
     if not country:
         country = CountryModel(code=country_code)
         db.add(country)
-
-
     return country
 
 
-
-@router.post("/movies/", response_model=schemas.MovieDetailSchema, status_code=201)
+@router.post(
+    "/movies/", response_model=schemas.MovieDetailSchema, status_code=201
+)
 async def create_movie(
-        db: Annotated[AsyncSession, Depends(get_db)],
-        movie_data: schemas.MovieCreateSchema,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    movie_data: schemas.MovieCreateSchema,
 ):
     genre_objects = await get_or_create_genres(db, movie_data.genres)
     actor_objects = await get_or_create_actors(db, movie_data.actors)
@@ -152,14 +147,17 @@ async def create_movie(
         await db.refresh(db_movie)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists.",
+        )
     stmt = (
         select(models.MovieModel)
         .options(
             selectinload(models.MovieModel.country),
             selectinload(models.MovieModel.genres),
             selectinload(models.MovieModel.actors),
-            selectinload(models.MovieModel.languages)
+            selectinload(models.MovieModel.languages),
         )
         .where(models.MovieModel.id == db_movie.id)
     )
@@ -168,38 +166,60 @@ async def create_movie(
 
     return final_movie
 
+
 @router.get("/movies/{movie_id}/", response_model=schemas.MovieDetailSchema)
-async def movie_detail(db: Annotated[AsyncSession, Depends(get_db)], movie_id: int = Path(..., gt=0, le=2147483647)):
+async def movie_detail(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    movie_id: int = Path(..., gt=0, le=2147483647),
+):
     movie = await db.scalar(
         select(models.MovieModel)
         .options(
             selectinload(models.MovieModel.country),
             selectinload(models.MovieModel.genres),
             selectinload(models.MovieModel.actors),
-            selectinload(models.MovieModel.languages)
+            selectinload(models.MovieModel.languages),
         )
         .where(models.MovieModel.id == movie_id)
     )
     if not movie:
-        raise HTTPException(status_code=404, detail=f"Movie with ID {movie_id} was not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Movie with ID {movie_id} was not found."
+        )
     return movie
 
 
 @router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(db: Annotated[AsyncSession, Depends(get_db)], movie_id: int = Path(..., gt=0, le=2147483647)):
-    movie = await db.scalar(select(MovieModel).where(MovieModel.id == movie_id))
+async def delete_movie(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    movie_id: int = Path(..., gt=0, le=2147483647),
+):
+    movie = await db.scalar(
+        select(MovieModel).where(MovieModel.id == movie_id)
+    )
     if not movie:
-        raise HTTPException(status_code=404, detail=f"Movie with ID {movie_id} was not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Movie with ID {movie_id} was not found."
+        )
     await db.delete(movie)
     await db.commit()
     return None
 
+
 @router.patch("/movies/{movie_id}/")
-async def update_movie(db: Annotated[AsyncSession, Depends(get_db)], movie_data: schemas.MovieUpdateSchema, movie_id: int = Path(..., gt=0, le=2147483647)):
-    movie = await db.scalar(select(MovieModel).where(MovieModel.id == movie_id))
+async def update_movie(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    movie_data: schemas.MovieUpdateSchema,
+    movie_id: int = Path(..., gt=0, le=2147483647),
+):
+    movie = await db.scalar(
+        select(MovieModel).where(MovieModel.id == movie_id)
+    )
 
     if not movie:
-        raise HTTPException(status_code=404, detail=f"Movie with ID {movie_id} was not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Movie with ID {movie_id} was not found."
+        )
     update_data = movie_data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(movie, key, value)
@@ -210,6 +230,3 @@ async def update_movie(db: Annotated[AsyncSession, Depends(get_db)], movie_data:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
     await db.refresh(movie)
-
-
-

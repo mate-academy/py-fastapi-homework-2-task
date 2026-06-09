@@ -17,6 +17,7 @@ class GenreSchema(BaseModel):
     name: str
     model_config = ConfigDict(from_attributes=True)
 
+
 class CountrySchema(BaseModel):
     id: int
     code: str
@@ -28,6 +29,7 @@ class LanguageSchema(BaseModel):
     id: int
     name: str
     model_config = ConfigDict(from_attributes=True)
+
 
 class MovieListItemSchema(BaseModel):
     id: int
@@ -62,20 +64,24 @@ class MovieDetailSchema(BaseModel):
 
 
 class MovieCreateSchema(MovieDetailSchema):
-    country: str = Field(..., pattern="^[A-Z]{3}$", description="ISO 3166-1 alpha-3 code")
+    country: str = Field(
+        ..., pattern="^[A-Z]{3}$", description="ISO 3166-1 alpha-3 code"
+    )
     genres: list[str]
     actors: list[str]
     languages: list[str]
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator('date')
+    @field_validator("date")
     @classmethod
     def date_not_too_far_in_future(cls, movie_date: date):
         today = date.today()
         one_year_later = today + timedelta(days=365)
 
         if movie_date > one_year_later:
-            raise ValueError('The date must not be more than one year in the future.')
+            raise ValueError(
+                "The date must not be more than one year in the future."
+            )
         return movie_date
 
 
