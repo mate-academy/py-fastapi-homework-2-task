@@ -2,7 +2,6 @@ from math import ceil
 from typing import Annotated
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
