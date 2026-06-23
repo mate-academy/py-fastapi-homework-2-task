@@ -1,8 +1,8 @@
 import math
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import ValidationError
 from sqlalchemy import desc, select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -196,8 +196,13 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)) -> MovieM
 
 @router.patch("/movies/{movie_id}/")
 async def update_movie(
-    movie_id: int, movie_data: MoviePatchSchema, db: AsyncSession = Depends(get_db)
+    movie_id: int, movie_data: dict, db: AsyncSession = Depends(get_db)
 ) -> dict[str, str]:
+    try:
+        movie_data = MoviePatchSchema(**movie_data)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     movie = await db.get(MovieModel, movie_id)
 
     if not movie:
