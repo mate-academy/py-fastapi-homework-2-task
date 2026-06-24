@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from starlette import status
 
 import crud
@@ -59,7 +61,13 @@ async def create_movie(
     movie_data: schemas.MovieCreateRequestSchema,
     db: DBDep,
 ):
-    return await crud.create_movie(db=db, movie_data=movie_data)
+    try:
+        return await crud.create_movie(db=db, movie_data=movie_data)
+    except (RequestValidationError, ValidationError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
+        )
 
 
 @router.get(
@@ -124,10 +132,16 @@ async def update_movie(
             detail="Movie with the given ID was not found."
         )
 
-    await crud.patch_movie_fields(
-        db=db,
-        movie=movie,
-        movie_update=movie_update
-    )
+    try:
+        await crud.patch_movie_fields(
+            db=db,
+            movie=movie,
+            movie_update=movie_update
+        )
+    except (RequestValidationError, ValidationError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
+        )
 
     return {"detail": "Movie updated successfully."}

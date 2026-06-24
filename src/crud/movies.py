@@ -62,8 +62,8 @@ async def create_movie(
 
     country, _ = await models.CountryModel.get_or_create(
         session=db,
-        name=movie_data.country,
-        defaults={"code": movie_data.country[:2].upper()}
+        code=movie_data.country,
+        defaults={"name": None}
     )
 
     genres_list = []
