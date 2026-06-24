@@ -2,12 +2,47 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
+import sqlalchemy as sa
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 
 
 class Base(DeclarativeBase):
+    __abstract__ = True
+
+    @classmethod
+    async def get_or_create(
+        cls, session: AsyncSession, defaults=None, **kwargs
+    ):
+        predicates = [getattr(cls, k) == v for k, v in kwargs.items()]
+
+        try:
+            instance = await session.scalar(sa.select(cls).where(*predicates))
+            if instance:
+                return instance, False
+        except Exception:
+            pass
+
+        defaults = defaults or {}
+        instance_kwargs = kwargs | defaults
+        instance = cls(**instance_kwargs)
+
+        try:
+            session.add(instance)
+            await session.flush()
+            return instance, True
+        except Exception:
+            await session.rollback()
+            try:
+                instance = await session.scalar(sa.select(cls).where(*predicates))
+                if instance:
+                    return instance, False
+            except Exception:
+                pass
+            raise
+
     @classmethod
     def default_order_by(cls):
         return None
