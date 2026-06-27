@@ -1,20 +1,29 @@
 import os
+from .models import MovieModel, CountryModel, GenreModel, ActorModel, LanguageModel, Base
 
-from database.models import (
-    Base,
-    MovieModel
+from .session_sqlite import (
+    reset_sqlite_database as reset_database,
+    sqlite_engine,
+    get_sqlite_db_contextmanager,
+    get_sqlite_db
 )
-from database.session_sqlite import reset_sqlite_database as reset_database
+
+engine_sqlite = sqlite_engine
 
 environment = os.getenv("ENVIRONMENT", "developing")
 
 if environment == "testing":
-    from database.session_sqlite import (
-        get_sqlite_db_contextmanager as get_db_contextmanager,
-        get_sqlite_db as get_db,
-    )
+    get_db_contextmanager = get_sqlite_db_contextmanager
+    get_db = get_sqlite_db
 else:
-    from database.session_postgresql import (
-        get_postgresql_db_contextmanager as get_db_contextmanager,
-        get_postgresql_db as get_db,
+    from .session_postgresql import (
+        get_postgresql_db_contextmanager,
+        get_postgresql_db,
     )
+    get_db_contextmanager = get_postgresql_db_contextmanager
+    get_db = get_postgresql_db
+
+__all__ = [
+    "MovieModel", "CountryModel", "GenreModel", "ActorModel", "LanguageModel",
+    "Base", "get_db", "get_db_contextmanager", "reset_database", "engine_sqlite"
+]
