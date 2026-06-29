@@ -55,6 +55,9 @@ class MovieDetailResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+MovieDetailSchema = MovieDetailResponseSchema
+
+
 class MovieCreateSchema(BaseModel):
     name: str = Field(max_length=255)
     date: datetime.date
