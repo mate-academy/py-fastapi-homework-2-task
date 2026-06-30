@@ -15,13 +15,12 @@ from schemas.movies import (
     MovieCreationDetailSchema,
     MovieDetailSchema,
     MovieUpdateSchema,
+    DetailMessageSchema,
 )
 
 router = APIRouter(prefix="/movies")
 
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
-PageParams = Annotated[int, Query(gte=1)]
-PerPageParams = Annotated[int, Query(gte=1, lte=20)]
 
 
 async def get_or_create_entities(db: DatabaseSession, model, names: list[str]) -> list:
@@ -52,7 +51,9 @@ async def get_movie_with_relationships(db: DatabaseSession, movie_id: int):
 
 @router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
-    db: DatabaseSession, page: PageParams = 1, per_page: PerPageParams = 10
+    db: DatabaseSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=20),
 ):
 
     movies_stmt = select(func.count(MovieModel.id))
@@ -68,7 +69,7 @@ async def get_movies(
 
     movies_stmt = (
         select(MovieModel)
-        .order_by(MovieModel.id)
+        .order_by(MovieModel.id.desc())
         .limit(per_page)
         .offset((page - 1) * per_page)
     )
@@ -181,7 +182,7 @@ async def delete_movie(movie_id: int, db: DatabaseSession):
     return responses.Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.patch("/{movie_id}/")
+@router.patch("/{movie_id}/", response_model=DetailMessageSchema)
 async def update_movie(movie_id: int, movie: MovieUpdateSchema, db: DatabaseSession):
     update_stmt = select(MovieModel).where(MovieModel.id == movie_id)
     update_result = await db.execute(update_stmt)
@@ -206,7 +207,4 @@ async def update_movie(movie_id: int, movie: MovieUpdateSchema, db: DatabaseSess
             detail="Invalid input data.",
         )
 
-    return responses.Response(
-        status_code=status.HTTP_200_OK,
-        content={"detail": "Movie updated successfully."},
-    )
+    return DetailMessageSchema(detail="Movie updated successfully.")

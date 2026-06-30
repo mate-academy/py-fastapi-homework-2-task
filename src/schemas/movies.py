@@ -71,6 +71,7 @@ class MovieCountrySchema(BaseModel):
 class MovieCreationDetailSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: int
     name: str
     date: datetime.date
     score: float
@@ -104,3 +105,7 @@ class MovieUpdateSchema(BaseModel):
         if v is not None and v.year > datetime.date.today().year + 1:
             raise ValidationError("Date must not be more than 1 year in the future")
         return v
+
+
+class DetailMessageSchema(BaseModel):
+    detail: str
