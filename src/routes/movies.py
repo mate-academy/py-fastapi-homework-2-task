@@ -194,7 +194,6 @@ async def update_movie(movie_id: int, movie: MovieUpdateSchema, db: DatabaseSess
             detail="Movie with the given ID was not found.",
         )
 
-    print()
     for key, value in movie.model_dump(exclude_unset=True).items():
         setattr(movie_for_update, key, value)
 

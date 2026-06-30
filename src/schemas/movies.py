@@ -3,7 +3,7 @@
 
 import datetime
 
-from pydantic import BaseModel, Field, field_validator, ValidationError, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from database.models import MovieStatusEnum
 
@@ -43,7 +43,7 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     def validate_date(cls, v):
         if v.year > datetime.date.today().year + 1:
-            raise ValidationError("Date must not be more than 1 year in the future")
+            raise ValueError("Date must not be more than 1 year in the future")
         return v
 
 
@@ -97,13 +97,12 @@ class MovieUpdateSchema(BaseModel):
     status: MovieStatusEnum | None = None
     budget: float | None = Field(default=None, ge=0)
     revenue: float | None = Field(default=None, ge=0)
-    country: str | None = Field(default=None, max_length=3)
 
     @field_validator("date")
     @classmethod
     def validate_date(cls, v):
         if v is not None and v.year > datetime.date.today().year + 1:
-            raise ValidationError("Date must not be more than 1 year in the future")
+            raise ValueError("Date must not be more than 1 year in the future")
         return v
 
 
