@@ -117,6 +117,8 @@ class MovieDetailSchema(MovieBase):
 
 
 class MovieListItemSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     date: datetime.date

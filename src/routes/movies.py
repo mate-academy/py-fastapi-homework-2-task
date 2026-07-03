@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import desc, select, func
@@ -7,11 +7,41 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from database import get_db, MovieModel
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieStatusEnum
 import schemas
 
 
 router = APIRouter()
+INVALID_INPUT_DETAIL = "Invalid input data."
+VALID_MOVIE_STATUSES = {movie_status.value for movie_status in MovieStatusEnum}
+
+
+def raise_invalid_input():
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=INVALID_INPUT_DETAIL)
+
+
+def is_valid_country_code(country: str) -> bool:
+    return country.isalpha() and len(country) in {2, 3}
+
+
+def validate_movie_data(movie: schemas.MovieCreate | schemas.MovieUpdate):
+    if movie.name is not None and len(movie.name) > 255:
+        raise_invalid_input()
+
+    if movie.date is not None and movie.date > date.today() + timedelta(days=365):
+        raise_invalid_input()
+
+    if movie.score is not None and (movie.score < 0 or movie.score > 100):
+        raise_invalid_input()
+
+    if movie.budget is not None and movie.budget < 0:
+        raise_invalid_input()
+
+    if movie.revenue is not None and movie.revenue < 0:
+        raise_invalid_input()
+
+    if movie.status is not None and movie.status not in VALID_MOVIE_STATUSES:
+        raise_invalid_input()
 
 
 @router.get("/movies/", response_model=schemas.MovieListResponseSchema)
@@ -29,18 +59,13 @@ async def get_movies(
     if not movies:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    movie_list = [schemas.MovieListItemSchema(**movie.__dict__) for movie in movies]
-
-    prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
-    next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if len(movies) == per_page else None
-
     total_items = await db.scalar(select(func.count()).select_from(MovieModel))
     total_pages = (total_items + per_page - 1) // per_page
 
     return schemas.MovieListResponseSchema(
-        movies=movie_list,
-        prev_page=prev_page,
-        next_page=next_page,
+        movies=movies,
+        prev_page=f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None,
+        next_page=f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None,
         total_pages=total_pages,
         total_items=total_items
     )
@@ -57,81 +82,70 @@ async def create_movie(movie: schemas.MovieCreate, db: AsyncSession = Depends(ge
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
 
-    if len(movie.name) > 255:
-        raise HTTPException(status_code=400, detail="Movie name exceeds maximum length of 255 characters.")
-
-    if movie.date.year > date.today().year + 1:
-        raise HTTPException(status_code=400, detail="Movie date cannot be in the future.")
-
-    if movie.score < 0 or movie.score > 100:
-        raise HTTPException(status_code=400, detail="Movie score must be between 0 and 100.")
-
-    if movie.budget < 0 or movie.revenue < 0:
-        raise HTTPException(status_code=400, detail="Movie budget and revenue cannot be negative.")
+    validate_movie_data(movie)
+    if not is_valid_country_code(movie.country):
+        raise_invalid_input()
 
     country_result = await db.scalars(select(CountryModel).where(CountryModel.code == movie.country))
     country = country_result.first()
-    if not country:
-        country = CountryModel(code=movie.country)
-        db.add(country)
-        await db.commit()
-
-    genres = []
-    for genre_name in movie.genres:
-        genre_result = await db.scalars(select(GenreModel).where(GenreModel.name == genre_name))
-        genre = genre_result.first()
-        if not genre:
-            genre = GenreModel(name=genre_name)
-            db.add(genre)
-            await db.commit()
-            await db.refresh(genre)
-
-        genres.append(genre)
-
-    actors = []
-    for actor_name in movie.actors:
-        actor_result = await db.scalars(select(ActorModel).where(ActorModel.name == actor_name))
-        actor = actor_result.first()
-        if not actor:
-            actor = ActorModel(name=actor_name)
-            db.add(actor)
-            await db.commit()
-            await db.refresh(actor)
-
-        actors.append(actor)
-
-    languages = []
-    for language_name in movie.languages:
-        language_result = await db.scalars(select(LanguageModel).where(LanguageModel.name == language_name))
-        language = language_result.first()
-        if not language:
-            language = LanguageModel(name=language_name)
-            db.add(language)
-            await db.commit()
-            await db.refresh(language)
-
-        languages.append(language)
-
-    new_movie = MovieModel(
-        name=movie.name,
-        date=movie.date,
-        score=movie.score,
-        overview=movie.overview,
-        status=movie.status,
-        budget=movie.budget,
-        revenue=movie.revenue,
-        country=country,
-        genres=genres,
-        actors=actors,
-        languages=languages
-    )
-
-    db.add(new_movie)
     try:
+        if not country:
+            country = CountryModel(code=movie.country)
+            db.add(country)
+            await db.flush()
+
+        genres = []
+        for genre_name in movie.genres:
+            genre_result = await db.scalars(select(GenreModel).where(GenreModel.name == genre_name))
+            genre = genre_result.first()
+            if not genre:
+                genre = GenreModel(name=genre_name)
+                db.add(genre)
+                await db.flush()
+
+            genres.append(genre)
+
+        actors = []
+        for actor_name in movie.actors:
+            actor_result = await db.scalars(select(ActorModel).where(ActorModel.name == actor_name))
+            actor = actor_result.first()
+            if not actor:
+                actor = ActorModel(name=actor_name)
+                db.add(actor)
+                await db.flush()
+
+            actors.append(actor)
+
+        languages = []
+        for language_name in movie.languages:
+            language_result = await db.scalars(select(LanguageModel).where(LanguageModel.name == language_name))
+            language = language_result.first()
+            if not language:
+                language = LanguageModel(name=language_name)
+                db.add(language)
+                await db.flush()
+
+            languages.append(language)
+
+        new_movie = MovieModel(
+            name=movie.name,
+            date=movie.date,
+            score=movie.score,
+            overview=movie.overview,
+            status=movie.status,
+            budget=movie.budget,
+            revenue=movie.revenue,
+            country=country,
+            genres=genres,
+            actors=actors,
+            languages=languages
+        )
+
+        db.add(new_movie)
         await db.commit()
-    except IntegrityError as e:
+    except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e.orig))
+        raise_invalid_input()
 
     result = await db.execute(
         select(MovieModel)
@@ -182,29 +196,21 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/movies/{movie_id}/")
 async def update_movie(movie_id: int, movie_update: schemas.MovieUpdate, db: AsyncSession = Depends(get_db)):
-    if movie_update.score is not None and (movie_update.score > 100 or movie_update.score < 0):
-        raise HTTPException(status_code=400, detail="Movie score must be between 0 and 100.")
-
-    if movie_update.budget is not None and movie_update.budget < 0:
-        raise HTTPException(status_code=400, detail="Movie budget cannot be negative.")
-
-    if movie_update.revenue is not None and movie_update.revenue < 0:
-        raise HTTPException(status_code=400, detail="Movie revenue cannot be negative.")
-
     result = await db.scalars(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
+    validate_movie_data(movie_update)
     update_data = movie_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(movie, field, value)
 
     try:
         await db.commit()
-    except IntegrityError as e:
+    except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e.orig))
+        raise_invalid_input()
 
     return {"detail": "Movie updated successfully."}
