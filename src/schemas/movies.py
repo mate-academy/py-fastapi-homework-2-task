@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
+from database.models import MovieStatusEnum
 
 
 class CountrySchema(BaseModel):
@@ -50,7 +51,7 @@ class MovieCreate(BaseModel):
     date: date
     score: float = Field(..., ge=0, le=100)
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
     country: str = Field(..., description="ISO 3166-1 alpha-3 code")
@@ -88,6 +89,6 @@ class MovieUpdate(BaseModel):
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
