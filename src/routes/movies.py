@@ -7,7 +7,6 @@ from sqlalchemy.orm import selectinload
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-
 from schemas import (
     PaginatedMoviesResponse,
     MovieCreate,
@@ -179,7 +178,6 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(movie)
     await db.commit()
     return None
-
 
 
 @router.patch("/movies/{movie_id}/")
