@@ -9,9 +9,9 @@ from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 
 from schemas import (
-    PaginatedMoviesResponse, 
-    MovieCreate, 
-    MovieDetailOut, 
+    PaginatedMoviesResponse,
+    MovieCreate,
+    MovieDetailOut,
     MovieUpdate
 )
 
@@ -32,7 +32,7 @@ async def get_movies(
         raise HTTPException(status_code=404, detail="No movies found.")
 
     total_pages = math.ceil(total_items / per_page)
-    
+
     if page > total_pages:
         raise HTTPException(status_code=404, detail="No movies found.")
 
@@ -121,7 +121,7 @@ async def create_movie(movie_data: MovieCreate, db: AsyncSession = Depends(get_d
         actors=actors,
         languages=languages
     )
-    
+
     db.add(new_movie)
     try:
         await db.commit()
@@ -131,7 +131,7 @@ async def create_movie(movie_data: MovieCreate, db: AsyncSession = Depends(get_d
             status_code=409,
             detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
         )
-    
+
     stmt = (
         select(MovieModel)
         .options(
@@ -160,10 +160,10 @@ async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
     )
     result = await db.execute(stmt)
     movie = result.scalar_one_or_none()
-    
+
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    
+
     return movie
 
 
@@ -172,13 +172,14 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     stmt = select(MovieModel).filter_by(id=movie_id)
     result = await db.execute(stmt)
     movie = result.scalar_one_or_none()
-    
+
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    
+
     await db.delete(movie)
     await db.commit()
     return None
+
 
 
 @router.patch("/movies/{movie_id}/")
@@ -186,22 +187,22 @@ async def update_movie(movie_id: int, movie_data: MovieUpdate, db: AsyncSession 
     stmt = select(MovieModel).filter_by(id=movie_id)
     result = await db.execute(stmt)
     movie = result.scalar_one_or_none()
-    
+
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    
+
     update_data = movie_data.model_dump(exclude_unset=True)
-    
+
     if not update_data:
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     for key, value in update_data.items():
         setattr(movie, key, value)
-        
+
     try:
         await db.commit()
     except Exception:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
-        
+
     return {"detail": "Movie updated successfully."}
