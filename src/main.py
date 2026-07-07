@@ -14,4 +14,4 @@ async def validation_exception_handler(request, exc):
     )
 
 
-app.include_router(movie_router, prefix="/theater")
+app.include_router(movie_router, prefix="/api/v1/theater")
