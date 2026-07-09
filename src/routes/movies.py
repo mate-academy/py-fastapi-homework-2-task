@@ -204,13 +204,6 @@ async def update_movie(
         )
 
     for param, value in movie_update_info.model_dump(exclude_unset=True).items():
-        if param == "date":
-            max_date = datetime.date.today() + datetime.timedelta(days=365)
-            if value > max_date:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid input data."
-                )
         setattr(movie, param, value)
 
     db.add(movie)

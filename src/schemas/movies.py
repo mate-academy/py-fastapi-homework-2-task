@@ -74,6 +74,14 @@ class MovieCreateItemSchema(BaseModel):
     actors: list[str]
     languages: list[str]
 
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value: datetime.date):
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+        if value > max_date:
+            raise ValueError()
+        return value
+
 
 class MovieDetailSchema(BaseModel):
     id: int
@@ -98,3 +106,11 @@ class MovieUpdateSchema(BaseModel):
     status: MovieStatusEnum = None
     budget: float | None = Field(default=None, ge=0)
     revenue: float | None = Field(default=None, ge=0)
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value: datetime.date):
+        max_date = datetime.date.today() + datetime.timedelta(days=365)
+        if value > max_date:
+            raise ValueError()
+        return value
