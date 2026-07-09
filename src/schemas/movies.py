@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, ValidationError
 
 from database.models import MovieStatusEnum
 
@@ -11,6 +11,8 @@ class CountryBaseSchema(BaseModel):
 
 
 class CountryDetailSchema(CountryBaseSchema):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -37,6 +39,8 @@ class LanguageBaseSchema(BaseModel):
 
 
 class LanguageDetailSchema(LanguageBaseSchema):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -58,7 +62,7 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieCreateItemSchema(BaseModel):
-    name: str
+    name: str = Field(max_length=255)
     date: datetime.date
     score: float = Field(ge=0, le=100)
     overview: str
@@ -87,7 +91,7 @@ class MovieDetailSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=255)
     date: datetime.date | None = None
     score: float | None = Field(default=None, ge=0, le=100)
     overview: str | None = None

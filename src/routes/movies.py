@@ -1,10 +1,10 @@
+import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
@@ -76,9 +76,17 @@ async def create_movie(
     movie_info = movie_info.model_dump()
 
     country = movie_info.pop("country")
+    date = movie_info.get("date")
     genres = movie_info.pop("genres")
     actors = movie_info.pop("actors")
     languages = movie_info.pop("languages")
+
+    max_date = datetime.date.today() + datetime.timedelta(days=365)
+    if date > max_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data."
+        )
 
     movie = MovieModel(**movie_info)
 
@@ -196,6 +204,13 @@ async def update_movie(
         )
 
     for param, value in movie_update_info.model_dump(exclude_unset=True).items():
+        if param == "date":
+            max_date = datetime.date.today() + datetime.timedelta(days=365)
+            if value > max_date:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid input data."
+                )
         setattr(movie, param, value)
 
     db.add(movie)
