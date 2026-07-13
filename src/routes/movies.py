@@ -1,6 +1,7 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -16,6 +17,16 @@ from schemas.movies import (
 )
 
 router = APIRouter()
+
+
+def validate_movie_date(movie_date: date) -> None:
+    max_date = date.today() + timedelta(days=365)
+
+    if movie_date > max_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data."
+        )
 
 
 @router.get(
@@ -148,6 +159,9 @@ async def update_movie(
             detail="Movie with the given ID was not found."
         )
 
+    if movie_data.date is not None:
+        validate_movie_date(movie_data.date)
+
     for field, value in movie_data.model_dump(exclude_unset=True).items():
         setattr(movie, field, value)
 
@@ -165,6 +179,8 @@ async def create_movie(
     movie_data: MovieCreateSchema,
     db: AsyncSession = Depends(get_db),
 ):
+    validate_movie_date(movie_data.date)
+
     existing_movie = await db.scalar(
         select(MovieModel).where(
             MovieModel.name == movie_data.name,
