@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from routes import movie_router
 
@@ -11,3 +13,19 @@ app = FastAPI(
 api_version_prefix = "/api/v1"
 
 app.include_router(movie_router, prefix=f"{api_version_prefix}/theater", tags=["theater"])
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    body_errors = [error for error in exc.errors() if error["loc"][0] == "body"]
+
+    if body_errors:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Invalid input data."},
+        )
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
