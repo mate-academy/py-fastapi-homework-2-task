@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from starlette import status
 
 from database import get_db, MovieModel
-from database.crud.movies import get_all_movies, create_movie, MovieAlreadyExistsError
+from database.crud.movies import get_all_movies, create_movie, MovieAlreadyExistsError, get_movie_by_id
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
 from schemas.movies import MovieCreateSchema
@@ -57,4 +57,15 @@ async def add_movie(
             detail=str(e),
         )
 
+    return MovieDetailSchema.model_validate(movie)
+
+
+@router.get("/{movie_id}/")
+async def get_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> MovieDetailSchema:
+    movie = await get_movie_by_id(session=db, movie_id=movie_id)
+    if not movie:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found")
     return MovieDetailSchema.model_validate(movie)

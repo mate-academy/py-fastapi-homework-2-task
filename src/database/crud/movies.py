@@ -32,6 +32,10 @@ async def get_all_movies(session: AsyncSession, page: int, per_page: int) -> tup
     return movies, total_items
 
 
+async def get_movie_by_id(session: AsyncSession, movie_id: int) -> MovieModel | None:
+    return await session.get(MovieModel, movie_id)
+
+
 async def get_or_create(
         session: AsyncSession, model, **kwargs
 ):
@@ -61,7 +65,7 @@ async def create_movie(
             f"and release date '{movie_data.date}' already exists."
         )
 
-    country = await get_or_create(session, CountryModel, code=movie_data.country)
+    country = await get_or_create(session, CountryModel, code=movie_data.country.upper())
 
     genres = [
         await get_or_create(session, GenreModel, name=genre_name)
@@ -100,17 +104,5 @@ async def create_movie(
             f"and release date '{movie_data.date}' already exists."
         )
 
-    stmt = (
-        select(MovieModel)
-        .where(MovieModel.id == movie.id)
-        .options(
-            selectinload(MovieModel.country),
-            selectinload(MovieModel.genres),
-            selectinload(MovieModel.actors),
-            selectinload(MovieModel.languages),
-        )
-    )
-    result = await session.execute(stmt)
-    movie = result.scalar_one()
-
+    await session.refresh(movie)
     return movie
