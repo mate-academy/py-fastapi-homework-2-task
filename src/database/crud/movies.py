@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -106,3 +106,10 @@ async def create_movie(
 
     await session.refresh(movie)
     return movie
+
+
+async def delete_movie(session: AsyncSession, movie_id: int) -> bool:
+    stmt = delete(MovieModel).where(MovieModel.id == movie_id)
+    result = await session.execute(stmt)
+    await session.commit()
+    return result.rowcount > 0

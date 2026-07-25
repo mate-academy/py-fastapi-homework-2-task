@@ -1,14 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 from starlette import status
 
-from database import get_db, MovieModel
-from database.crud.movies import get_all_movies, create_movie, MovieAlreadyExistsError, get_movie_by_id
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from database import get_db
+from database.crud import movies as crud_movies
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
 from schemas.movies import MovieCreateSchema
 
@@ -21,7 +16,7 @@ async def get_movies(
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db),
 ) -> MovieListResponseSchema:
-    movies, total_items = await get_all_movies(session=db, page=page, per_page=per_page)
+    movies, total_items = await crud_movies.get_all_movies(session=db, page=page, per_page=per_page)
     if not movies:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
@@ -50,8 +45,8 @@ async def add_movie(
         db: AsyncSession = Depends(get_db),
 ) -> MovieDetailSchema:
     try:
-        movie = await create_movie(session=db, movie_data=movie_data)
-    except MovieAlreadyExistsError as e:
+        movie = await crud_movies.create_movie(session=db, movie_data=movie_data)
+    except crud_movies.MovieAlreadyExistsError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
@@ -65,7 +60,17 @@ async def get_movie(
         movie_id: int,
         db: AsyncSession = Depends(get_db),
 ) -> MovieDetailSchema:
-    movie = await get_movie_by_id(session=db, movie_id=movie_id)
+    movie = await crud_movies.get_movie_by_id(session=db, movie_id=movie_id)
     if not movie:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
     return MovieDetailSchema.model_validate(movie)
+
+
+@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> None:
+    is_deleted = await crud_movies.delete_movie(session=db, movie_id=movie_id)
+    if not is_deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
