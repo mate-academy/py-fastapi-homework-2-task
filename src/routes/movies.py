@@ -5,7 +5,7 @@ from starlette import status
 from database import get_db
 from database.crud import movies as crud_movies
 from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
-from schemas.movies import MovieCreateSchema
+from schemas.movies import MovieCreateSchema, MovieUpdateSchema, MessageResponseSchema
 
 router = APIRouter(prefix="/movies")
 
@@ -39,7 +39,7 @@ async def get_movies(
     )
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def add_movie(
         movie_data: MovieCreateSchema,
         db: AsyncSession = Depends(get_db),
@@ -74,3 +74,15 @@ async def delete_movie(
     is_deleted = await crud_movies.delete_movie(session=db, movie_id=movie_id)
     if not is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
+
+
+@router.patch("/{movie_id}/")
+async def update_movie(
+        movie_id: int,
+        movie_data: MovieUpdateSchema,
+        db: AsyncSession = Depends(get_db),
+) -> MessageResponseSchema:
+    is_updated = await crud_movies.update_movie(session=db, movie_id=movie_id, movie_data=movie_data)
+    if not is_updated:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie with the given ID was not found.")
+    return MessageResponseSchema(detail="Movie updated successfully.")

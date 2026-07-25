@@ -3,11 +3,10 @@ from typing import Sequence
 from sqlalchemy import select, func, desc, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from database import MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieCreateSchema
+from schemas.movies import MovieCreateSchema, MovieUpdateSchema
 
 
 class MovieAlreadyExistsError(Exception):
@@ -113,3 +112,20 @@ async def delete_movie(session: AsyncSession, movie_id: int) -> bool:
     result = await session.execute(stmt)
     await session.commit()
     return result.rowcount > 0
+
+async def update_movie(
+    session: AsyncSession, movie_id: int, movie_data: MovieUpdateSchema
+) -> bool:
+    stmt = select(MovieModel).where(MovieModel.id == movie_id)
+    result = await session.execute(stmt)
+    movie = result.scalar_one_or_none()
+
+    if movie is None:
+        return False
+
+    update_data = movie_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(movie, field, value)
+
+    await session.commit()
+    return True
