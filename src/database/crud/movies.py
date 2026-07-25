@@ -113,8 +113,9 @@ async def delete_movie(session: AsyncSession, movie_id: int) -> bool:
     await session.commit()
     return result.rowcount > 0
 
+
 async def update_movie(
-    session: AsyncSession, movie_id: int, movie_data: MovieUpdateSchema
+        session: AsyncSession, movie_id: int, movie_data: MovieUpdateSchema
 ) -> bool:
     stmt = select(MovieModel).where(MovieModel.id == movie_id)
     result = await session.execute(stmt)

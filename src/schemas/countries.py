@@ -7,4 +7,3 @@ class CountryDetailSchema(BaseModel):
     name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
-
