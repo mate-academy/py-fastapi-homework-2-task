@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -87,7 +88,7 @@ class MovieAddSchema(BaseModel):
     def country_iso_code(cls, v):
         if len(v) == 2 and v.isalpha() and v.isupper():
             return v
-        raise ValueError("country must be in ISO 3166-1 alpha-3 code format.")
+        raise ValueError("country must be in ISO 3166-1 alpha-2 code format.")
 
     @field_validator("genres", "languages", "actors")
     @classmethod
@@ -96,10 +97,17 @@ class MovieAddSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str = Field(max_length=255, default=None)
-    date: date = None
-    score: float = Field(ge=0, le=100, default=None)
-    overview: str = None
-    status: MovieStatusEnum = None
-    budget: float = Field(ge=0, default=None)
-    revenue: float = Field(ge=0, default=None)
+    name: Optional[str] = Field(max_length=255, default=None)
+    date: Optional[date] = None
+    score: Optional[float] = Field(ge=0, le=100, default=None)
+    overview: Optional[str] = None
+    status: Optional[MovieStatusEnum] = None
+    budget: Optional[float] = Field(ge=0, default=None)
+    revenue: Optional[float] = Field(ge=0, default=None)
+
+    @field_validator("date")
+    @classmethod
+    def date_lte_one_year_from_now(cls, v):
+        if v <= date.today() + timedelta(days=365):
+            return v
+        raise ValueError("date must not be greater that one year in the future.")
