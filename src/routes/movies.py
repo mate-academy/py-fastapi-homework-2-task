@@ -7,9 +7,10 @@ from sqlalchemy.orm import joinedload
 from starlette import status
 
 from database import get_db, MovieModel
-from database.crud.movies import get_all_movies
+from database.crud.movies import get_all_movies, create_movie, MovieAlreadyExistsError
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas import MovieListResponseSchema, MovieListItemSchema
+from schemas import MovieListResponseSchema, MovieListItemSchema, MovieDetailSchema
+from schemas.movies import MovieCreateSchema
 
 router = APIRouter(prefix="/movies")
 
@@ -41,3 +42,19 @@ async def get_movies(
         total_pages=total_pages,
         total_items=total_items,
     )
+
+
+@router.post("/")
+async def add_movie(
+        movie_data: MovieCreateSchema,
+        db: AsyncSession = Depends(get_db),
+) -> MovieDetailSchema:
+    try:
+        movie = await create_movie(session=db, movie_data=movie_data)
+    except MovieAlreadyExistsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
+
+    return MovieDetailSchema.model_validate(movie)

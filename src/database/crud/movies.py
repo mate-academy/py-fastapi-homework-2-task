@@ -1,9 +1,17 @@
 from typing import Sequence
 
 from sqlalchemy import select, func, desc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from database import MovieModel
+from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from schemas.movies import MovieCreateSchema
+
+
+class MovieAlreadyExistsError(Exception):
+    pass
 
 
 async def get_all_movies(session: AsyncSession, page: int, per_page: int) -> tuple[Sequence[MovieModel], int]:
@@ -22,3 +30,87 @@ async def get_all_movies(session: AsyncSession, page: int, per_page: int) -> tup
     movies = result.scalars().all()
 
     return movies, total_items
+
+
+async def get_or_create(
+        session: AsyncSession, model, **kwargs
+):
+    stmt = select(model).filter_by(**kwargs)
+    result = await session.execute(stmt)
+    instance = result.scalars().first()
+    if instance:
+        return instance
+    instance = model(**kwargs)
+    session.add(instance)
+    await session.flush()
+    return instance
+
+
+async def create_movie(
+        session: AsyncSession, movie_data: MovieCreateSchema
+) -> MovieModel:
+    stmt = select(MovieModel).where(
+        MovieModel.name == movie_data.name,
+        MovieModel.date == movie_data.date,
+    )
+    result = await session.execute(stmt)
+    existing_movie = result.scalars().first()
+    if existing_movie:
+        raise MovieAlreadyExistsError(
+            f"A movie with the name '{movie_data.name}' "
+            f"and release date '{movie_data.date}' already exists."
+        )
+
+    country = await get_or_create(session, CountryModel, code=movie_data.country)
+
+    genres = [
+        await get_or_create(session, GenreModel, name=genre_name)
+        for genre_name in movie_data.genres
+    ]
+    actors = [
+        await get_or_create(session, ActorModel, name=actor_name)
+        for actor_name in movie_data.actors
+    ]
+    languages = [
+        await get_or_create(session, LanguageModel, name=lang_name)
+        for lang_name in movie_data.languages
+    ]
+
+    movie = MovieModel(
+        name=movie_data.name,
+        date=movie_data.date,
+        score=movie_data.score,
+        overview=movie_data.overview,
+        status=movie_data.status,
+        budget=movie_data.budget,
+        revenue=movie_data.revenue,
+        country=country,
+        genres=genres,
+        actors=actors,
+        languages=languages,
+    )
+
+    session.add(movie)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise MovieAlreadyExistsError(
+            f"A movie with the name '{movie_data.name}' "
+            f"and release date '{movie_data.date}' already exists."
+        )
+
+    stmt = (
+        select(MovieModel)
+        .where(MovieModel.id == movie.id)
+        .options(
+            selectinload(MovieModel.country),
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages),
+        )
+    )
+    result = await session.execute(stmt)
+    movie = result.scalar_one()
+
+    return movie
