@@ -16,7 +16,11 @@ async def get_movies(
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db),
 ) -> MovieListResponseSchema:
-    movies, total_items = await crud_movies.get_all_movies(session=db, page=page, per_page=per_page)
+    movies, total_items = await crud_movies.get_all_movies(
+        session=db,
+        page=page,
+        per_page=per_page
+    )
     if not movies:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
