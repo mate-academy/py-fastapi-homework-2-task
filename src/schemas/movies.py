@@ -44,7 +44,7 @@ class LanguageSchema(MovieDetailItemsBase):
 
 class MovieCreateSchema(BaseModel):
     name: str = Field(max_length=255)
-    date: datetime.date
+    date: datetime.date = Field(le=datetime.date.today() + datetime.timedelta(days=365))
     score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatusEnum
@@ -57,8 +57,10 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str = Field(max_length=255, default=255)
-    date: datetime.date | None = None
+    name: str = Field(max_length=255, default=None)
+    date: datetime.date = Field(
+        le=datetime.date.today() + datetime.timedelta(days=365), default=None
+    )
     score: float = Field(default=None, ge=0, le=100)
     overview: str | None = None
     status: MovieStatusEnum | None = None
