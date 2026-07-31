@@ -43,7 +43,7 @@ async def read_all_movies(
         )
     if per_page < 1:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY2,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
                 "loc": ["query", "per_page"],
                 "msg": "ensure this value is greater than or equal to 1",

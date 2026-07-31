@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from fastapi import Request
 
@@ -43,13 +43,13 @@ class LanguageSchema(MovieDetailItemsBase):
 
 
 class MovieCreateSchema(BaseModel):
-    name: str
+    name: str = Field(max_length=255)
     date: datetime.date
-    score: float
+    score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatusEnum
-    budget: float
-    revenue: float
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
     country: str
     genres: list[str]
     actors: list[str]
@@ -57,13 +57,13 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = None
+    name: str = Field(max_length=255, default=255)
     date: datetime.date | None = None
-    score: float | None = None
+    score: float = Field(default=None, ge=0, le=100)
     overview: str | None = None
     status: MovieStatusEnum | None = None
-    budget: float | None = None
-    revenue: float | None = None
+    budget: float = Field(default=None, ge=0)
+    revenue: float = Field(default=None, ge=0)
 
 
 class MovieDetailSchema(BaseModel):

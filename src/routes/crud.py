@@ -1,3 +1,5 @@
+from datetime import timedelta, date
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -66,7 +68,7 @@ async def get_or_create_language(db: AsyncSession, language_name: str):
 async def name_and_date_is_unique(db: AsyncSession, movie: MovieCreateSchema):
     movie = await db.scalar(
         select(MovieModel).where(
-            MovieModel.name == movie.name and MovieModel.date == movie.date
+            MovieModel.name == movie.name, MovieModel.date == movie.date
         )
     )
     if movie is None:
@@ -74,15 +76,46 @@ async def name_and_date_is_unique(db: AsyncSession, movie: MovieCreateSchema):
     return False
 
 
+async def movie_data_validation(
+    db: AsyncSession, movie: MovieCreateSchema | MovieUpdateSchema
+):
+    bad_request_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid input data.",
+    )
+    name_and_date_conflict_error = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            f"A movie with the name '{movie.name}' and release date "
+            f"'{movie.date}' already exists."
+        ),
+    )
+    if movie.score is not None and not 0 <= movie.score <= 100:
+        raise bad_request_error
+
+    if movie.budget is not None and movie.budget < 0:
+        raise bad_request_error
+
+    if movie.revenue is not None and movie.revenue < 0:
+        raise bad_request_error
+
+    if movie.name is not None and len(movie.name) > 255:
+        raise bad_request_error
+
+    if movie.date is not None and movie.date > date.today() + timedelta(days=365):
+        raise bad_request_error
+
+    if (
+        movie.name
+        and movie.date
+        and not await name_and_date_is_unique(db=db, movie=movie)
+    ):
+        raise name_and_date_conflict_error
+
+
 async def create_movie(db: AsyncSession, movie: MovieCreateSchema):
-    if not await name_and_date_is_unique(db=db, movie=movie):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"A movie with the name '{movie.name}' and release date "
-                f"'{movie.date}' already exists."
-            ),
-        )
+
+    await movie_data_validation(db=db, movie=movie)
 
     country = await get_or_create_country_by_code(db=db, country_code=movie.country)
 
@@ -112,7 +145,6 @@ async def create_movie(db: AsyncSession, movie: MovieCreateSchema):
     db.add(movie_db)
 
     await db.commit()
-    await db.rollback()
 
     return movie_db
 
@@ -151,18 +183,8 @@ async def delete_movie_by_id(db: AsyncSession, movie_id: int):
 async def update_movie(
     db: AsyncSession, movie_id: int, movie_payload: MovieUpdateSchema
 ):
-    if (
-        movie_payload.name
-        and movie_payload.date
-        and not await name_and_date_is_unique(db=db, movie=movie_payload)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"A movie with the name '{movie_payload.name}' and release date "
-                f"'{movie_payload.date}' already exists."
-            ),
-        )
+    await movie_data_validation(db=db, movie=movie_payload)
+
     movie = await db.scalar(
         select(MovieModel)
         .options(
@@ -187,30 +209,7 @@ async def update_movie(
             detail="No fields were provided for update.",
         )
 
-    score = update_data.get("score")
-    budget = update_data.get("budget")
-    revenue = update_data.get("revenue")
-
-    if score is not None and not 0 <= score <= 100:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid input data.",
-        )
-
-    if budget is not None and budget < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid input data.",
-        )
-
-    if revenue is not None and revenue < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid input data.",
-        )
-
     for field, value in update_data.items():
         setattr(movie, field, value)
 
     await db.commit()
-    await db.rollback()
