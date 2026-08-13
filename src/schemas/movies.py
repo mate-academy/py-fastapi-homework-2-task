@@ -29,7 +29,7 @@ class Country(BaseModel):
 
 
 class MovieBase(BaseModel):
-    name: str
+    name: str = Field(max_length=255)
     date: datetime.date
     score: float = Field(ge=0, le=100)
     overview: str
