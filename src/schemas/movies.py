@@ -64,7 +64,6 @@ class MovieCreate(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -80,5 +79,4 @@ class MovieUpdate(BaseModel):
     genres: list[str] | None = None
     actors: list[str] | None = None
     languages: list[str] | None = None
-
     model_config = ConfigDict(from_attributes=True)
