@@ -3,7 +3,7 @@ from sqlalchemy import select, func, desc
 import math
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from datetime import timedelta, date as Date
 from schemas import MovieListResponseSchema, MovieDetailResponseSchema, MovieCreate
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
@@ -74,6 +74,18 @@ async def create_movie(
     movie: MovieCreate,
     db: AsyncSession = Depends(get_db),
 ):
+    if (
+        len(movie.name) > 255
+        or movie.date > Date.today() + timedelta(days=365)
+        or not 0 <= movie.score <= 100
+        or movie.budget < 0
+        or movie.revenue < 0
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
     stmt = select(MovieModel).where(
         MovieModel.name == movie.name, MovieModel.date == movie.date
     )
@@ -195,6 +207,23 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 async def update_movie(
     movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)
 ):
+    if (
+        movie.name is not None
+        and len(movie.name) > 255
+        or movie.date is not None
+        and movie.date > Date.today() + timedelta(days=365)
+        or movie.score is not None
+        and not 0 <= movie.score <= 100
+        or movie.budget is not None
+        and movie.budget < 0
+        or movie.revenue is not None
+        and movie.revenue < 0
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
     db_movie = await db.scalar(select(MovieModel).where(MovieModel.id == movie_id))
 
     if db_movie is None:

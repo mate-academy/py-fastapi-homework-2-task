@@ -1,6 +1,8 @@
 from datetime import timedelta, date as Date
 from pydantic import BaseModel, ConfigDict, Field
 
+from database.models import MovieStatusEnum
+
 
 class NamedEntitySchema(BaseModel):
     id: int
@@ -23,7 +25,7 @@ class MovieDetailResponseSchema(BaseModel):
     date: Date
     score: float
     overview: str
-    status: str
+    status: MovieStatusEnum
     budget: float
     revenue: float
     country: CountrySchema
@@ -53,30 +55,30 @@ class MovieListResponseSchema(BaseModel):
 
 
 class MovieCreate(BaseModel):
-    name: str = Field(max_length=255)
-    date: Date = Field(le=Date.today() + timedelta(days=365))
-    score: float = Field(ge=0, le=100)
+    name: str
+    date: Date
+    score: float
     overview: str
-    status: str
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
+    status: MovieStatusEnum
+    budget: float
+    revenue: float
     country: str
     genres: list[str]
     actors: list[str]
     languages: list[str]
-    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieUpdate(BaseModel):
-    name: str | None = Field(default=None, max_length=255)
-    date: Date | None = Field(default=None, le=Date.today() + timedelta(days=365))
-    score: float | None = Field(default=None, ge=0, le=100)
+    name: str | None = None
+    date: Date | None = None
+    score: float | None = None
     overview: str | None = None
-    status: str | None = None
-    budget: float | None = Field(default=None, ge=0)
-    revenue: float | None = Field(default=None, ge=0)
+    status: MovieStatusEnum | None = None
+    budget: float | None = None
+    revenue: float | None = None
     country: str | None = None
     genres: list[str] | None = None
     actors: list[str] | None = None
     languages: list[str] | None = None
+
     model_config = ConfigDict(from_attributes=True)
