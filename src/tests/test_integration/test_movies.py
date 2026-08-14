@@ -1,5 +1,4 @@
 import random
-
 import pytest
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
