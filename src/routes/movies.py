@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, desc
-import math
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from datetime import timedelta, date as Date
-from schemas import MovieListResponseSchema, MovieDetailResponseSchema, MovieCreate
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas.movies import MovieUpdate
+from schemas.movies import (
+    MovieUpdate,
+    MovieListResponseSchema,
+    MovieDetailResponseSchema,
+    MovieCreate,
+)
 
 router = APIRouter()
 
@@ -22,6 +25,7 @@ async def get_or_create(db: AsyncSession, model, field: str, value: str):
     instance = model(**{field: value})
 
     db.add(instance)
+    await db.flush()
 
     return instance
 
@@ -38,7 +42,7 @@ async def get_all_movies(
     stmt = select(func.count(MovieModel.id))
     items = await db.execute(stmt)
     total_items = items.scalar()
-    total_pages = math.ceil(total_items / per_page)
+    total_pages = (total_items + per_page - 1) // per_page
 
     stmt = (
         select(MovieModel)
@@ -91,7 +95,7 @@ async def create_movie(
     )
     movie_exists = await db.execute(stmt)
 
-    if movie_exists.scalar():
+    if movie_exists.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
@@ -207,18 +211,31 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 async def update_movie(
     movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)
 ):
-    if (
-        movie.name is not None
-        and len(movie.name) > 255
-        or movie.date is not None
-        and movie.date > Date.today() + timedelta(days=365)
-        or movie.score is not None
-        and not 0 <= movie.score <= 100
-        or movie.budget is not None
-        and movie.budget < 0
-        or movie.revenue is not None
-        and movie.revenue < 0
-    ):
+    if movie.name is not None and len(movie.name) > 255:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
+    if movie.date is not None and movie.date > Date.today() + timedelta(days=365):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
+    if movie.score is not None and not 0 <= movie.score <= 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
+    if movie.budget is not None and movie.budget < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid input data.",
+        )
+
+    if movie.revenue is not None and movie.revenue < 0:
         raise HTTPException(
             status_code=400,
             detail="Invalid input data.",
