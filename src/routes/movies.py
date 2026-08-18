@@ -171,9 +171,6 @@ async def update_movie(
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail=_duplicate_movie_detail(movie.name, movie.date),
-        )
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
     return MessageResponseSchema(detail="Movie updated successfully.")
