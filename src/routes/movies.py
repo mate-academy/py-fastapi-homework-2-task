@@ -252,7 +252,7 @@ async def update_movie(
 
         raise HTTPException(
             status_code=400,
-            detail="Invalid movie data.",
+            detail="Invalid input data.",
         )
 
     return {"detail": "Movie updated successfully."}
