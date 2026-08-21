@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from database.models import MovieStatusEnum
 
@@ -83,6 +83,19 @@ class MovieCreateSchema(BaseModel):
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value: datetime.date) -> datetime.date:
+        today = datetime.date.today()
+        max_date = today.replace(year=today.year + 1)
+
+        if value > max_date:
+            raise ValueError(
+                "Movie date cannot be more than one year in the future."
+            )
+
+        return value
 
 
 class MovieUpdateSchema(BaseModel):

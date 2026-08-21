@@ -238,14 +238,21 @@ async def update_movie(
 
     try:
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         await db.rollback()
+
+        if "unique_movie_constraint" in str(exc):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"A movie with the name '{movie.name}' "
+                    f"and release date '{movie.date}' already exists."
+                ),
+            )
+
         raise HTTPException(
-            status_code=409,
-            detail=(
-                f"A movie with the name '{movie.name}' "
-                f"and release date '{movie.date}' already exists."
-            ),
+            status_code=400,
+            detail="Invalid movie data.",
         )
 
     return {"detail": "Movie updated successfully."}
@@ -270,3 +277,5 @@ async def delete_movie(
 
     await db.delete(movie)
     await db.commit()
+
+    return None
