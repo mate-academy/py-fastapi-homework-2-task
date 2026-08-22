@@ -100,7 +100,7 @@ class CSVDatabaseSeeder:
 
         if items:
             for i in range(0, len(items), CHUNK_SIZE):
-                chunk = items[i : i + CHUNK_SIZE]
+                chunk = items[i: i + CHUNK_SIZE]
                 result = await self._db_session.execute(
                     select(model).where(getattr(model, unique_field).in_(chunk))
                 )
@@ -114,12 +114,12 @@ class CSVDatabaseSeeder:
 
         if new_records:
             for i in range(0, len(new_records), CHUNK_SIZE):
-                chunk = new_records[i : i + CHUNK_SIZE]
+                chunk = new_records[i: i + CHUNK_SIZE]
                 await self._db_session.execute(insert(model).values(chunk))
                 await self._db_session.flush()
 
             for i in range(0, len(new_items), CHUNK_SIZE):
-                chunk = new_items[i : i + CHUNK_SIZE]
+                chunk = new_items[i: i + CHUNK_SIZE]
                 result_new = await self._db_session.execute(
                     select(model).where(getattr(model, unique_field).in_(chunk))
                 )

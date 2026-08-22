@@ -161,7 +161,7 @@ class MovieModel(Base):
         "LanguageModel", secondary=MoviesLanguagesModel, back_populates="movies"
     )
 
-    __table_args__ = (UniqueConstraint("name", "date", name="unique_movie_constraint"),)
+    __table_args__ = UniqueConstraint("name", "date", name="unique_movie_constraint")
 
     @classmethod
     def default_order_by(cls):
