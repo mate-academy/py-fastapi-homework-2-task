@@ -3,16 +3,19 @@ from pydantic_core import PydanticCustomError
 from typing import List, Optional, Union
 from datetime import date as DateType, datetime
 
+
 # --- Base Relation Schemas for Responses ---
 class GenreBase(BaseModel):
     id: int
     name: str
     model_config = ConfigDict(from_attributes=True)
 
+
 class ActorBase(BaseModel):
     id: int
     name: str
     model_config = ConfigDict(from_attributes=True)
+
 
 class CountryBase(BaseModel):
     id: int
@@ -20,10 +23,12 @@ class CountryBase(BaseModel):
     name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+
 class LanguageBase(BaseModel):
     id: int
     name: str
     model_config = ConfigDict(from_attributes=True)
+
 
 # --- Movie Base Schemas ---
 class MovieBase(BaseModel):
@@ -43,6 +48,7 @@ class MovieBase(BaseModel):
             )
         return value
 
+
 class MovieCreate(MovieBase):
     budget: Optional[float] = Field(default=0.0, ge=0.0)
     revenue: Optional[float] = Field(default=0.0, ge=0.0)
@@ -51,6 +57,7 @@ class MovieCreate(MovieBase):
     genres: List[str] = Field(default=[])
     actors: List[str] = Field(default=[])
     languages: List[str] = Field(default=[])
+
 
 class MovieUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
@@ -77,12 +84,14 @@ class MovieUpdate(BaseModel):
                 )
         return value
 
+
 # --- Specific Route Response Structures ---
 
 # List view item: strictly contains exactly the 5 fields tested
 class MovieListItemSchema(MovieBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
 
 # Full detailed item (GET by ID, POST/PATCH output)
 class MovieResponse(MovieBase):
@@ -96,6 +105,7 @@ class MovieResponse(MovieBase):
     languages: List[LanguageBase] = []
     model_config = ConfigDict(from_attributes=True)
 
+
 class MoviePaginationResponse(BaseModel):
     movies: List[MovieListItemSchema]  # Enforces clean list rows
     prev_page: Optional[str] = None    # Formatted as endpoint strings
@@ -103,8 +113,10 @@ class MoviePaginationResponse(BaseModel):
     total_pages: int
     total_items: int
 
+
 class MovieUpdateSuccessResponse(BaseModel):
     detail: str = "Movie updated successfully."
+
 
 # --- Assignment & Test Compatibility Mapping ---
 MovieDetailSchema = MovieResponse

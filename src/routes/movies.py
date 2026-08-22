@@ -116,7 +116,8 @@ async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)
     if dup_res.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A movie with the name '{movie_in.name}' and release date '{movie_in.date.isoformat()}' already exists."
+            detail=f"A movie with the name '{movie_in.name}' and release date "
+                   f"'{movie_in.date.isoformat()}' already exists."
         )
 
     new_movie = MovieModel(
