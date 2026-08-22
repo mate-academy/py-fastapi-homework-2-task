@@ -10,6 +10,7 @@ from database.models import (
     GenreModel,
     LanguageModel,
     MovieModel,
+    MovieStatusEnum,
 )
 from schemas.movies import (
     MovieCreateSchema,
@@ -19,7 +20,6 @@ from schemas.movies import (
 )
 
 router = APIRouter()
-
 LOAD_RELATIONS = (
     selectinload(MovieModel.country),
     selectinload(MovieModel.genres),
@@ -90,6 +90,7 @@ async def create_movie(
         )
 
     try:
+        status_enum = MovieStatusEnum(movie_data.status)
         country = await get_or_create(db, CountryModel, "code", movie_data.country)
         genres = [
             await get_or_create(db, GenreModel, "name", n) for n in movie_data.genres
@@ -104,8 +105,9 @@ async def create_movie(
 
         movie = MovieModel(
             **movie_data.model_dump(
-                exclude={"country", "genres", "actors", "languages"}
+                exclude={"country", "genres", "actors", "languages", "status"}
             ),
+            status=status_enum,
             country=country,
             genres=genres,
             actors=actors,
@@ -162,7 +164,10 @@ async def update_movie(
         )
 
     try:
-        for field, value in movie_data.model_dump(exclude_unset=True).items():
+        update_data = movie_data.model_dump(exclude_unset=True)
+        if "status" in update_data:
+            update_data["status"] = MovieStatusEnum(update_data["status"])
+        for field, value in update_data.items():
             setattr(movie, field, value)
         await db.commit()
     except Exception:

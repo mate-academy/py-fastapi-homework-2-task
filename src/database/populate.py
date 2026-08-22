@@ -72,9 +72,7 @@ class CSVDatabaseSeeder:
 
         data["genre"] = data["genre"].str.replace("\u00a0", "", regex=True)
         data["date_x"] = data["date_x"].astype(str).str.strip()
-        data["date_x"] = pd.to_datetime(
-            data["date_x"], format="%Y-%m-%d", errors="raise"
-        )
+        data["date_x"] = pd.to_datetime(data["date_x"], format="%Y-%m-%d", errors="raise")
         data["date_x"] = data["date_x"].dt.date
         data["orig_lang"] = data["orig_lang"].str.replace(r"\s+", "", regex=True)
         data["status"] = data["status"].str.strip()
