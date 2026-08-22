@@ -62,10 +62,11 @@ async def get_or_create_country(db: AsyncSession, code_str: str) -> Optional[Cou
 
 
 # 1. GET ALL MOVIES
+# src/routes/movies.py
 @router.get("/", response_model=MoviePaginationResponse, status_code=status.HTTP_200_OK)
 async def get_movies(
         page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=1),
+        per_page: int = Query(10, ge=1, le=20),
         search: Optional[str] = None,
         db: AsyncSession = Depends(get_db)
 ):

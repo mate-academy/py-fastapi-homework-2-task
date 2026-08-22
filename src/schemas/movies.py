@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 from pydantic_core import PydanticCustomError
 from typing import List, Optional, Union
 from datetime import date as DateType, datetime
+from enum import Enum
 
 
 # --- Base Relation Schemas for Responses ---
@@ -49,10 +50,16 @@ class MovieBase(BaseModel):
         return value
 
 
+class MovieStatus(str, Enum):
+    RELEASED = "Released"
+    POST_PRODUCTION = "Post Production"
+    IN_PRODUCTION = "In Production"
+
+
 class MovieCreate(MovieBase):
     budget: Optional[float] = Field(default=0.0, ge=0.0)
     revenue: Optional[float] = Field(default=0.0, ge=0.0)
-    status: Optional[str] = Field(default="Released")
+    status: Optional[MovieStatus] = Field(default=MovieStatus.RELEASED)
     country: Optional[str] = Field(default=None)
     genres: List[str] = Field(default=[])
     actors: List[str] = Field(default=[])
@@ -66,7 +73,7 @@ class MovieUpdate(BaseModel):
     score: Optional[float] = Field(None, ge=0.0, le=100.0)
     budget: Optional[float] = Field(None, ge=0.0)
     revenue: Optional[float] = Field(None, ge=0.0)
-    status: Optional[str] = None
+    status: Optional[MovieStatus] = None
     country: Optional[str] = None
     genres: Optional[List[str]] = None
     actors: Optional[List[str]] = None
