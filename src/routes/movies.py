@@ -163,16 +163,11 @@ async def update_movie(
         query = (
             update(MovieModel)
             .where(MovieModel.id == movie_id)
-            .values(
-                **movie.model_dump(
-                    exclude_none=True,
-                    exclude={"country", "genres", "languages", "actors"},
-                )
-            )
+            .values(**movie.model_dump(exclude_none=True))
         )
         await db.execute(query)
         await db.commit()
         return {"detail": "Movie updated successfully."}
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=404, detail="Invalid input data.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")

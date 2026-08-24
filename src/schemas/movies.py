@@ -89,14 +89,10 @@ class MovieCreateSchema(BaseModel):
 
 
 class MovieUpdateSchema(BaseModel):
-    name: str | None = None
+    name: Annotated[str | None, Field(max_length=255)] = None
     date: datetime.date | None = None
-    score: float | None = None
+    score: Annotated[float | None, Field(ge=0.0, le=100.0)] = None
     overview: str | None = None
     status: MovieStatusEnum | None = None
-    budget: float | None = None
-    revenue: float | None = None
-    country: str | None = None
-    genres: list[str] | None = None
-    actors: list[str] | None = None
-    languages: list[str] | None = None
+    budget: Annotated[float | None, Field(ge=0.0)] = None
+    revenue: Annotated[float | None, Field(ge=0.0)] = None
