@@ -1,50 +1,43 @@
-FROM python:3.10
+FROM python:3.10-slim
 
-# Setting environment variables for Python
+# Set Python environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PIP_NO_CACHE_DIR=off
-ENV ALEMBIC_CONFIG = /usr/src/alembic/alembic.ini
+ENV UV_COMPILE_BYTECODE=1
+ENV ALEMBIC_CONFIG=/usr/src/alembic/alembic.ini
 
-# Installing dependencies
-RUN apt update && apt install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     netcat-openbsd \
     postgresql-client \
     dos2unix \
-    && apt clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN python -m pip install --upgrade pip && \
-    pip install poetry
+# Copy uv binaries from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy dependency files
-COPY ./poetry.lock /usr/src/poetry/poetry.lock
-COPY ./pyproject.toml /usr/src/poetry/pyproject.toml
+# Set working directory for the application
+WORKDIR /usr/src/app
+
+# Copy dependency definition files
+COPY ./pyproject.toml ./uv.lock* /usr/src/app/
 COPY ./alembic.ini /usr/src/alembic/alembic.ini
 
-# Configure Poetry to avoid creating a virtual environment
-RUN poetry config virtualenvs.create false
+# Install project dependencies into .venv (excluding dev group) using build cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
-# Selecting a working directory
-WORKDIR /usr/src/poetry
-
-# Install dependencies with Poetry
-RUN poetry lock
-RUN poetry install --no-root --only main
-
-# Selecting a working directory
-WORKDIR /usr/src/fastapi
-
-# Copy the source code
-COPY ./src .
-
-# Copy commands
+# Copy source code and scripts
+COPY ./src /usr/src/app/src
 COPY ./commands /commands
 
-# Ensure Unix-style line endings for scripts
-RUN dos2unix /commands/*.sh
+# Install the project itself and add the virtual environment to PATH
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
-# Add execute bit to commands files
-RUN chmod +x /commands/*.sh
+ENV PATH="/usr/src/app/.venv/bin:$PATH"
+
+# Convert line endings to Unix style and set execution permissions
+RUN dos2unix /commands/*.sh && chmod +x /commands/*.sh
