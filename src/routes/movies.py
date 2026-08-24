@@ -30,7 +30,7 @@ DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
 async def get_movies(
     db: DatabaseSession,
     page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
+    per_page: int = Query(10, ge=1, le=20),
 ) -> MovieListResponseSchema:
     total_items = int(await db.scalar(select(func.count()).select_from(MovieModel)))
     total_pages = math.ceil(total_items / per_page) if total_items else 0
@@ -99,7 +99,6 @@ async def create_movie(
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
         )
     try:
-        print(movie.country, movie.genres, movie.languages)
         country = await create_country(db, movie.country)
         genres = await create_genres(db, movie.genres)
         languages = await create_languages(db, movie.languages)
@@ -147,7 +146,7 @@ async def delete_movie(db: DatabaseSession, movie_id: int) -> None:
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=404, detail="Error with deletion")
+        raise HTTPException(status_code=400, detail="Error with deletion")
 
 
 @router.patch("/movies/{movie_id}/", status_code=200)
@@ -172,14 +171,6 @@ async def update_movie(
             )
         )
         await db.execute(query)
-        if movie.country is not None:
-            result_movie.country = await create_country(db, movie.country)
-        if movie.genres is not None:
-            result_movie.genres = await create_genres(db, movie.genres)
-        if movie.languages is not None:
-            result_movie.languages = await create_languages(db, movie.languages)
-        if movie.actors is not None:
-            result_movie.actors = await create_actors(db, movie.actors)
         await db.commit()
         return {"detail": "Movie updated successfully."}
     except IntegrityError:

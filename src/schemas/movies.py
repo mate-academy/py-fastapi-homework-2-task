@@ -8,7 +8,7 @@ from database.models import MovieStatusEnum
 
 def check_not_in_future(date: datetime.date) -> datetime.date:
     if (date - datetime.date.today()).days > 365:
-        raise ValueError("The date is in the future more then a year")
+        raise ValueError("The date is in the future more than a year")
     return date
 
 

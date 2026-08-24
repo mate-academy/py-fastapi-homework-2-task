@@ -15,12 +15,12 @@ async def create_country(
 ) -> CountryModel | None:
     if not country_name:
         return None
-    query = select(CountryModel).where(CountryModel.name == country_name)
+    query = select(CountryModel).where(CountryModel.code == country_name)
     result = await db.execute(query)
     instance = result.scalar_one_or_none()
 
     if not instance:
-        instance = CountryModel(name=country_name, code=country_name[:2].upper())
+        instance = CountryModel(name=country_name, code=country_name[:3].upper())
         db.add(instance)
         await db.flush()
     return instance
