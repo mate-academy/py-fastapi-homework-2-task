@@ -2,19 +2,15 @@ from typing import TypeVar
 
 from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
-from database import get_db, MovieModel
+from database import MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from dependencies import DB, PaginationDep
 from schemas.movies import (
     MoviesPageSchema,
     MovieDetailSchema,
     MovieCreateSchema,
-    GenreSchema,
-    ActorSchema,
     MovieUpdateSchema,
 )
 
