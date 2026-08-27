@@ -15,6 +15,8 @@ class CountrySchema(BaseModel):
     code: str
     name: str | None
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class GenreSchema(BaseModel):
     id: int
@@ -93,7 +95,7 @@ class MovieUpdateSchema(BaseModel):
     date: datetime.date | None = None
     score: float | None = None
     overview: str | None = None
-    status: str | None = None
+    status: MovieStatusEnum | None = None
     budget: float | None = None
     revenue: float | None = None
 

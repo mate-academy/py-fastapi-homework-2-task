@@ -71,8 +71,7 @@ def validate_movie_data(movie: MovieCreateSchema) -> None:
     if errors:
         raise HTTPException(
             status_code=400,
-            detail="The input data is invalid "
-            "(e.g., missing required fields, invalid values).",
+            detail="Invalid input data.",
         )
 
 
