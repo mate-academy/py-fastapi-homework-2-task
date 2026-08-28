@@ -1,3 +1,4 @@
 src/**/*.py
+src/schemas/movies.py
 Dockerfile
 pyproject.toml
