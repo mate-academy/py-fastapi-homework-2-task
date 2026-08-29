@@ -1,11 +1,11 @@
 import datetime
-from enum import StrEnum
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class MovieStatus(StrEnum):
+class MovieStatus(str, Enum):
     RELEASED = "Released"
     POST_PRODUCTION = "Post Production"
     IN_PRODUCTION = "In Production"
