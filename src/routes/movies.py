@@ -4,11 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, Session
+from sqlalchemy.orm import joinedload
 from starlette import status
 
 from database import get_db
-from database.models import CountryModel, GenreModel, ActorModel, LanguageModel, MovieModel
+from database.models import (
+    CountryModel,
+    GenreModel,
+    ActorModel,
+    LanguageModel,
+    MovieModel
+)
 from schemas.movies import (
     MessageResponseSchema,
     MovieUpdateSchema,
@@ -87,7 +93,6 @@ async def _get_or_create_languages(
             db.add(language)
             await db.flush()
         languages.append(language)
-
     return languages
 
 
@@ -146,11 +151,11 @@ async def get_movies(
         )
 
     prev_page = (
-        f"/theater/movies/?page={page-1}&per_page={per_page}"
+        f"/theater/movies/?page={page - 1}&per_page={per_page}"
         if page > 1 else None
     )
     next_page = (
-        f"/theater/movies/?page={page+1}&per_page={per_page}"
+        f"/theater/movies/?page={page + 1}&per_page={per_page}"
         if page < total_pages else None
     )
 
@@ -161,7 +166,6 @@ async def get_movies(
         total_pages=total_pages,
         total_items=total_items,
     )
-
 
 
 @router.post(
@@ -229,6 +233,7 @@ async def create_movie(
     movie = await _get_movie_or_404(db, movie.id)
     return movie
 
+
 @router.get(
     "/movies/{movie_id}/",
     response_model=MovieDetailSchema,
@@ -261,6 +266,7 @@ async def delete_movie(
     await db.delete(movie)
     await db.commit()
     return None
+
 
 @router.patch(
     "/movies/{movie_id}/",

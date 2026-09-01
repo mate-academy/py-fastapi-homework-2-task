@@ -4,5 +4,3 @@ from schemas.movies import (
     MovieListItemSchema,
     MovieCreateSchema
 )
-
-
