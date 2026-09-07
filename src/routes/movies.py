@@ -1,25 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.database import get_db, MovieModel
 from src.database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-
 from src.schemas.movies import (
     MovieCreateSchema,
     MovieUpdateSchema,
     MovieDetailResponseSchema,
     MovieListResponseSchema,
-    CountrySchema,
-    GenreSchema,
-    ActorSchema,
-    LanguageSchema,
 )
 
+# Module-level Query and Depends defaults to satisfy flake8-bugbear B008
 PAGE_QUERY = Query(1, ge=1)
 PER_PAGE_QUERY = Query(10, ge=1, le=20)
+DB_DEP = Depends(get_db)
 
 router = APIRouter()
 
@@ -28,7 +24,7 @@ router = APIRouter()
 async def get_movies(
     page: int = PAGE_QUERY,
     per_page: int = PER_PAGE_QUERY,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = DB_DEP,
 ):
     total_items = await db.scalar(select(func.count()).select_from(MovieModel))
     if total_items == 0:
@@ -61,7 +57,7 @@ async def get_movies(
 
 
 @router.post("/movies/", response_model=MovieDetailResponseSchema, status_code=201)
-async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+async def create_movie(movie: MovieCreateSchema, db: AsyncSession = DB_DEP):
     duplicate = await db.execute(
         select(MovieModel).where(
             MovieModel.name == movie.name, MovieModel.date == movie.date
@@ -70,7 +66,7 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_
     if duplicate.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
+            detail=f"A movie with the name {movie.name!r} and release date {movie.date.isoformat()!r} already exists.",
         )
 
     country_result = await db.execute(
@@ -174,7 +170,7 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
-async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def get_movie(movie_id: int, db: AsyncSession = DB_DEP):
     result = await db.execute(
         select(MovieModel)
         .options(
@@ -194,7 +190,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
-async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_movie(movie_id: int, db: AsyncSession = DB_DEP):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
     if not movie:
@@ -208,7 +204,7 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/movies/{movie_id}/")
 async def update_movie(
-    movie_id: int, update_data: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
+    movie_id: int, update_data: MovieUpdateSchema, db: AsyncSession = DB_DEP
 ):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
@@ -217,11 +213,36 @@ async def update_movie(
             status_code=404, detail="Movie with the given ID was not found."
         )
 
-    for field, value in update_data.dict(exclude_unset=True).items():
-        setattr(movie, field, value)
+    # Use Pydantic v2 model_dump to get only provided fields
+    incoming = update_data.model_dump(exclude_unset=True)
 
-    if movie.score < 0 or movie.score > 100 or movie.budget < 0 or movie.revenue < 0:
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+    # Validate incoming values (validate incoming data, not stale DB values)
+    if "score" in incoming:
+        score_val = incoming["score"]
+        if score_val is None or score_val < 0 or score_val > 100:
+            raise HTTPException(status_code=400, detail="Invalid input data.")
+    if "budget" in incoming:
+        budget_val = incoming["budget"]
+        if budget_val is None or budget_val < 0:
+            raise HTTPException(status_code=400, detail="Invalid input data.")
+    if "revenue" in incoming:
+        revenue_val = incoming["revenue"]
+        if revenue_val is None or revenue_val < 0:
+            raise HTTPException(status_code=400, detail="Invalid input data.")
+    if "name" in incoming:
+        name_val = incoming["name"]
+        if name_val is None or len(name_val) > 255:
+            raise HTTPException(status_code=400, detail="Invalid input data.")
+    if "date" in incoming:
+        date_val = incoming["date"]
+        today = __import__("datetime").date.today()
+        if date_val is not None and date_val > today + __import__("datetime").timedelta(
+            days=365
+        ):
+            raise HTTPException(status_code=400, detail="Invalid input data.")
+
+    for field, value in incoming.items():
+        setattr(movie, field, value)
 
     await db.commit()
     return {"detail": "Movie updated successfully."}

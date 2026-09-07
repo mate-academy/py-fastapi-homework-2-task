@@ -84,7 +84,7 @@ class GenreModel(Base):
     )
 
     def __repr__(self):
-        return f"<Genre(name='{self.name}')>"
+        return f"<Genre(name={self.name!r})>"
 
 
 class ActorModel(Base):
@@ -98,7 +98,7 @@ class ActorModel(Base):
     )
 
     def __repr__(self):
-        return f"<Actor(name='{self.name}')>"
+        return f"<Actor(name={self.name!r})>"
 
 
 class CountryModel(Base):
@@ -113,7 +113,7 @@ class CountryModel(Base):
     )
 
     def __repr__(self):
-        return f"<Country(code='{self.code}', name='{self.name}')>"
+        return f"<Country(code={self.code!r}, name={self.name!r})>"
 
 
 class LanguageModel(Base):
@@ -127,7 +127,7 @@ class LanguageModel(Base):
     )
 
     def __repr__(self):
-        return f"<Language(name='{self.name}')>"
+        return f"<Language(name={self.name!r})>"
 
 
 class MovieModel(Base):
@@ -168,4 +168,4 @@ class MovieModel(Base):
         return [cls.id.desc()]
 
     def __repr__(self):
-        return f"<Movie(name='{self.name}', release_date='{self.date}', score={self.score})>"
+        return f"<Movie(name={self.name!r}, release_date={self.date!r}, score={self.score})>"
