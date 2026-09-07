@@ -444,7 +444,6 @@ database models and utility functions, has already been provided.
 Your task is to implement an endpoint in the `routes/movies.py` file that retrieves a **paginated list of movies** from
 the database. The required response structure is detailed below.
 
-
 #### Endpoint Details
 
 - **HTTP Method**: `GET`
@@ -506,7 +505,12 @@ This task requires you to implement both the endpoint logic in `routes/movies.py
 `schemas/movies.py`. Ensure that your implementation handles all edge cases, such as invalid query parameters or empty
 results.
 
-### 2: Implement Movie Creation Endpoint
+### 2: 1. **Validation**:
+   - The `name` must not exceed 255 characters.
+   - The `date` must not be more than one year in the future.
+   - The `score` must be between 0 and 100.
+   - The `budget` and `revenue` must be non-negative.
+
 
 Your task is to implement an endpoint in the `routes/movies.py` file that allows the creation of a new movie in the database. The required request and response structures are detailed below.
 
