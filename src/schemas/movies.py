@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
+
 class CountrySchema(BaseModel):
     id: int
     name: Optional[str] = None
@@ -9,11 +10,13 @@ class CountrySchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class GenreSchema(BaseModel):
     id: int
     name: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ActorSchema(BaseModel):
     id: int
@@ -21,11 +24,13 @@ class ActorSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class LanguageSchema(BaseModel):
     id: int
     name: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class MovieCreateSchema(BaseModel):
     name: str = Field(..., max_length=255)
@@ -49,6 +54,7 @@ class MovieCreateSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class MovieUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     date: Optional[date] = None
@@ -71,6 +77,7 @@ class MovieUpdateSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
@@ -79,6 +86,7 @@ class MovieListItemSchema(BaseModel):
     overview: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class MovieDetailResponseSchema(BaseModel):
     id: int
@@ -96,8 +104,10 @@ class MovieDetailResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class MovieDetailSchema(MovieDetailResponseSchema):
     pass
+
 
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieListItemSchema]
