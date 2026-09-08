@@ -24,7 +24,7 @@ router = APIRouter()
 @router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
     page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
+    per_page: int = Query(10, ge=1, le=20),
     db: AsyncSession = Depends(get_sqlite_db),
 ):
     total_result = await db.execute(
