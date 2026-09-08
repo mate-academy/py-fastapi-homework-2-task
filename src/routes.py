@@ -76,7 +76,7 @@ async def get_movie(
     )
     movie = result.scalars().first()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     return movie
 
 
@@ -185,7 +185,7 @@ async def update_movie(
     )
     movie = res.scalars().first()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     country_res = await db.execute(
         select(CountryModel).where(CountryModel.code == movie_in.country)
@@ -269,7 +269,7 @@ async def delete_movie(
     )
     movie = res.scalars().first()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await db.delete(movie)
     await db.commit()
     return None

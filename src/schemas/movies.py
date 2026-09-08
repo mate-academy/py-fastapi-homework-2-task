@@ -37,10 +37,10 @@ class MovieCreateSchema(BaseModel):
     date: date
     score: float = Field(..., ge=0.0, le=100.0)
     overview: str
-    status: str
+    status: str = Field(..., pattern="^(Released|Post Production|In Production)$")
     budget: float = Field(..., ge=0.0)
     revenue: float = Field(..., ge=0.0)
-    country: str = Field(..., min_length=2, max_length=3)
+    country: str = Field(..., min_length=3, max_length=3)
     genres: List[str]
     actors: List[str]
     languages: List[str] = []
@@ -60,10 +60,10 @@ class MovieUpdateSchema(BaseModel):
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0.0, le=100.0)
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[str] = Field(None, pattern="^(Released|Post Production|In Production)$")
     budget: Optional[float] = Field(None, ge=0.0)
     revenue: Optional[float] = Field(None, ge=0.0)
-    country: Optional[str] = Field(None, min_length=2, max_length=3)
+    country: Optional[str] = Field(None, min_length=3, max_length=3)
     genres: Optional[List[str]] = None
     actors: Optional[List[str]] = None
     languages: Optional[List[str]] = None
@@ -103,10 +103,6 @@ class MovieDetailResponseSchema(BaseModel):
     languages: List[LanguageSchema]
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class MovieDetailSchema(MovieDetailResponseSchema):
-    pass
 
 
 class MovieListResponseSchema(BaseModel):
