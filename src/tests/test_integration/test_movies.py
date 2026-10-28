@@ -496,7 +496,7 @@ async def test_update_movie_success(client, db_session, seed_database):
     movie_id = movie.id
     update_data = {
         "name": "Updated Movie Name",
-        "score": 95.0,
+        "score": 95.0
     }
 
     response = await client.patch(f"/api/v1/theater/movies/{movie_id}/", json=update_data)
