@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from pydantic import ValidationError
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -150,7 +151,12 @@ async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     return
 
 @router.patch("/movies/{movie_id}/")
-async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)):
+async def update_movie_by_id(movie_id: int, payload: dict = Body(), db: AsyncSession = Depends(get_db)):
+    try:
+        movie_data = MovieUpdate(**payload)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     stmt = select(MovieModel).where(MovieModel.id == movie_id).options(
         joinedload(MovieModel.country),
         joinedload(MovieModel.genres),
@@ -162,7 +168,11 @@ async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession
     if not db_film:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
-    update_data = movie.model_dump(exclude_unset=True)
+    update_data = movie_data.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     for key, value in update_data.items():
         setattr(db_film, key, value)
 
