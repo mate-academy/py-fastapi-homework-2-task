@@ -132,13 +132,31 @@ async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return
 
-@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema, status_code=204)
+@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    stmt = select(MovieModel).where(MovieModel.id == movie_id).options(
+        joinedload(MovieModel.country),
+        joinedload(MovieModel.genres),
+        joinedload(MovieModel.actors),
+        joinedload(MovieModel.languages)
+    )
+    result = await db.execute(stmt)
     db_film = result.scalar_one_or_none()
     if not db_film:
         raise HTTPException(status_code=404, detail="The movie with the specified ID does not exist.")
 
-    await db.delete(db_film)
-    await db.commit()
-    return
+    update_data = movie.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_film, key, value)
+
+    try:
+        await db.commit()
+        await db.refresh(db_film)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the same name and release date already exists."
+        )
+
+    return db_film
