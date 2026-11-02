@@ -4,10 +4,13 @@ from typing import Optional
 from database.models import MovieStatusEnum
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+class LanguageBae(BaseModel):
+    id: int
+    name: str
 
 class CountyBase(BaseModel):
     id: int
-    name: str
+    name: str | None
     code: str
 
 class ActorBase(BaseModel):
@@ -29,10 +32,10 @@ class MovieBase(BaseModel):
     country_id: int
 
 class MovieDetailSchema(MovieBase):
-    country: Optional[str] = None
+    country: Optional[CountyBase] | None = None
     genres: list[GenreBase] = []
     actors: list[ActorBase] = []
-    languages: list[CountyBase] = []
+    languages: list[LanguageBae] = []
 
 class MovieCreate(MovieBase):
     name: str  = Field(max_length=255)
@@ -44,7 +47,7 @@ class MovieCreate(MovieBase):
     actors: list[str]
     languages: list[str]
 
-    @field_validator("event_date")
+    @field_validator("date")
     @classmethod
     def validate_future_limit(cls, v: date) -> date:
         today = date.today()

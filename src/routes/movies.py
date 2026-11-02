@@ -6,8 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
-from schemas import MovieListItemSchema
-from schemas.movies import MovieListResponseSchema, MovieCreate, MovieDetailSchema
+from schemas.movies import MovieListResponseSchema, MovieCreate, MovieDetailSchema, MovieUpdate
 
 router = APIRouter()
 
@@ -86,10 +85,11 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     try:
         await db.commit()
     except IntegrityError as e:
+        print(e, 'e')
         await db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+            detail=f"A movie with the name '{new_movie.name}' and release date '{new_movie.date}' already exists."
         )
 
     stmt = (
@@ -104,3 +104,41 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     )
     result = await db.execute(stmt)
     return result.scalars().first()
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(MovieModel).where(MovieModel.id == movie_id).options(
+        joinedload(MovieModel.country),
+        joinedload(MovieModel.genres),
+        joinedload(MovieModel.actors),
+        joinedload(MovieModel.languages)
+    )
+    movie = await db.execute(stmt)
+    movie = movie.scalars().first()
+
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found.")
+
+    return movie
+
+@router.delete("/movies/{movie_id}/", response_model=None, status_code=204)
+async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    db_film = result.scalar_one_or_none()
+    if not db_film:
+        raise HTTPException(status_code=404, detail="The movie with the specified ID does not exist.")
+
+    await db.delete(db_film)
+    await db.commit()
+    return
+
+@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema, status_code=204)
+async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
+    db_film = result.scalar_one_or_none()
+    if not db_film:
+        raise HTTPException(status_code=404, detail="The movie with the specified ID does not exist.")
+
+    await db.delete(db_film)
+    await db.commit()
+    return
