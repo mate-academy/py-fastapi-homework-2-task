@@ -11,8 +11,8 @@ from schemas.movies import MovieListResponseSchema, MovieCreate, MovieDetailSche
 
 router = APIRouter()
 
-@router.get("/movies/", response_model=int)
-async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=1, le=30), db: AsyncSession = Depends(get_db)):
+@router.get("/movies/", response_model=MovieListResponseSchema)
+async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=1, le=20), db: AsyncSession = Depends(get_db)):
     movies_count = await db.execute(select(func.count(MovieModel.id)).select_from(MovieModel))
     movies_count = movies_count.scalar()
 
@@ -22,7 +22,7 @@ async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=
     total_pages = movies_count // per_page + 1
     offset = (page - 1) * per_page
 
-    movies = await db.execute(select(MovieModel).offset(offset).limit(per_page).order_by(MovieModel.id))
+    movies = await db.execute(select(MovieModel).offset(offset).limit(per_page).order_by(MovieModel.id.desc()))
     movies = movies.scalars().all()
 
     if not movies:
@@ -100,7 +100,7 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
             joinedload(MovieModel.actors),
             joinedload(MovieModel.languages),
         )
-        .where(MovieModel.id == movie.id)
+        .where(MovieModel.id == new_movie.id)
     )
     result = await db.execute(stmt)
     return result.scalars().first()

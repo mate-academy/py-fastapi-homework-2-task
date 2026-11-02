@@ -2,8 +2,21 @@ from datetime import date
 from typing import Optional
 
 from database.models import MovieStatusEnum
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+
+class CountyBase(BaseModel):
+    id: int
+    name: str
+    code: str
+
+class ActorBase(BaseModel):
+    id: int
+    name: str
+
+class GenreBase(BaseModel):
+    id: int
+    name: str
 
 class MovieBase(BaseModel):
     name: str
@@ -17,15 +30,32 @@ class MovieBase(BaseModel):
 
 class MovieDetailSchema(MovieBase):
     country: Optional[str] = None
-    genres: list[str] = []
-    actors: list[str] = []
-    languages: list[str] = []
+    genres: list[GenreBase] = []
+    actors: list[ActorBase] = []
+    languages: list[CountyBase] = []
 
 class MovieCreate(MovieBase):
-    country: str
+    name: str  = Field(max_length=255)
+    score: float = Field(lt=100, ge=0)
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+    country_id: int
     genres: list[str]
     actors: list[str]
     languages: list[str]
+
+    @field_validator("event_date")
+    @classmethod
+    def validate_future_limit(cls, v: date) -> date:
+        today = date.today()
+        one_year_hence = today.replace(year=today.year + 1)
+
+        if v > one_year_hence:
+            raise ValueError(
+                f"Date cannot be more than 1 year in the future. "
+                f"Max allowed date: {one_year_hence}"
+            )
+        return v
 
 class MovieUpdate(MovieBase):
     name: Optional[str] = None
@@ -37,7 +67,7 @@ class MovieUpdate(MovieBase):
     revenue: Optional[float] = None
 
 
-class MovieListItemSchema(MovieBase):
+class MovieListItemSchema(BaseModel):
     id: int
     name: str
     date: date
