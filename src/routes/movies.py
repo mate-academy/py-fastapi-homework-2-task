@@ -11,8 +11,12 @@ from schemas.movies import MovieListResponseSchema, MovieCreate, MovieDetailSche
 
 router = APIRouter()
 
+
 @router.get("/movies/", response_model=MovieListResponseSchema)
-async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=1, le=20), db: AsyncSession = Depends(get_db)):
+async def get_movies(
+    page: int = Query(
+        1, ge=1), per_page: int = Query(
+            10, ge=1, le=20), db: AsyncSession = Depends(get_db)):
     movies_count = await db.execute(select(func.count(MovieModel.id)).select_from(MovieModel))
     movies_count = movies_count.scalar()
 
@@ -31,7 +35,6 @@ async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=
     prev_page = f"/theater/movies/?page={page - 1}&per_page={per_page}" if page > 1 else None
     next_page = f"/theater/movies/?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
-
     return MovieListResponseSchema(
         movies=movies,
         next_page=next_page,
@@ -40,14 +43,14 @@ async def get_movies(page:int =  Query(1, ge = 1), per_page: int = Query(10, ge=
         total_items=movies_count
     )
 
-async def get_or_create_inner_instances(model_class, data: list[str],  db: AsyncSession) -> list:
+
+async def get_or_create_inner_instances(model_class, data: list[str], db: AsyncSession) -> list:
     item_instants_list = []
 
     for item_name in data:
         stmt_items = select(model_class).where(getattr(model_class, "name") == item_name)
         result = await db.execute(stmt_items)
         item = result.scalars().first()
-
 
         if not item:
             try:
@@ -62,10 +65,12 @@ async def get_or_create_inner_instances(model_class, data: list[str],  db: Async
 
     return item_instants_list
 
+
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
 
-    db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name and MovieModel.date == movie.date))
+    db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name
+                                                              and MovieModel.date == movie.date))
     db_same_movie = db_same_movie.scalar_one_or_none()
     if db_same_movie:
         raise HTTPException(
@@ -73,7 +78,7 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
             detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
 
-    genre_list = await get_or_create_inner_instances(GenreModel,  movie.genres, db)
+    genre_list = await get_or_create_inner_instances(GenreModel, movie.genres, db)
     actor_list = await get_or_create_inner_instances(ActorModel, movie.actors, db)
     languages_list = await get_or_create_inner_instances(LanguageModel, movie.languages, db)
 
@@ -102,7 +107,7 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     db.add(new_movie)
     try:
         await db.commit()
-    except IntegrityError as e:
+    except IntegrityError:
         await db.rollback()
         raise HTTPException(
             status_code=409,
@@ -122,6 +127,7 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(stmt)
     return result.scalars().first()
 
+
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     stmt = select(MovieModel).where(MovieModel.id == movie_id).options(
@@ -138,6 +144,7 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     return movie
 
+
 @router.delete("/movies/{movie_id}/", response_model=None, status_code=204)
 async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
@@ -148,6 +155,7 @@ async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(db_film)
     await db.commit()
     return
+
 
 @router.patch("/movies/{movie_id}/")
 async def update_movie_by_id(movie_id: int, payload: dict = Body(), db: AsyncSession = Depends(get_db)):
@@ -182,7 +190,7 @@ async def update_movie_by_id(movie_id: int, payload: dict = Body(), db: AsyncSes
         await db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the same name and release date already exists."
+            detail="A movie with the same name and release date already exists."
         )
 
     return {"detail": "Movie updated successfully."}

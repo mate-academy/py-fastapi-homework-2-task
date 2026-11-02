@@ -1,5 +1,6 @@
 from datetime import date
 
+
 def validate_future_limit(v: date) -> date:
     today = date.today()
     one_year_hence = today.replace(year=today.year + 1)
