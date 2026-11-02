@@ -61,7 +61,7 @@ async def get_or_create_inner_instances(model_class, data: list[str],  db: Async
 
     return item_instants_list
 
-@router.post("/movies/", response_model=MovieDetailSchema)
+@router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
 
     db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name))
@@ -76,6 +76,15 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     actor_list = await get_or_create_inner_instances(ActorModel, movie.actors, db)
     languages_list = await get_or_create_inner_instances(LanguageModel, movie.languages, db)
 
+    stmt_country = select(CountryModel).where(CountryModel.code == movie.country)
+    result_country = await db.execute(stmt_country)
+    country = result_country.scalars().first()
+
+    if not country:
+        country = CountryModel(code=movie.country)
+        db.add(country)
+        await db.flush()
+
     new_movie = MovieModel(
         name=movie.name,
         date=movie.date,
@@ -86,7 +95,8 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
         revenue=movie.revenue,
         genres=genre_list,
         actors=actor_list,
-        languages=languages_list
+        languages=languages_list,
+        country=country
     )
     db.add(new_movie)
     try:

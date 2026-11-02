@@ -44,6 +44,7 @@ class MovieCreate(MovieBase):
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
     country_id: Optional[int] = None
+    country: str
     genres: list[str]
     actors: list[str]
     languages: list[str]
