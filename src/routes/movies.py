@@ -64,6 +64,14 @@ async def get_or_create_inner_instances(model_class, data: list[str],  db: Async
 @router.post("/movies/", response_model=MovieDetailSchema)
 async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
 
+    db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name))
+    db_same_movie = db_same_movie.scalar_one_or_none()
+    if db_same_movie:
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
+        )
+
     genre_list = await get_or_create_inner_instances(GenreModel,  movie.genres, db)
     actor_list = await get_or_create_inner_instances(ActorModel, movie.actors, db)
     languages_list = await get_or_create_inner_instances(LanguageModel, movie.languages, db)
@@ -76,7 +84,6 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
         status=movie.status,
         budget=movie.budget,
         revenue=movie.revenue,
-        country_id=movie.country_id,
         genres=genre_list,
         actors=actor_list,
         languages=languages_list
@@ -89,7 +96,7 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
         await db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"A movie with the name '{new_movie.name}' and release date '{new_movie.date}' already exists."
+            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists."
         )
 
     stmt = (
@@ -132,7 +139,7 @@ async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return
 
-@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema)
+@router.patch("/movies/{movie_id}/")
 async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession = Depends(get_db)):
     stmt = select(MovieModel).where(MovieModel.id == movie_id).options(
         joinedload(MovieModel.country),
@@ -141,7 +148,7 @@ async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession
         joinedload(MovieModel.languages)
     )
     result = await db.execute(stmt)
-    db_film = result.scalar_one_or_none()
+    db_film = result.unique().scalar_one_or_none()
     if not db_film:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
@@ -159,4 +166,4 @@ async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession
             detail=f"A movie with the same name and release date already exists."
         )
 
-    return db_film
+    return {"detail": "Movie updated successfully."}

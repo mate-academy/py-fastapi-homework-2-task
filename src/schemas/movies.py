@@ -32,6 +32,7 @@ class MovieBase(BaseModel):
     country_id: int
 
 class MovieDetailSchema(MovieBase):
+    id: int
     country: Optional[CountyBase] | None = None
     genres: list[GenreBase] = []
     actors: list[ActorBase] = []
@@ -42,7 +43,7 @@ class MovieCreate(MovieBase):
     score: float = Field(lt=100, ge=0)
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country_id: int
+    country_id: Optional[int] = None
     genres: list[str]
     actors: list[str]
     languages: list[str]
@@ -68,6 +69,20 @@ class MovieUpdate(MovieBase):
     status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = None
     revenue: Optional[float] = None
+    country_id: Optional[int] = None
+
+    @field_validator("date")
+    @classmethod
+    def validate_future_limit(cls, v: date) -> date:
+        today = date.today()
+        one_year_hence = today.replace(year=today.year + 1)
+
+        if v > one_year_hence:
+            raise ValueError(
+                f"Date cannot be more than 1 year in the future. "
+                f"Max allowed date: {one_year_hence}"
+            )
+        return v
 
 
 class MovieListItemSchema(BaseModel):
