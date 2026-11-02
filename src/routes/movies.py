@@ -257,6 +257,24 @@ async def update_movie(
         )
     update_data = movie_data.model_dump(exclude_unset=True)
 
+    if "score" in update_data and not 0 <= update_data["score"] <= 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Score must be between 0 and 100."
+        )
+
+    if "budget" in update_data and update_data["budget"] < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Budget cannot be negative."
+        )
+
+    if "revenue" in update_data and update_data["revenue"] < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Revenue cannot be negative."
+        )
+
     for field, value in update_data.items():
         setattr(movie, field, value)
 
