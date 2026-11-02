@@ -117,7 +117,7 @@ async def get_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = movie.scalars().first()
 
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found.")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     return movie
 
@@ -126,7 +126,7 @@ async def delete_movie_by_id(movie_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     db_film = result.scalar_one_or_none()
     if not db_film:
-        raise HTTPException(status_code=404, detail="The movie with the specified ID does not exist.")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     await db.delete(db_film)
     await db.commit()
@@ -143,7 +143,7 @@ async def update_movie_by_id(movie_id: int, movie: MovieUpdate, db: AsyncSession
     result = await db.execute(stmt)
     db_film = result.scalar_one_or_none()
     if not db_film:
-        raise HTTPException(status_code=404, detail="The movie with the specified ID does not exist.")
+        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
 
     update_data = movie.model_dump(exclude_unset=True)
     for key, value in update_data.items():
