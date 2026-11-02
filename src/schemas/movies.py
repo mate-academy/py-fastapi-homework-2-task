@@ -1,8 +1,9 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, Annotated
 
 from database.models import MovieStatusEnum
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from validation import validate_future_limit
+from pydantic import BaseModel, ConfigDict, Field, AfterValidator
 
 class LanguageBae(BaseModel):
     id: int
@@ -38,6 +39,8 @@ class MovieDetailSchema(MovieBase):
     actors: list[ActorBase] = []
     languages: list[LanguageBae] = []
 
+ValidReleaseDate = Annotated[date, AfterValidator(validate_future_limit)]
+
 class MovieCreate(MovieBase):
     name: str  = Field(max_length=255)
     score: float = Field(lt=100, ge=0)
@@ -48,46 +51,17 @@ class MovieCreate(MovieBase):
     genres: list[str]
     actors: list[str]
     languages: list[str]
-
-    @field_validator("date")
-    @classmethod
-    def validate_future_limit(cls, v: date) -> date:
-        today = date.today()
-        one_year_hence = today.replace(year=today.year + 1)
-
-        if v > one_year_hence:
-            raise ValueError(
-                f"Date cannot be more than 1 year in the future. "
-                f"Max allowed date: {one_year_hence}"
-            )
-        return v
+    date: ValidReleaseDate
 
 class MovieUpdate(MovieBase):
     name: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[ValidReleaseDate] = None
     score: Optional[float] = Field(default=None,lt=100, ge=0)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
     budget: Optional[float] = Field(default=None,ge=0)
     revenue: Optional[float] = Field(default=None,ge=0)
     country_id: Optional[int] = None
-
-    @field_validator("date")
-    @classmethod
-    def validate_future_limit(cls, v: date) -> date:
-        today = date.today()
-        one_year_hence = today.replace(year=today.year + 1)
-
-        if v is None:
-            return v
-
-        if v > one_year_hence:
-            raise ValueError(
-                f"Date cannot be more than 1 year in the future. "
-                f"Max allowed date: {one_year_hence}"
-            )
-        return v
-
 
 class MovieListItemSchema(BaseModel):
     id: int

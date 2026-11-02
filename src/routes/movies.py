@@ -65,7 +65,7 @@ async def get_or_create_inner_instances(model_class, data: list[str],  db: Async
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
 
-    db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name))
+    db_same_movie = await db.execute(select(MovieModel).where(MovieModel.name == movie.name and MovieModel.date == movie.date))
     db_same_movie = db_same_movie.scalar_one_or_none()
     if db_same_movie:
         raise HTTPException(
@@ -103,7 +103,6 @@ async def create_movies(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     try:
         await db.commit()
     except IntegrityError as e:
-        print(e, 'e')
         await db.rollback()
         raise HTTPException(
             status_code=409,
