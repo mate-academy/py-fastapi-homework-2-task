@@ -65,11 +65,11 @@ class MovieCreate(MovieBase):
 class MovieUpdate(MovieBase):
     name: Optional[str] = None
     date: Optional[date] = None
-    score: Optional[float] = None
+    score: Optional[float] = Field(default=None,lt=100, ge=0)
     overview: Optional[str] = None
     status: Optional[MovieStatusEnum] = None
-    budget: Optional[float] = None
-    revenue: Optional[float] = None
+    budget: Optional[float] = Field(default=None,ge=0)
+    revenue: Optional[float] = Field(default=None,ge=0)
     country_id: Optional[int] = None
 
     @field_validator("date")
@@ -77,6 +77,9 @@ class MovieUpdate(MovieBase):
     def validate_future_limit(cls, v: date) -> date:
         today = date.today()
         one_year_hence = today.replace(year=today.year + 1)
+
+        if v is None:
+            return v
 
         if v > one_year_hence:
             raise ValueError(
