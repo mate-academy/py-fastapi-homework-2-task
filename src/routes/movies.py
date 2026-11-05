@@ -21,6 +21,50 @@ from schemas.movies import (
 router = APIRouter()
 
 
+async def get_or_create_genre(db: AsyncSession, genre_name: str) -> GenreModel:
+    genre_stmt = select(GenreModel).where(GenreModel.name == genre_name)
+    genre_result = await db.execute(genre_stmt)
+    genre = genre_result.scalars().first()
+    if not genre:
+        genre = GenreModel(name=genre_name)
+        db.add(genre)
+        await db.flush()
+    return genre
+
+
+async def get_or_create_actor(db: AsyncSession, actor_name: str) -> ActorModel:
+    actor_stmt = select(ActorModel).where(ActorModel.name == actor_name)
+    actor_result = await db.execute(actor_stmt)
+    actor = actor_result.scalars().first()
+    if not actor:
+        actor = ActorModel(name=actor_name)
+        db.add(actor)
+        await db.flush()
+    return actor
+
+
+async def get_or_create_language(db: AsyncSession, language_name: str) -> LanguageModel:
+    language_stmt = select(LanguageModel).where(LanguageModel.name == language_name)
+    language_result = await db.execute(language_stmt)
+    language = language_result.scalars().first()
+    if not language:
+        language = LanguageModel(name=language_name)
+        db.add(language)
+        await db.flush()
+    return language
+
+
+async def get_or_create_country(db: AsyncSession, country_code: str) -> CountryModel:
+    country_stmt = select(CountryModel).where(CountryModel.code == country_code)
+    country_result = await db.execute(country_stmt)
+    country = country_result.scalars().first()
+    if not country:
+        country = CountryModel(code=country_code, name=None)
+        db.add(country)
+        await db.flush()
+    return country
+
+
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movies(
     page: int = Query(1, ge=1),
@@ -82,49 +126,16 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
         )
 
     # Get or create country
-    country_stmt = select(CountryModel).where(CountryModel.code == movie_data.country)
-    country_result = await db.execute(country_stmt)
-    country = country_result.scalars().first()
-    if not country:
-        country = CountryModel(code=movie_data.country, name=None)
-        db.add(country)
-        await db.flush()
+    country = await get_or_create_country(db, movie_data.country)
 
     # Get or create genres
-    genre_models = []
-    for genre_name in movie_data.genres:
-        genre_stmt = select(GenreModel).where(GenreModel.name == genre_name)
-        genre_result = await db.execute(genre_stmt)
-        genre = genre_result.scalars().first()
-        if not genre:
-            genre = GenreModel(name=genre_name)
-            db.add(genre)
-            await db.flush()
-        genre_models.append(genre)
+    genre_models = [await get_or_create_genre(db, genre_name) for genre_name in movie_data.genres]
 
     # Get or create actors
-    actor_models = []
-    for actor_name in movie_data.actors:
-        actor_stmt = select(ActorModel).where(ActorModel.name == actor_name)
-        actor_result = await db.execute(actor_stmt)
-        actor = actor_result.scalars().first()
-        if not actor:
-            actor = ActorModel(name=actor_name)
-            db.add(actor)
-            await db.flush()
-        actor_models.append(actor)
+    actor_models = [await get_or_create_actor(db, actor_name) for actor_name in movie_data.actors]
 
     # Get or create languages
-    language_models = []
-    for language_name in movie_data.languages:
-        language_stmt = select(LanguageModel).where(LanguageModel.name == language_name)
-        language_result = await db.execute(language_stmt)
-        language = language_result.scalars().first()
-        if not language:
-            language = LanguageModel(name=language_name)
-            db.add(language)
-            await db.flush()
-        language_models.append(language)
+    language_models = [await get_or_create_language(db, language_name) for language_name in movie_data.languages]
 
     # Create movie
     movie = MovieModel(
@@ -222,56 +233,20 @@ async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSe
 
     # Update country if provided
     if movie_data.country is not None:
-        country_stmt = select(CountryModel).where(CountryModel.code == movie_data.country)
-        country_result = await db.execute(country_stmt)
-        country = country_result.scalars().first()
-        if not country:
-            country = CountryModel(code=movie_data.country, name=None)
-            db.add(country)
-            await db.flush()
+        country = await get_or_create_country(db, movie_data.country)
         movie.country_id = country.id
 
     # Update genres if provided
     if movie_data.genres is not None:
-        genre_models = []
-        for genre_name in movie_data.genres:
-            genre_stmt = select(GenreModel).where(GenreModel.name == genre_name)
-            genre_result = await db.execute(genre_stmt)
-            genre = genre_result.scalars().first()
-            if not genre:
-                genre = GenreModel(name=genre_name)
-                db.add(genre)
-                await db.flush()
-            genre_models.append(genre)
-        movie.genres = genre_models
+        movie.genres = [await get_or_create_genre(db, genre_name) for genre_name in movie_data.genres]
 
     # Update actors if provided
     if movie_data.actors is not None:
-        actor_models = []
-        for actor_name in movie_data.actors:
-            actor_stmt = select(ActorModel).where(ActorModel.name == actor_name)
-            actor_result = await db.execute(actor_stmt)
-            actor = actor_result.scalars().first()
-            if not actor:
-                actor = ActorModel(name=actor_name)
-                db.add(actor)
-                await db.flush()
-            actor_models.append(actor)
-        movie.actors = actor_models
+        movie.actors = [await get_or_create_actor(db, actor_name) for actor_name in movie_data.actors]
 
     # Update languages if provided
     if movie_data.languages is not None:
-        language_models = []
-        for language_name in movie_data.languages:
-            language_stmt = select(LanguageModel).where(LanguageModel.name == language_name)
-            language_result = await db.execute(language_stmt)
-            language = language_result.scalars().first()
-            if not language:
-                language = LanguageModel(name=language_name)
-                db.add(language)
-                await db.flush()
-            language_models.append(language)
-        movie.languages = language_models
+        movie.languages = [await get_or_create_language(db, language_name) for language_name in movie_data.languages]
 
     await db.commit()
     await db.refresh(movie, ["country", "genres", "actors", "languages"])
