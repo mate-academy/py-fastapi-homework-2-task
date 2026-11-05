@@ -36,7 +36,7 @@ class MessageResponse(BaseModel):
 
 
 class MovieCreate(BaseModel):
-    name: str = Field(default=None, max_length=255)
+    name: str = Field(max_length=255)
     date: date
     score: float = Field(ge=0, le=100)
     overview: str
