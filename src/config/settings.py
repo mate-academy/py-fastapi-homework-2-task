@@ -35,3 +35,6 @@ def get_settings() -> BaseSettings:
     if environment == "testing":
         return TestingSettings()
     return Settings()
+
+
+api_version_prefix = "/api/v1"
