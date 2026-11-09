@@ -7,7 +7,7 @@ authors = ["Yurii Okal <yurii.okal@mate.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "^0.115.6"
-sqlalchemy = "^2.0.36"
+sqlalchemy = {version = ">=2.0.36,<2.1", extras = ["asyncio"]}
 pytest = "^8.3.4"
 pydantic-settings = "^2.7.0"
 pandas = "^2.2.3"
@@ -19,7 +19,7 @@ flake8 = "^7.1.1"
 psycopg2-binary = "^2.9.10"
 alembic = "^1.14.0"
 aiosqlite = "^0.21.0"
-asyncpg = "^0.30.0"
+asyncpg = "^0.31.0"
 pytest-asyncio = "^0.25.3"
 
 
