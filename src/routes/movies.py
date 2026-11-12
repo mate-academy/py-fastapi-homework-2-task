@@ -4,7 +4,6 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
-    Response,
     status
 )
 from sqlalchemy import func, select
@@ -14,7 +13,6 @@ from sqlalchemy.orm import selectinload
 from database import get_db
 from database.models import (
     MovieModel,
-    CountryModel,
     GenreModel,
     ActorModel,
     LanguageModel,
@@ -25,50 +23,45 @@ from schemas.movies import (
     MovieCreateSchema,
     MovieUpdateSchema,
 )
+from services.movie_helpers import get_or_create_country, get_or_create_entities
 
 router = APIRouter(prefix="/movies", tags=["Movies"])
 
 
-async def get_or_create_country(db: AsyncSession, code: str) -> CountryModel:
-    stmt = select(CountryModel).where(CountryModel.code == code)
-    result = await db.execute(stmt)
-    country = result.scalar_one_or_none()
-    if not country:
-        country = CountryModel(code=code, name=code)
-        db.add(country)
-        await db.flush()
-    return country
-
-
-async def get_or_create_entities(db: AsyncSession, model_class, names: list[str]):
-    entities = []
-    for name in names:
-        stmt = select(model_class).where(model_class.name == name)
-        result = await db.execute(stmt)
-        entity = result.scalar_one_or_none()
-        if not entity:
-            entity = model_class(name=name)
-            db.add(entity)
-            await db.flush()
-        entities.append(entity)
-    return entities
+async def check_movie_duplicate(db: AsyncSession, name: str, date) -> None:
+    dup_stmt = select(MovieModel).where(
+        MovieModel.name == name,
+        MovieModel.date == date
+    )
+    existing = (await db.execute(dup_stmt)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A movie with the name '{name}' and release date '{date}' already exists."
+        )
 
 
 @router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
-    db: AsyncSession = Depends(get_db),
-):
+        page: int = Query(1, ge=1),
+        per_page: int = Query(10, ge=1, le=20),
+        db: AsyncSession = Depends(get_db),
+) -> MovieListResponseSchema:
     count_query = select(func.count()).select_from(MovieModel)
     total_items = (await db.execute(count_query)).scalar_one()
 
     if total_items == 0:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No movies found."
+        )
 
     total_pages = math.ceil(total_items / per_page)
     if page > total_pages:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No movies found."
+        )
 
     offset = (page - 1) * per_page
     stmt = (
@@ -100,20 +93,10 @@ async def get_movies(
 
 @router.post("/", response_model=MovieDetailResponseSchema, status_code=status.HTTP_201_CREATED)
 async def create_movie(
-    movie_data: MovieCreateSchema,
-    db: AsyncSession = Depends(get_db),
-):
-    # Перевірка на дублікат (назва + дата)
-    dup_stmt = select(MovieModel).where(
-        MovieModel.name == movie_data.name,
-        MovieModel.date == movie_data.date
-    )
-    existing = (await db.execute(dup_stmt)).scalar_one_or_none()
-    if existing:
-        raise HTTPException(
-            status_code=409,
-            detail=f"A movie with the name '{movie_data.name}' and release date '{movie_data.date}' already exists."
-        )
+        movie_data: MovieCreateSchema,
+        db: AsyncSession = Depends(get_db),
+) -> MovieDetailResponseSchema:
+    await check_movie_duplicate(db, movie_data.name, movie_data.date)
 
     country = await get_or_create_country(db, movie_data.country)
     genres = await get_or_create_entities(db, GenreModel, movie_data.genres)
@@ -136,7 +119,18 @@ async def create_movie(
     db.add(new_movie)
     await db.commit()
 
-    # Повторне зчитування з базу з підвантаженими зв'язками для серіалізації
+    await db.refresh(
+        new_movie,
+        attribute_names=["country", "genres", "actors", "languages"]
+    )
+    return new_movie
+
+
+@router.get("/{movie_id}/", response_model=MovieDetailResponseSchema)
+async def get_movie_by_id(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> MovieDetailResponseSchema:
     stmt = (
         select(MovieModel)
         .options(
@@ -145,16 +139,38 @@ async def create_movie(
             selectinload(MovieModel.actors),
             selectinload(MovieModel.languages),
         )
-        .where(MovieModel.id == new_movie.id)
+        .where(MovieModel.id == movie_id)
     )
-    created_movie = (await db.execute(stmt)).scalar_one()
-    return created_movie
+    movie = (await db.execute(stmt)).scalar_one_or_none()
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found."
+        )
+    return movie
 
 
-@router.get("/{movie_id}/", response_model=MovieDetailResponseSchema)
-async def get_movie_by_id(
-    movie_id: int,
-    db: AsyncSession = Depends(get_db),
+@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> None:
+    stmt = select(MovieModel).where(MovieModel.id == movie_id)
+    movie = (await db.execute(stmt)).scalar_one_or_none()
+    if not movie:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found."
+        )
+    await db.delete(movie)
+    await db.commit()
+
+
+@router.patch("/{movie_id}/")
+async def update_movie(
+        movie_id: int,
+        movie_data: MovieUpdateSchema,
+        db: AsyncSession = Depends(get_db),
 ):
     stmt = (
         select(MovieModel)
@@ -168,38 +184,48 @@ async def get_movie_by_id(
     )
     movie = (await db.execute(stmt)).scalar_one_or_none()
     if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    return movie
-
-
-@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(
-    movie_id: int,
-    db: AsyncSession = Depends(get_db),
-):
-    stmt = select(MovieModel).where(MovieModel.id == movie_id)
-    movie = (await db.execute(stmt)).scalar_one_or_none()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
-    await db.delete(movie)
-    await db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.patch("/{movie_id}/")
-async def update_movie(
-    movie_id: int,
-    movie_data: MovieUpdateSchema,
-    db: AsyncSession = Depends(get_db),
-):
-    stmt = select(MovieModel).where(MovieModel.id == movie_id)
-    movie = (await db.execute(stmt)).scalar_one_or_none()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found."
+        )
 
     update_data = movie_data.model_dump(exclude_unset=True)
+
+    if "name" in update_data or "date" in update_data:
+        check_name = update_data.get("name", movie.name)
+        check_date = update_data.get("date", movie.date)
+
+        dup_stmt = select(MovieModel).where(
+            MovieModel.name == check_name,
+            MovieModel.date == check_date,
+            MovieModel.id != movie_id
+        )
+        if (await db.execute(dup_stmt)).scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A movie with the name '{check_name}' and release date '{check_date}' already exists."
+            )
+
+    if "country" in update_data:
+        country_code = update_data.pop("country")
+        country = await get_or_create_country(db, country_code)
+        movie.country_id = country.id
+
+    if "genres" in update_data:
+        genres_names = update_data.pop("genres")
+        movie.genres = await get_or_create_entities(db, GenreModel, genres_names)
+
+    if "actors" in update_data:
+        actors_names = update_data.pop("actors")
+        movie.actors = await get_or_create_entities(db, ActorModel, actors_names)
+
+    if "languages" in update_data:
+        languages_names = update_data.pop("languages")
+        movie.languages = await get_or_create_entities(db, LanguageModel, languages_names)
+
     for key, value in update_data.items():
         setattr(movie, key, value)
 
     await db.commit()
+
     return {"detail": "Movie updated successfully."}
