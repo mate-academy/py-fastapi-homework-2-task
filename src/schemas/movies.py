@@ -1,4 +1,10 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator
+)
 import datetime
 from database.models import MovieStatusEnum
 import pycountry
@@ -80,23 +86,24 @@ class MovieCreateSchema(MovieModelBase):
     @classmethod
     def validate_date(cls, value):
         today = datetime.date.today()
-        max_date = today.replace(year=today.year + 1)
+        try:
+            max_date = today.replace(year=today.year + 1)
+        except ValueError:
+            max_date = today.replace(year=today.year + 1, day=28)
 
         if value > max_date:
-            raise ValueError(
-                "Date cannot be more than one year in the future"
-            )
+            raise ValueError("Date cannot be more than one year in the future")
+
         return value
 
     @field_validator("country")
     @classmethod
     def validate_country(cls, value):
         value = value.upper()
-        country = (pycountry.countries.get(alpha_2=value)
-                or pycountry.countries.get(alpha_3=value)
-                   )
-        if country is None:
+
+        if pycountry.countries.get(alpha_3=value) is None:
             raise ValueError("Invalid country code.")
+
         return value
 
 
@@ -108,3 +115,12 @@ class MovieUpdateSchema(BaseModel):
     status: MovieStatusEnum | None = Field(default=None)
     budget: float | None = Field(default=None, ge=0)
     revenue: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null_values(cls, values):
+        if isinstance(values, dict):
+            if any(value is None for value in values.values()):
+                raise ValueError("Null values are not allowed.")
+
+        return values
