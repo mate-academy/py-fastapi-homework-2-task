@@ -10,9 +10,30 @@ from schemas.movies import (
 )
 from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
+from fastapi.routing import APIRoute
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 
-router = APIRouter()
+class ValidationErrorRoute(APIRoute):
+    def get_route_handler(self):
+        original_route_handler = super().get_route_handler()
+
+        async def custom_route_handler(request):
+            try:
+                return await original_route_handler(request)
+            except RequestValidationError:
+                if request.method in ("POST", "PATCH"):
+                    return JSONResponse(
+                        status_code=400,
+                        content={"detail": "Invalid input data."}
+                    )
+                raise
+
+        return custom_route_handler
+
+
+router = APIRouter(route_class=ValidationErrorRoute)
 
 
 @router.get("/movies/", response_model=MovieListResponseSchema)

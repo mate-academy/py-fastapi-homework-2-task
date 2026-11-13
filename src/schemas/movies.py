@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import datetime
 from database.models import MovieStatusEnum
+import pycountry
 
 
 class MovieModelBase(BaseModel):
@@ -85,7 +86,17 @@ class MovieCreateSchema(MovieModelBase):
             raise ValueError(
                 "Date cannot be more than one year in the future"
             )
+        return value
 
+    @field_validator("country")
+    @classmethod
+    def validate_country(cls, value):
+        value = value.upper()
+        country = (pycountry.countries.get(alpha_2=value)
+                or pycountry.countries.get(alpha_3=value)
+                   )
+        if country is None:
+            raise ValueError("Invalid country code.")
         return value
 
 
