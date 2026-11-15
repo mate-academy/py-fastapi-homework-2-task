@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from database.models import MovieStatusEnum
+from schemas.iso3166 import ISO_3166_1_ALPHA_3
 
 
 TIME_ZONE = ZoneInfo("Europe/Kyiv")
@@ -18,6 +19,13 @@ def validate_movie_date_not_too_far(value: Optional[date]) -> Optional[date]:
     if value > max_date:
         raise ValueError("Date cannot be more than one year in the future.")
     return value
+
+
+def validate_iso3166_alpha3_country_code(value: str) -> str:
+    code = value.strip().upper()
+    if code not in ISO_3166_1_ALPHA_3:
+        raise ValueError("Country must be a valid ISO 3166-1 alpha-3 code.")
+    return code
 
 
 class MovieListItemSchema(BaseModel):
@@ -92,7 +100,7 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
-    country: str = Field(..., max_length=3)
+    country: str = Field(..., min_length=3, max_length=3)
     genres: list[str]
     actors: list[str]
     languages: list[str]
@@ -101,6 +109,11 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     def validate_date_not_too_far(cls, value: date) -> date:
         return validate_movie_date_not_too_far(value)
+
+    @field_validator("country")
+    @classmethod
+    def validate_country(cls, value: str) -> str:
+        return validate_iso3166_alpha3_country_code(value)
 
 
 class MovieUpdateSchema(BaseModel):
