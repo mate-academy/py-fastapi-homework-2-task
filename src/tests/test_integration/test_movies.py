@@ -409,6 +409,28 @@ async def test_create_movie_and_related_models(client, db_session):
 
 
 @pytest.mark.asyncio
+async def test_create_movie_rejects_unassigned_alpha3_country_code(client):
+    movie_data = {
+        "name": "Movie with invalid country code",
+        "date": "2020-01-01",
+        "score": 85.5,
+        "overview": "A movie with an unassigned country code.",
+        "status": "Released",
+        "budget": 0,
+        "revenue": 0,
+        "country": "AAA",
+        "genres": [],
+        "actors": [],
+        "languages": [],
+    }
+
+    response = await client.post("/api/v1/theater/movies/", json=movie_data)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid input data."}
+
+
+@pytest.mark.asyncio
 async def test_create_movie_duplicate_error(client, db_session, seed_database):
     """
     Test that trying to create a movie with the same name and date as an existing movie

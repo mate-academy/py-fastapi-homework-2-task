@@ -765,6 +765,17 @@ files = [
 ]
 
 [[package]]
+name = "pycountry"
+version = "26.2.16"
+description = "ISO country, subdivision, language, currency and script definitions and their translations"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "pycountry-26.2.16-py3-none-any.whl", hash = "sha256:115c4baf7cceaa30f59a4694d79483c9167dbce7a9de4d3d571c5f3ea77c305a"},
+    {file = "pycountry-26.2.16.tar.gz", hash = "sha256:5b6027d453fcd6060112b951dd010f01f168b51b4bf8a1f1fc8c95c8d94a0801"},
+]
+
+[[package]]
 name = "pydantic"
 version = "2.10.4"
 description = "Data validation using Python type hints"
@@ -1263,5 +1274,5 @@ standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)",
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "659462b1da8960f6f13e914ff3352f7a05010c6255989adc628a8c7520a17a57"
+python-versions = ">=3.10,<3.14"
+content-hash = "c6319430eafe2448aa0a20793e0377b9e582de1dc4bb933deae82cd96e981b7c"

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date as Date
 from math import isfinite
 
+import pycountry
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from database.models import MovieStatusEnum
@@ -108,7 +109,12 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     def normalize_country_code(cls, value: str) -> str:
         code = value.strip().upper()
-        if len(code) != 3 or not code.isascii() or not code.isalpha():
+        if (
+            len(code) != 3
+            or not code.isascii()
+            or not code.isalpha()
+            or pycountry.countries.get(alpha_3=code) is None
+        ):
             raise ValueError("Country must be an ISO 3166-1 alpha-3 code")
         return code
 
