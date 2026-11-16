@@ -23,6 +23,7 @@ from schemas.movies import (
 router = APIRouter()
 
 NOT_FOUND = "Movie with the given ID was not found."
+INVALID_DATA = "Invalid input data."
 LINKS_BASE = "/theater/movies/"
 
 
@@ -39,6 +40,19 @@ async def get_or_create(
         db.add(instance)
         await db.flush()
     return instance
+
+
+async def get_or_create_many(
+        db: AsyncSession,
+        model: type,
+        field: str,
+        values: list[str],
+) -> list:
+    unique_values = list(dict.fromkeys(values))
+    return [
+        await get_or_create(db, model, field, value)
+        for value in unique_values
+    ]
 
 
 async def load_movie(db: AsyncSession, movie_id: int) -> MovieModel | None:
@@ -60,7 +74,7 @@ async def get_movies(
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20),
         db: AsyncSession = Depends(get_db),
-):
+) -> dict:
     total_items = await db.scalar(select(func.count(MovieModel.id)))
     total_pages = math.ceil(total_items / per_page)
 
@@ -93,7 +107,10 @@ async def get_movies(
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
-async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def get_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> MovieModel:
     movie = await load_movie(db, movie_id)
     if movie is None:
         raise HTTPException(status_code=404, detail=NOT_FOUND)
@@ -108,7 +125,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 async def create_movie(
         data: MovieCreateSchema,
         db: AsyncSession = Depends(get_db),
-):
+) -> MovieModel:
     duplicate = await db.scalar(
         select(MovieModel).where(
             MovieModel.name == data.name,
@@ -135,30 +152,30 @@ async def create_movie(
             budget=data.budget,
             revenue=data.revenue,
             country=country,
-            genres=[
-                await get_or_create(db, GenreModel, "name", name)
-                for name in data.genres
-            ],
-            actors=[
-                await get_or_create(db, ActorModel, "name", name)
-                for name in data.actors
-            ],
-            languages=[
-                await get_or_create(db, LanguageModel, "name", name)
-                for name in data.languages
-            ],
+            genres=await get_or_create_many(
+                db, GenreModel, "name", data.genres
+            ),
+            actors=await get_or_create_many(
+                db, ActorModel, "name", data.actors
+            ),
+            languages=await get_or_create_many(
+                db, LanguageModel, "name", data.languages
+            ),
         )
         db.add(movie)
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=400, detail=INVALID_DATA)
 
     return await load_movie(db, movie.id)
 
 
 @router.delete("/movies/{movie_id}/", status_code=204)
-async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+) -> Response:
     movie = await db.get(MovieModel, movie_id)
     if movie is None:
         raise HTTPException(status_code=404, detail=NOT_FOUND)
@@ -172,7 +189,7 @@ async def update_movie(
         movie_id: int,
         data: MovieUpdateSchema,
         db: AsyncSession = Depends(get_db),
-):
+) -> dict:
     movie = await db.get(MovieModel, movie_id)
     if movie is None:
         raise HTTPException(status_code=404, detail=NOT_FOUND)
@@ -184,6 +201,6 @@ async def update_movie(
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=400, detail=INVALID_DATA)
 
     return {"detail": "Movie updated successfully."}
