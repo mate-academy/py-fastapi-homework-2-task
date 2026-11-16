@@ -90,7 +90,7 @@ async def get_movies(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_movie(
-    payload: Any = Body(...),
+    payload: Any = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> MovieDetailSchema:
     try:
@@ -222,7 +222,7 @@ async def delete_movie(
 @router.patch("/movies/{movie_id}/")
 async def update_movie(
     movie_id: int,
-    payload: Any = Body(...),
+    payload: Any = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     try:

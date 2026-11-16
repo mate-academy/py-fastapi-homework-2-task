@@ -46,7 +46,7 @@ class MovieDetailSchema(BaseModel):
 
     id: int
     name: str
-    date: date
+    date: Date
     score: float
     overview: str
     status: MovieStatusEnum
@@ -89,7 +89,7 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(ge=0)
     revenue: float = Field(ge=0)
-    country: str = Field(min_length=2, max_length=3)
+    country: str = Field(min_length=3, max_length=3)
     genres: list[str]
     actors: list[str]
     languages: list[str]
@@ -108,8 +108,8 @@ class MovieCreateSchema(BaseModel):
     @classmethod
     def normalize_country_code(cls, value: str) -> str:
         code = value.strip().upper()
-        if len(code) not in (2, 3) or not code.isalpha():
-            raise ValueError("Country must be a two- or three-letter code")
+        if len(code) != 3 or not code.isascii() or not code.isalpha():
+            raise ValueError("Country must be an ISO 3166-1 alpha-3 code")
         return code
 
     @field_validator("genres", "actors", "languages")
