@@ -8,7 +8,9 @@ from database import get_db, MovieModel
 from database.models import CountryModel, GenreModel, ActorModel, LanguageModel
 from database.session_sqlite import AsyncSQLiteSessionLocal
 from pagination.utils import paginate
-from schemas.movies import MovieListObjectResponse, MovieListResponseSchema
+from schemas.movies import MovieListObjectResponse, MovieListResponseSchema, MovieCreateSchema, MovieCreateResponseSchema
+
+from crud.movies import create_movie
 
 router = APIRouter()
 
@@ -43,3 +45,11 @@ async def get_movies(
         total_items=total_items,
         movies=[MovieListObjectResponse.model_validate(movie) for movie in movies],
     )
+
+
+@router.post("/movies/", response_model=MovieCreateResponseSchema)
+async def create_new_movie(
+    movie: MovieCreateSchema,
+    db: AsyncSQLiteSessionLocal = Depends(get_db),
+):
+    return await create_movie(movie, db)
