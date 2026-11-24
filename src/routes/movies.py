@@ -2,6 +2,7 @@ import math
 
 from typing import Annotated
 
+from pydantic import ValidationError
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select, func
@@ -122,11 +123,19 @@ async def get_movie_by_id(
     status_code=status.HTTP_201_CREATED
 )
 async def create_movie(
-    movie: MovieCreateSchema,
+    movie: dict,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
+    try:
+        movie_data = MovieCreateSchema.model_validate(movie)
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
+        )
+
     stmt_movie = select(MovieModel).where(
-        MovieModel.name == movie.name, MovieModel.date == movie.date,
+        MovieModel.name == movie_data.name, MovieModel.date == movie_data.date,
     )
 
     result = await db.execute(stmt_movie)
@@ -135,34 +144,34 @@ async def create_movie(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
-                f"A movie with the name '{movie.name}' and "
-                f"release date '{movie.date}' already exists."
+                f"A movie with the name '{movie_data.name}' and "
+                f"release date '{movie_data.date}' already exists."
             )
         )
 
-    stmt_country = select(CountryModel).where(CountryModel.code == movie.country)
+    stmt_country = select(CountryModel).where(CountryModel.code == movie_data.country)
     result = await db.execute(stmt_country)
     db_country = result.scalar_one_or_none()
     if db_country is None:
         db_country = CountryModel(
-            code=movie.country
+            code=movie_data.country
         )
         db.add(db_country)
         await db.commit()
         await db.refresh(db_country)
 
-    genres_list = await get_or_create(GenreModel, movie.genres, db)
-    actors_list = await get_or_create(ActorModel, movie.actors, db)
-    languages_list = await get_or_create(LanguageModel, movie.languages, db)
+    genres_list = await get_or_create(GenreModel, movie_data.genres, db)
+    actors_list = await get_or_create(ActorModel, movie_data.actors, db)
+    languages_list = await get_or_create(LanguageModel, movie_data.languages, db)
 
     db_movie = MovieModel(
-        name=movie.name,
-        date=movie.date,
-        score=movie.score,
-        overview=movie.overview,
-        status=movie.status,
-        budget=movie.budget,
-        revenue=movie.revenue,
+        name=movie_data.name,
+        date=movie_data.date,
+        score=movie_data.score,
+        overview=movie_data.overview,
+        status=movie_data.status,
+        budget=movie_data.budget,
+        revenue=movie_data.revenue,
         country=db_country,
         genres=genres_list,
         actors=actors_list,
@@ -175,11 +184,21 @@ async def create_movie(
 
 
 @router.patch("/movies/{movie_id}/", status_code=status.HTTP_200_OK)
-async def remove_film(
+async def update_movie(
     movie_id: int,
-    movie_data: MovieUpdateSchema,
+    movie_data: dict,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
+    try:
+        update_data = MovieUpdateSchema.model_validate(
+            movie_data
+        ).model_dump(exclude_unset=True)
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data."
+        )
+
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     db_movie = result.scalar_one_or_none()
 
@@ -188,8 +207,6 @@ async def remove_film(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Movie with the given ID was not found."
         )
-
-    update_data = movie_data.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
         setattr(db_movie, key, value)

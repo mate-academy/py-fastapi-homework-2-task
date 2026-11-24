@@ -11,6 +11,8 @@ class CountryBase(BaseModel):
 
 
 class CountryRead(CountryBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -19,6 +21,8 @@ class GenreBase(BaseModel):
 
 
 class GenreRead(GenreBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -27,6 +31,8 @@ class ActorBase(BaseModel):
 
 
 class ActorRead(ActorBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -35,6 +41,8 @@ class LanguageBase(BaseModel):
 
 
 class LanguageRead(LanguageBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
 
 
@@ -75,6 +83,8 @@ class MovieUpdateSchema(MovieBase):
 
 
 class MovieDetailSchema(MovieBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     status: str
     budget: float = Field(..., ge=0)
