@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict
 
 class CountryBase(BaseModel):
     code: str
-    name: str | None
+    name: str | None = None
 
 
 class CountryRead(CountryBase):
