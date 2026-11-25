@@ -10,7 +10,11 @@ from schemas.movies import MovieListResponseSchema
 router = APIRouter()
 
 
-@router.get("/movies/", response_model=MovieListResponseSchema)
+@router.get(
+    "/movies/",
+    response_model=MovieListResponseSchema,
+    responses={404: {"description": "No movies found."}},
+)
 async def get_movies(db: SessionDep, pagination: PaginationHelper, request: Request):
     movies = await all_movies(
         db=db,
