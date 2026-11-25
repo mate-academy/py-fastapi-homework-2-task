@@ -4,6 +4,10 @@ from dateutil.relativedelta import relativedelta
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from database.models import MovieStatusEnum
+from schemas.actors import ActorRead
+from schemas.countries import CountryRead
+from schemas.genres import GenreRead
+from schemas.languages import LanguageRead
 
 
 class MovieBase(BaseModel):
@@ -39,6 +43,16 @@ class MovieListItemSchema(BaseModel):
     overview: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MovieDetailSchema(MovieListItemSchema):
+    status: MovieStatusEnum
+    budget: float
+    revenue: float
+    country: CountryRead
+    genres: list[GenreRead]
+    actors: list[ActorRead]
+    languages: list[LanguageRead]
 
 
 class MovieListResponseSchema(BaseModel):
