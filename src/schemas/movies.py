@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from database.models import MovieStatusEnum
 
 
-class MovieBase(BaseModel):
+class MovieDetailSchema(BaseModel):
     name: str
     date: datetime.date
     score: float
@@ -15,7 +15,7 @@ class MovieBase(BaseModel):
     country_id: int
 
 
-class MovieBaseRead(BaseModel):
+class MovieListItemSchema(BaseModel):
     id: int
     name: str
     date: datetime.date
@@ -25,8 +25,8 @@ class MovieBaseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MovieList(BaseModel):
-    movies: list[MovieBaseRead]
+class MovieListResponseSchema(BaseModel):
+    movies: list[MovieListItemSchema]
     prev_page: str | None = None
     next_page: str | None = None
     total_pages: int
