@@ -1,18 +1,34 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict
+from dateutil.relativedelta import relativedelta
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from database.models import MovieStatusEnum
 
 
-class MovieDetailSchema(BaseModel):
-    name: str
+class MovieBase(BaseModel):
+    name: str = Field(max_length=255, min_length=1)
     date: datetime.date
-    score: float
+    score: float = Field(ge=0, le=100)
     overview: str
     status: MovieStatusEnum
-    revenue: float
-    country_id: int
+    budget: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+    country: str = Field(min_length=3, max_length=3)
+    genres: list[str] = Field(min_length=1)
+    actors: list[str] = Field(min_length=1)
+    languages: list[str] = Field(min_length=1)
+
+    @field_validator("date", mode="after")
+    @classmethod
+    def check_date(cls, date: datetime.date) -> datetime.date:
+        if date > datetime.date.today() + relativedelta(years=1):
+            raise ValueError("Date cannot be more than 1 year in the future.")
+        return date
+
+
+class MovieCreate(MovieBase):
+    pass
 
 
 class MovieListItemSchema(BaseModel):
