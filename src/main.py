@@ -18,7 +18,7 @@ app.include_router(
 async def pydantic_error_interceptor(
     request: Request, exception: RequestValidationError
 ):
-    if request.method == "POST":
+    if request.method in ("POST", "PATCH"):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": "Invalid input data."},
