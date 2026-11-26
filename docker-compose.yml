@@ -1,6 +1,6 @@
 services:
   db:
-    image: 'postgres:latest'
+    image: 'postgres:16'
     container_name: postgres_theater
     env_file:
       - .env
@@ -57,7 +57,7 @@ services:
   migrator:
     build: .
     container_name: alembic_migrator_theater
-    command: ["/bin/bash", "/commands/run_migration.sh"]
+    command: [ "/bin/bash", "/commands/run_migration.sh" ]
     depends_on:
       db:
         condition: service_healthy
