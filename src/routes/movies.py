@@ -7,6 +7,7 @@ from crud.movies import (
     movies_count,
     find_movie_by_name_and_date,
     create_movie_by_data,
+    movie_by_id,
 )
 from database.dependencies.db import SessionDep
 from database.pagination import PaginationHelper
@@ -79,5 +80,22 @@ async def create_movie(db: SessionDep, movie: MovieCreate):
         )
 
     movie = await create_movie_by_data(db=db, movie_data=movie)
+
+    return movie
+
+
+@router.get(
+    "/movies/{movie_id}/",
+    response_model=MovieDetailSchema,
+    responses={404: {"description": "Movie with the given ID was not found."}},
+)
+async def movie_details(db: SessionDep, movie_id: int):
+    movie = await movie_by_id(db=db, movie_id=movie_id)
+
+    if movie is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie with the given ID was not found.",
+        )
 
     return movie
