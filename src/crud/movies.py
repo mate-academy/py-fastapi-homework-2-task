@@ -1,3 +1,4 @@
+import datetime
 from typing import Sequence
 
 from sqlalchemy import select, func
@@ -74,3 +75,11 @@ async def create_movie(db: AsyncSession, movie_data: MovieCreate) -> MovieModel:
     )
 
     return movie
+
+
+async def find_movie_by_name_and_date(
+    db: AsyncSession, name: str, date: datetime.date
+) -> MovieModel | None:
+    return await db.scalar(
+        select(MovieModel).where(MovieModel.name == name, MovieModel.date == date)
+    )
