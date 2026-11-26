@@ -9,10 +9,16 @@ from crud.movies import (
     create_movie_by_data,
     movie_by_id,
     delete_movie_model,
+    update_movie_model,
 )
 from database.dependencies.db import SessionDep
 from database.pagination import PaginationHelper
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreate
+from schemas.movies import (
+    MovieListResponseSchema,
+    MovieDetailSchema,
+    MovieCreate,
+    MoviePartialUpdate,
+)
 
 router = APIRouter()
 
@@ -116,3 +122,22 @@ async def delete_movie(db: SessionDep, movie_id: int):
         )
 
     await delete_movie_model(db=db, movie=movie)
+
+
+@router.patch(
+    "/movies/{movie_id}/",
+    responses={
+        404: {"description": "Movie with the given ID was not found."},
+    },
+)
+async def update_movie(db: SessionDep, movie_id: int, movie_data: MoviePartialUpdate):
+    movie = await movie_by_id(db=db, movie_id=movie_id)
+
+    if movie is None:
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
+
+    await update_movie_model(db=db, movie=movie, movie_data=movie_data)
+
+    return {"detail": "Movie updated successfully."}
