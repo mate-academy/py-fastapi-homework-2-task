@@ -8,6 +8,7 @@ from crud.movies import (
     find_movie_by_name_and_date,
     create_movie_by_data,
     movie_by_id,
+    delete_movie_model,
 )
 from database.dependencies.db import SessionDep
 from database.pagination import PaginationHelper
@@ -99,3 +100,19 @@ async def movie_details(db: SessionDep, movie_id: int):
         )
 
     return movie
+
+
+@router.delete(
+    "/movies/{movie_id}/",
+    status_code=204,
+    responses={404: {"description": "Movie with the given ID was not found."}},
+)
+async def delete_movie(db: SessionDep, movie_id: int):
+    movie = await movie_by_id(db=db, movie_id=movie_id)
+
+    if movie is None:
+        raise HTTPException(
+            status_code=404, detail="Movie with the given ID was not found."
+        )
+
+    await delete_movie_model(db=db, movie=movie)
