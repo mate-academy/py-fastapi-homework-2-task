@@ -48,13 +48,13 @@ async def get_movies(db: SessionDep, pagination: PaginationHelper, request: Requ
 
     if pagination.page - 1 > 0:
         prev_page = (
-            request.url.path
+            request.url.path.removeprefix("/api/v1")
             + f"?page={pagination.page - 1}&per_page={pagination.per_page}"
         )
 
     if pagination.page + 1 <= total_pages:
         next_page = (
-            request.url.path
+            request.url.path.removeprefix("/api/v1")
             + f"?page={pagination.page + 1}&per_page={pagination.per_page}"
         )
 

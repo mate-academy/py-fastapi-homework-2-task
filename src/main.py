@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -17,7 +18,13 @@ app.include_router(
 async def pydantic_error_interceptor(
     request: Request, exception: RequestValidationError
 ):
+    if request.method == "POST":
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Invalid input data."},
+        )
+
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": "Invalid input data."},
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": jsonable_encoder(exception.errors())},
     )
