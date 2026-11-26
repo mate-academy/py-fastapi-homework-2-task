@@ -3,6 +3,7 @@ from typing import Sequence
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, joinedload
 
 from crud.actors import find_actors_by_name_or_create
 from crud.countries import find_country_by_code_or_create
@@ -26,6 +27,19 @@ async def all_movies(db: AsyncSession, skip: int, limit: int) -> Sequence[MovieM
             select(MovieModel).order_by(MovieModel.id.desc()).offset(skip).limit(limit)
         )
     ).all()
+
+
+async def movie_by_id(db: AsyncSession, movie_id: int) -> MovieModel | None:
+    return await db.get(
+        MovieModel,
+        movie_id,
+        options=[
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.actors),
+            selectinload(MovieModel.languages),
+            joinedload(MovieModel.country),
+        ],
+    )
 
 
 async def create_movie_by_data(db: AsyncSession, movie_data: MovieCreate) -> MovieModel:
