@@ -32,16 +32,6 @@ class MovieBase(BaseModel, ValidateDateMixin):
     actors: list[str] = Field(min_length=1)
     languages: list[str] = Field(min_length=1)
 
-    @field_validator("country", mode="after")
-    @classmethod
-    def validate_country_code(cls, value: str) -> str:
-        value = value.strip().upper()
-        if value == "US":
-            return "USA"
-        if len(value) != 3 or not value.isalpha():
-            raise ValueError("Country code must be a valid 3-letter ISO alpha-3 code.")
-        return value
-
 
 class MovieCreate(MovieBase):
     pass
