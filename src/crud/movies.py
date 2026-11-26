@@ -42,6 +42,14 @@ async def movie_by_id(db: AsyncSession, movie_id: int) -> MovieModel | None:
     )
 
 
+async def find_movie_by_name_and_date(
+    db: AsyncSession, name: str, date: datetime.date
+) -> MovieModel | None:
+    return await db.scalar(
+        select(MovieModel).where(MovieModel.name == name, MovieModel.date == date)
+    )
+
+
 async def create_movie_by_data(db: AsyncSession, movie_data: MovieCreate) -> MovieModel:
     country = await find_country_by_code_or_create(
         db=db, country_data=CountryCreate(code=movie_data.country)
@@ -91,9 +99,6 @@ async def create_movie_by_data(db: AsyncSession, movie_data: MovieCreate) -> Mov
     return movie
 
 
-async def find_movie_by_name_and_date(
-    db: AsyncSession, name: str, date: datetime.date
-) -> MovieModel | None:
-    return await db.scalar(
-        select(MovieModel).where(MovieModel.name == name, MovieModel.date == date)
-    )
+async def delete_movie_model(db: AsyncSession, movie: MovieModel) -> None:
+    await db.delete(movie)
+    await db.commit()
