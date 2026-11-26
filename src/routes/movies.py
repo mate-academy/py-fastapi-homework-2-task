@@ -2,10 +2,15 @@ import math
 
 from fastapi import APIRouter, status, HTTPException, Request
 
-from crud.movies import all_movies, movies_count
+from crud.movies import (
+    all_movies,
+    movies_count,
+    find_movie_by_name_and_date,
+    create_movie_by_data,
+)
 from database.dependencies.db import SessionDep
 from database.pagination import PaginationHelper
-from schemas.movies import MovieListResponseSchema
+from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreate
 
 router = APIRouter()
 
@@ -52,3 +57,27 @@ async def get_movies(db: SessionDep, pagination: PaginationHelper, request: Requ
         total_pages=total_pages,
         total_items=total_movies,
     )
+
+
+@router.post(
+    "/movies/",
+    response_model=MovieDetailSchema,
+    status_code=201,
+    responses={
+        409: {"description": "A movie with the same name and date already exists."}
+    },
+)
+async def create_movie(db: SessionDep, movie: MovieCreate):
+    existed_movie = await find_movie_by_name_and_date(
+        db=db, name=movie.name, date=movie.date
+    )
+
+    if existed_movie is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.",
+        )
+
+    movie = await create_movie_by_data(db=db, movie_data=movie)
+
+    return movie

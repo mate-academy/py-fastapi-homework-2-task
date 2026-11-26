@@ -28,7 +28,7 @@ async def all_movies(db: AsyncSession, skip: int, limit: int) -> Sequence[MovieM
     ).all()
 
 
-async def create_movie(db: AsyncSession, movie_data: MovieCreate) -> MovieModel:
+async def create_movie_by_data(db: AsyncSession, movie_data: MovieCreate) -> MovieModel:
     country = await find_country_by_code_or_create(
         db=db, country_data=CountryCreate(code=movie_data.country)
     )
