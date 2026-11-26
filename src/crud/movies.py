@@ -14,7 +14,7 @@ from schemas.actors import ActorCreate
 from schemas.countries import CountryCreate
 from schemas.genres import GenreCreate
 from schemas.languages import LanguageCreate
-from schemas.movies import MovieCreate
+from schemas.movies import MovieCreate, MoviePartialUpdate
 
 
 async def movies_count(db: AsyncSession) -> int:
@@ -102,3 +102,15 @@ async def create_movie_by_data(db: AsyncSession, movie_data: MovieCreate) -> Mov
 async def delete_movie_model(db: AsyncSession, movie: MovieModel) -> None:
     await db.delete(movie)
     await db.commit()
+
+
+async def update_movie_model(
+    db: AsyncSession, movie: MovieModel, movie_data: MoviePartialUpdate
+) -> MovieModel:
+    for field, value in movie_data.model_dump(exclude_unset=True).items():
+        setattr(movie, field, value)
+
+    await db.commit()
+    await db.refresh(movie)
+
+    return movie
