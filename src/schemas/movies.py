@@ -49,9 +49,9 @@ class MovieCreateSchema(BaseModel):
     revenue: float = Field(..., ge=0)
     country: str = Field(
         ...,
-        min_length=2,
+        min_length=3,
         max_length=3,
-        pattern=r"^[A-Za-z]{2,3}$",
+        pattern=r"^[A-Za-z]{3}$",
     )
     genres: list[str] = Field(..., min_length=1)
     actors: list[str] = Field(..., min_length=1)

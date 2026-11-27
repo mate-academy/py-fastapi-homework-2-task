@@ -1,7 +1,8 @@
+import json
 import math
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -24,6 +25,29 @@ from schemas.movies import (
 )
 
 router = APIRouter(prefix="/movies", tags=["movies"])
+
+
+async def _parse_json_object(request: Request) -> dict[str, Any]:
+    raw_body = await request.body()
+    if not raw_body or not raw_body.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data.",
+        )
+    try:
+        payload = json.loads(raw_body)
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data.",
+        ) from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data.",
+        )
+    return payload
 
 
 def _movie_detail_query():
@@ -107,9 +131,10 @@ async def get_movies(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_movie(
-    payload: dict[str, Any] = Body(...),
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    payload = await _parse_json_object(request)
     try:
         movie_data = MovieCreateSchema.model_validate(payload)
     except ValidationError as exc:
@@ -195,9 +220,10 @@ async def get_movie_by_id(
 @router.patch("/{movie_id}/")
 async def update_movie(
     movie_id: int,
-    payload: dict[str, Any] = Body(...),
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    payload = await _parse_json_object(request)
     try:
         movie_data = MovieUpdateSchema.model_validate(payload)
     except ValidationError as exc:
