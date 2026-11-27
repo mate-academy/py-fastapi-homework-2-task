@@ -53,9 +53,9 @@ class MovieCreateSchema(BaseModel):
         max_length=3,
         pattern=r"^[A-Za-z]{3}$",
     )
-    genres: list[str] = Field(..., min_length=1)
-    actors: list[str] = Field(..., min_length=1)
-    languages: list[str] = Field(..., min_length=1)
+    genres: list[str]
+    actors: list[str]
+    languages: list[str]
 
     @field_validator("date")
     @classmethod
@@ -103,16 +103,3 @@ class MovieUpdateSchema(BaseModel):
                 if value is None:
                     raise ValueError(f"Field '{key}' cannot be null.")
         return data
-
-    @field_validator("date")
-    @classmethod
-    def validate_date_within_one_year(
-        cls, value: datetime.date | None
-    ) -> datetime.date | None:
-        if value is None:
-            return None
-        today = datetime.date.today()
-        max_date = datetime.date(today.year + 1, today.month, today.day)
-        if value > max_date:
-            raise ValueError("Date cannot be more than one year in the future.")
-        return value
