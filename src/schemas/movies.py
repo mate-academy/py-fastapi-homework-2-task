@@ -1,8 +1,10 @@
 import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from database.models import MovieStatusEnum
+
 
 class CountrySchema(BaseModel):
     id: int
@@ -45,7 +47,12 @@ class MovieCreateSchema(BaseModel):
     status: MovieStatusEnum
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
-    country: str = Field(..., min_length=1)
+    country: str = Field(
+        ...,
+        min_length=2,
+        max_length=3,
+        pattern=r"^[A-Za-z]{2,3}$",
+    )
     genres: list[str] = Field(..., min_length=1)
     actors: list[str] = Field(..., min_length=1)
     languages: list[str] = Field(..., min_length=1)
@@ -85,6 +92,17 @@ class MovieUpdateSchema(BaseModel):
     status: MovieStatusEnum | None = None
     budget: float | None = Field(default=None, ge=0)
     revenue: float | None = Field(default=None, ge=0)
+
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_explicit_none(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if value is None:
+                    raise ValueError(f"Field '{key}' cannot be null.")
+        return data
 
     @field_validator("date")
     @classmethod

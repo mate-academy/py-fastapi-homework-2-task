@@ -1,5 +1,8 @@
 import math
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Any
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,9 +107,17 @@ async def get_movies(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_movie(
-    movie_data: MovieCreateSchema,
+    payload: dict[str, Any] = Body(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        movie_data = MovieCreateSchema.model_validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data.",
+        ) from exc
+
     existing_stmt = select(MovieModel).where(
         MovieModel.name == movie_data.name,
         MovieModel.date == movie_data.date,
@@ -184,9 +195,17 @@ async def get_movie_by_id(
 @router.patch("/{movie_id}/")
 async def update_movie(
     movie_id: int,
-    movie_data: MovieUpdateSchema,
+    payload: dict[str, Any] = Body(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        movie_data = MovieUpdateSchema.model_validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data.",
+        ) from exc
+
     movie = await db.scalar(
         _movie_detail_query().where(MovieModel.id == movie_id)
     )
@@ -197,6 +216,9 @@ async def update_movie(
         )
 
     updates = movie_data.model_dump(exclude_unset=True)
+    target_name = updates.get("name", movie.name)
+    target_date = updates.get("date", movie.date)
+
     for field, value in updates.items():
         setattr(movie, field, value)
 
@@ -206,12 +228,12 @@ async def update_movie(
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Movie with this name and release date already exists.",
+            detail=(
+                f"A movie with the name '{target_name}' "
+                f"and release date '{target_date}' already exists."
+            ),
         ) from exc
 
-    updated_movie = await db.scalar(
-        _movie_detail_query().where(MovieModel.id == movie_id)
-    )
     return {"detail": "Movie updated successfully."}
 
 
